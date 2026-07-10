@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "algoERP",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "loading": "Loading...",
+  "error": "Something went wrong",
+  "retry": "Retry",
+  "empty": "Nothing here yet"
+}

@@ -1,0 +1,15 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "lib/l10n/gen/**"
+    # Parked offline-first code — kept for a future offline phase, not part of
+    # the current online-only build. See docs/BUILD_TASKS.md §9.
+    - "lib/core/database/**"
+
+linter:
+  rules:
+    public_member_api_docs: false
