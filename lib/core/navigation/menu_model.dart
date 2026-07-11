@@ -37,9 +37,9 @@ abstract final class AppMenu {
     MenuSectionModel(
       items: [
         MenuItemModel(
-          label: 'Dashboard',
-          icon: Icons.dashboard_outlined,
-          selectedIcon: Icons.dashboard,
+          label: 'Desk',
+          icon: Icons.home_work_outlined,
+          selectedIcon: Icons.home_work,
           route: '/dashboard',
         ),
       ],
@@ -76,6 +76,13 @@ abstract final class AppMenu {
           icon: Icons.inventory_2_outlined,
           selectedIcon: Icons.inventory_2,
           route: '/inventory',
+          requiredModule: 'Inventory',
+        ),
+        MenuItemModel(
+          label: 'Brand',
+          icon: Icons.sell_outlined,
+          selectedIcon: Icons.sell,
+          route: '/inventory/brand',
           requiredModule: 'Inventory',
         ),
       ],

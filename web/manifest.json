@@ -1,11 +1,11 @@
 {
-    "name": "algo_erp_front",
-    "short_name": "algo_erp_front",
+    "name": "algoERP",
+    "short_name": "algoERP",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F1EDE6",
+    "theme_color": "#0E6B68",
+    "description": "algoERP — online ERP for UAE SMEs.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

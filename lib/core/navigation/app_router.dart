@@ -8,6 +8,8 @@ import 'package:algo_erp_front/core/theme/theme_preview_page.dart';
 import 'package:algo_erp_front/core/widgets/gallery/widget_gallery_page.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:algo_erp_front/features/auth/presentation/pages/login_page.dart';
+import 'package:algo_erp_front/features/desk/presentation/pages/todays_desk_page.dart';
+import 'package:algo_erp_front/features/inventory_brand/presentation/brand_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -75,8 +77,10 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                 pageBuilder: (context, state) => buildPageWithMotion(
                   state: state,
                   child: switch (item.route) {
+                    '/dashboard' => const TodaysDeskPage(),
                     '/theme-preview' => const ThemePreviewPage(),
                     '/widget-gallery' => const WidgetGalleryPage(),
+                    '/inventory/brand' => const BrandListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
@@ -133,7 +137,7 @@ class _ForbiddenPage extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () => context.go('/dashboard'),
-              child: const Text('Back to dashboard'),
+              child: const Text('Back to desk'),
             ),
           ],
         ),

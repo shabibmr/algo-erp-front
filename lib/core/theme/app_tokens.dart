@@ -55,6 +55,58 @@ class AppElevation {
   final double level4;
 }
 
+/// Named surfaces and brand accents for the Ledger & Linen system.
+/// Widgets should prefer these over raw [ColorScheme] when the desk
+/// metaphor matters (canvas, paper cards, lagoon seals, brass money).
+@immutable
+class BrandColors {
+  const BrandColors({
+    required this.linen,
+    required this.paper,
+    required this.mist,
+    required this.ink,
+    required this.inkMuted,
+    required this.lagoon,
+    required this.lagoonSoft,
+    required this.brass,
+    required this.oxblood,
+  });
+
+  final Color linen;
+  final Color paper;
+  final Color mist;
+  final Color ink;
+  final Color inkMuted;
+  final Color lagoon;
+  final Color lagoonSoft;
+  final Color brass;
+  final Color oxblood;
+
+  static const light = BrandColors(
+    linen: Color(0xFFF1EDE6),
+    paper: Color(0xFFFBF9F6),
+    mist: Color(0xFFE4E9EE),
+    ink: Color(0xFF1A2330),
+    inkMuted: Color(0xFF5C6778),
+    lagoon: Color(0xFF0E6B68),
+    lagoonSoft: Color(0xFFD7EFED),
+    brass: Color(0xFFB8843B),
+    oxblood: Color(0xFF8F3535),
+  );
+
+  static const dark = BrandColors(
+    linen: Color(0xFF11161D),
+    paper: Color(0xFF1A212B),
+    mist: Color(0xFF2A3340),
+    ink: Color(0xFFE8ECF1),
+    inkMuted: Color(0xFF9AA3B2),
+    lagoon: Color(0xFF3CB8B0),
+    lagoonSoft: Color(0xFF1A3D3B),
+    brass: Color(0xFFD9A45C),
+    oxblood: Color(0xFFE07A7A),
+  );
+}
+
 /// Voucher lifecycle status colors, kept separate from Material's semantic
 /// roles because a voucher's status maps to domain meaning, not UI severity.
 @immutable
@@ -76,21 +128,21 @@ class VoucherStatusColors {
   final Color pendingSync;
 
   static const light = VoucherStatusColors(
-    draft: Color(0xFF6B7280),
-    approved: Color(0xFF2563EB),
-    posted: Color(0xFF15803D),
-    cancelled: Color(0xFF991B1B),
-    rejected: Color(0xFFB91C1C),
-    pendingSync: Color(0xFFB45309),
+    draft: Color(0xFF5C6778),
+    approved: Color(0xFF0E6B68),
+    posted: Color(0xFF2F6F4E),
+    cancelled: Color(0xFF8F3535),
+    rejected: Color(0xFF8F3535),
+    pendingSync: Color(0xFFB8843B),
   );
 
   static const dark = VoucherStatusColors(
-    draft: Color(0xFF9CA3AF),
-    approved: Color(0xFF60A5FA),
-    posted: Color(0xFF4ADE80),
-    cancelled: Color(0xFFF87171),
-    rejected: Color(0xFFEF4444),
-    pendingSync: Color(0xFFFBBF24),
+    draft: Color(0xFF9AA3B2),
+    approved: Color(0xFF3CB8B0),
+    posted: Color(0xFF6BBF8A),
+    cancelled: Color(0xFFE07A7A),
+    rejected: Color(0xFFE07A7A),
+    pendingSync: Color(0xFFD9A45C),
   );
 }
 
@@ -117,25 +169,25 @@ class SemanticColors {
   final Color onInfo;
 
   static const light = SemanticColors(
-    success: Color(0xFF15803D),
+    success: Color(0xFF2F6F4E),
     onSuccess: Color(0xFFFFFFFF),
-    warning: Color(0xFFB45309),
+    warning: Color(0xFFB8843B),
     onWarning: Color(0xFFFFFFFF),
-    danger: Color(0xFFB91C1C),
+    danger: Color(0xFF8F3535),
     onDanger: Color(0xFFFFFFFF),
-    info: Color(0xFF2563EB),
+    info: Color(0xFF0E6B68),
     onInfo: Color(0xFFFFFFFF),
   );
 
   static const dark = SemanticColors(
-    success: Color(0xFF4ADE80),
+    success: Color(0xFF6BBF8A),
     onSuccess: Color(0xFF052E16),
-    warning: Color(0xFFFBBF24),
-    onWarning: Color(0xFF451A03),
-    danger: Color(0xFFF87171),
-    onDanger: Color(0xFF450A0A),
-    info: Color(0xFF60A5FA),
-    onInfo: Color(0xFF172554),
+    warning: Color(0xFFD9A45C),
+    onWarning: Color(0xFF2A1A05),
+    danger: Color(0xFFE07A7A),
+    onDanger: Color(0xFF2A0A0A),
+    info: Color(0xFF3CB8B0),
+    onInfo: Color(0xFF0A1F1E),
   );
 }
 
@@ -145,6 +197,7 @@ class SemanticColors {
 @immutable
 class AppTokens extends ThemeExtension<AppTokens> {
   const AppTokens({
+    required this.brand,
     required this.semanticColors,
     required this.voucherStatusColors,
     this.spacing = const AppSpacing(),
@@ -152,6 +205,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.elevation = const AppElevation(),
   });
 
+  final BrandColors brand;
   final SemanticColors semanticColors;
   final VoucherStatusColors voucherStatusColors;
   final AppSpacing spacing;
@@ -159,17 +213,20 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final AppElevation elevation;
 
   static const light = AppTokens(
+    brand: BrandColors.light,
     semanticColors: SemanticColors.light,
     voucherStatusColors: VoucherStatusColors.light,
   );
 
   static const dark = AppTokens(
+    brand: BrandColors.dark,
     semanticColors: SemanticColors.dark,
     voucherStatusColors: VoucherStatusColors.dark,
   );
 
   @override
   AppTokens copyWith({
+    BrandColors? brand,
     SemanticColors? semanticColors,
     VoucherStatusColors? voucherStatusColors,
     AppSpacing? spacing,
@@ -177,6 +234,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     AppElevation? elevation,
   }) {
     return AppTokens(
+      brand: brand ?? this.brand,
       semanticColors: semanticColors ?? this.semanticColors,
       voucherStatusColors: voucherStatusColors ?? this.voucherStatusColors,
       spacing: spacing ?? this.spacing,

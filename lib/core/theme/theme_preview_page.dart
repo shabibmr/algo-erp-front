@@ -46,6 +46,23 @@ class _ThemePreviewPageState extends State<ThemePreviewPage> {
         body: ListView(
           padding: EdgeInsets.all(tokens.spacing.lg),
           children: [
+            const _SectionLabel('Brand surfaces (Ledger & Linen)'),
+            Wrap(
+              spacing: tokens.spacing.sm,
+              runSpacing: tokens.spacing.sm,
+              children: [
+                _ColorSwatch('Linen', tokens.brand.linen),
+                _ColorSwatch('Paper', tokens.brand.paper),
+                _ColorSwatch('Mist', tokens.brand.mist),
+                _ColorSwatch('Ink', tokens.brand.ink),
+                _ColorSwatch('Ink muted', tokens.brand.inkMuted),
+                _ColorSwatch('Lagoon', tokens.brand.lagoon),
+                _ColorSwatch('Lagoon soft', tokens.brand.lagoonSoft),
+                _ColorSwatch('Brass', tokens.brand.brass),
+                _ColorSwatch('Oxblood', tokens.brand.oxblood),
+              ],
+            ),
+            SizedBox(height: tokens.spacing.lg),
             const _SectionLabel('Semantic colors'),
             Wrap(
               spacing: tokens.spacing.sm,

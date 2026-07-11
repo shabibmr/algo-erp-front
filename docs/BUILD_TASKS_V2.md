@@ -1,5 +1,16 @@
 # algoERP Frontend — Manifest-Driven Execution Plan (v2)
 
+> **Status update — 2026-07-11 (post vertical-slice):** rather than building the full EMR
+> (A3) before proving it, we built a deliberately narrow **vertical slice**: the manifest
+> model (§7 A3.1, minimal `FieldType`), `MasterListSurface` only (§7 A3.3, list Surface
+> only), and Brand's list binding (§8 A4, list only — no hard-case entity, no recipe doc
+> yet). This is intentionally short of A3/A4's full done-when criteria — see the inline
+> `[~]` notes in those sections. **Decision point:** now that `/inventory/brand` renders
+> real backend data through `MasterListSurface`, decide with the user whether to extend
+> EMR (detail/form Surfaces, more masters) or fall back to v1 hand-written features before
+> building anything further. See `docs/SESSION_CONTEXT_EXPORT.md` §4 and §8 for the full
+> reasoning behind this checkpoint.
+
 > **Curated successor to** `docs/BUILD_TASKS.md` **and** `PROMPT_EXECUTION_PLAN.md`.
 > Date: 2026-07-11 · Architecture: **ONLINE-ONLY, INTERFACE-DRIVEN, MANIFEST-RENDERED**.
 >
@@ -38,25 +49,38 @@ The original plan ships ~40 master slices and ~18 voucher slices by **stamping n
 | Network | Dio + auth/tenant/requestId interceptors, `ApiResponse`, `Paginated`, sealed `Failure`, `safeCall` |
 | Wave 0 contracts | `Repository`, `RemoteDataSource`, `Mapper`, `PageQuery`, `CrudState`/`CrudEvent`, `PermissionService`, `ViewState`, `feature-contract.md` |
 
-### 1.2 Track A — Reuse Keystone  `[~]` HALF-BAKED
+### 1.2 Track A — Reuse Keystone  `[x]` DONE (as v1's Wave 0/Track A scope — NOT v2's expanded A0)
 
-**Present and compiling** under `lib/core/{data,bloc,utils}`:
+**Present, compiling, tested** under `lib/core/{data,bloc,utils}`, all green
+(`flutter analyze`/`flutter test` — 62/62 passing as of 2026-07-11):
 
-| Artifact | State | Gap vs BUILD_TASKS |
-|----------|-------|--------------------|
-| `RemoteDataSourceBase` | Implemented | Needs unit tests + optional client-side page filter hook |
-| `RemoteRepository` | Implemented | Needs unit tests; no DI factory helper yet |
-| `CrudBloc<E,ID,F>` | Implemented + **8 tests green** | Plan said `PaginationMixin` / `SearchDebounceMixin` — logic is **inlined** + `debounceRestartable` transformer instead. Accept this design; document it. |
-| `DetailBloc` | Implemented | States live in same file; no tests |
-| `FormMixin` | Partial | Only maps `Failure.validation` → field errors. No form submit lifecycle / dirty tracking |
-| Extensions | `context.tokens/.l10n`, Decimal/date format, `CrudState→ViewState` | OK |
-| `features/**` | **Empty** | Nothing wired end-to-end |
+| Artifact | State | Gap vs this doc's original A0 wishlist |
+|----------|-------|--------------------------|
+| `RemoteDataSourceBase` | Implemented, used by Brand | No `RepoBinding` DI helper (A0.2) — deferred, see A3.2 |
+| `RemoteRepository` | Implemented, 8 tests | Same — no generic DI factory yet |
+| `CrudBloc<E,ID,F>` | Implemented, 8 tests green | Pagination/search logic is **inlined** + `debounceRestartable` transformer, not separate mixins — accepted design, not revisited |
+| `DetailBloc` | Implemented | Still no tests (no detail Surface consumes it yet) |
+| `FormMixin` | Implemented, used by Track B's `AuthBloc` | No submit lifecycle/dirty tracking beyond field-error mapping (A0.3) — not yet needed |
+| `ClientQuery` adapter (A0.4) | **Not built** | Deferred — BE-002/003/004 workaround not yet needed by Brand's list |
+| Idempotency-Key interceptor (A0.5) | **Not built** | Deferred |
+| `features/**` | Brand only (`inventory_brand/`) | The vertical slice's one binding |
 
-**Close Track A before anything else** — see Wave A0.
+v2's *expanded* A0 checklist (ClientQuery, idempotency shield, RepoBinding
+helper, documenting deviations) remains open — it was consciously deferred by
+the vertical-slice plan, not forgotten. Revisit at the next EMR-extension
+decision point.
 
-### 1.3 Not started
+### 1.3 Status of the rest
 
-- Track B Identity/Access · Track C Widget library · Gold Brand · Mass masters · Vouchers · Dashboard/reports · Polish/QA
+- **Track B — Identity & Access:** `[x]` DONE. Full auth stack
+  (`lib/features/auth/**`), `FailOpenPermissionService` (BE-001), router
+  guards (`/login`, `/403`, `appRouterRedirect`), 12 tests.
+- **Track C — Widget library:** `[x]` DONE. `lib/core/widgets/**` (fields,
+  chips, dialogs, filter bar, FK lookup, adaptive list, line-item grid,
+  `AsyncStateView`), `docs/widget-catalog.md`, gallery route, 14 tests.
+- **EMR vertical slice (A3/A4, partial):** `[~]` see §7/§8 below.
+- **Not started:** Mass masters (A5) · Voucher blueprints/DocumentSurface (A6/A7)
+  · Dashboard/reports/palette (A8) · Polish/QA (A9).
 
 ### 1.4 Backend frictions that shape the plan (from `backend-suggestions.md`)
 
@@ -228,67 +252,104 @@ Build **token-only** primitives first (no paid Widgetbook — a simple `/gallery
 
 ---
 
-## 7. Wave A3 — ★ Entity Manifest Runtime (core differentiator)  `[ ]`  ∥ after A0
+## 7. Wave A3 — ★ Entity Manifest Runtime (core differentiator)  `[~]` VERTICAL SLICE ONLY
 
 **Folders:** `lib/core/manifest/`, `lib/core/surfaces/`, `docs/manifest-spec.md`
 
-### A3.1 Manifest model (typed, freezed or hand-sealed)
+### A3.1 Manifest model (typed, freezed or hand-sealed)  `[~]`
 
-- [ ] `FieldType` sealed: text, int, decimal, bool, date, datetime, enum, fk, selfFk, json, binary
-- [ ] `FieldSpec`: key (entity), wireKey (DTO/`@JsonKey`), label l10n key, type, required, readOnly, validators, visibleIn(list|form|detail|filter)
-- [ ] `FkSpec`: target manifest id, display field, repository lookup key
-- [ ] `EntityManifest`:
-  - `id`, `rbacModule`, `resourcePath`, `idField`
-  - `fields[]`, `listColumns[]`, `formSections[]`
-  - `deleteMode` soft|hard
-  - `searchFields[]` (for ClientQuery)
-  - optional `treeParentField` for hierarchical masters
-- [ ] `ManifestRegistry` — map id → manifest; power menu + command palette + routes
+- [x] `FieldType` — **minimal by design**: only `text`/`dateTime` exist
+      (`lib/core/manifest/field_spec.dart`). The full set (int/decimal/bool/enum/
+      fk/selfFk/json/binary) is deliberately not built — it grows from real
+      pressure (next: `LedgerMaster` needs `decimal`+`fk`, `AccountGroup` needs
+      `selfFk`), not speculation.
+- [x] `FieldSpec<E>`: `key`, `label`, `type`, `required`, `cellValue` closure. No
+      `wireKey`/l10n key/`readOnly`/`validators`/`visibleIn` yet — not needed
+      until a form Surface exists.
+- [ ] `FkSpec` — not built.
+- [~] `EntityManifest<E>`: has `id`, `label`, `rbacModule`, `resourcePath`,
+      `listColumns[]`, `searchFields[]`. Missing `idField`, `fields[]`,
+      `formSections[]`, `deleteMode`, `treeParentField` — all deferred with
+      the (nonexistent) form/detail Surfaces they'd serve.
+- [ ] `ManifestRegistry` — not built. Only one manifest (`brandManifest`)
+      exists as a top-level `final` constant; a registry is premature with one entry.
 
-### A3.2 Binding layer
+### A3.2 Binding layer  `[ ]` not built
 
-- [ ] `EntityCodec<E>`: `fromJson` / `toJson` / `idOf` / `readField(E, key)` / `writeField` (or immutable `copyWith` map)
-- [ ] `MasterBinding<E, ID>` = manifest + codec + `Repository<E,ID>` registration
-- [ ] Codegen **optional later**; **v1 = hand-written codecs** for gold entities (no new paid tools). A free `build_runner` builder can be a later optimization, not a blocker.
+- [ ] `EntityCodec<E>` generic interface — Brand instead uses a bespoke
+      `BrandMapper`/`BrandDto` pair (Track A/B precedent: hand-written, no
+      freezed). Revisit generalizing once a second manifest exists.
+- [ ] `MasterBinding<E, ID>` / `RepoBinding` DI helper — not built. Brand's DI
+      is three plain factory functions in `lib/features/inventory_brand/brand_di.dart`.
+      **Intentionally not generalized yet** — see that file's doc comment.
 
-### A3.3 Surfaces (generic UI)
+### A3.3 Surfaces (generic UI)  `[~]`
 
-- [ ] `MasterListSurface` — adaptive table/cards, search, pagination, RBAC actions, uses `CrudBloc`
-- [ ] `MasterDetailSurface` — `DetailBloc` + field renderer by `FieldSpec`
-- [ ] `MasterFormSurface` — dynamic form from sections; validation + `FormMixin` errors
-- [ ] `FieldRenderer` switch on `FieldType` (exhaustive)
-- [ ] Route factory: `/m/:manifestId` list, `/m/:manifestId/:id`, `/m/:manifestId/new`
+- [x] `MasterListSurface<E>` (`lib/core/surfaces/master_list_surface.dart`) —
+      adaptive table/cards (via Track C's `AdaptiveEntityList`), search (via
+      `FilterBar` → `CrudSearchChanged`), infinite scroll (new: a
+      `NotificationListener<ScrollNotification>` dispatching
+      `CrudLoadMoreRequested`, since `AdaptiveEntityList` takes a plain list),
+      RBAC-gated "New" action via `PermissionGate`. Tested:
+      `test/core/surfaces/master_list_surface_test.dart`.
+- [ ] `MasterDetailSurface` — not built.
+- [ ] `MasterFormSurface` — not built.
+- [ ] `FieldRenderer` switch — not built (list-only rendering is inlined in
+      `MasterListSurface` via `FieldSpec.cellValue`; a real renderer switch
+      is only needed once `FieldType` grows past `text`/`dateTime`).
+- [ ] Route factory (`/m/:manifestId/...`) — not built. Brand is wired as a
+      normal, individually-registered route (`/inventory/brand` in
+      `app_router.dart`), not through a generic manifest-id route.
 
-### A3.4 ★ Command palette
+### A3.4 ★ Command palette  `[ ]` not built — deferred past the checkpoint
 
-- [ ] `CommandPalette` overlay (desktop/web shortcut, mobile entry in app bar)
-- [ ] Indexes: manifests, voucher types, reports, settings actions
-- [ ] Fuzzy match pure Dart (no cloud)
+### A3.5 Spec & tests  `[~]`
 
-### A3.5 Spec & tests
+- [ ] `docs/manifest-spec.md` — not written (one entity isn't enough to
+      generalize a recipe from yet).
+- [x] Widget test: `MasterListSurface` rendered against a fake tiny manifest +
+      fake repo (loading/error/search-dispatch) — `test/core/surfaces/master_list_surface_test.dart`.
+- [ ] Registry/field-visibility/ClientQuery tests — N/A, those components don't exist yet.
 
-- [ ] `docs/manifest-spec.md` — how to add an entity in &lt; N lines
-- [ ] Unit tests: registry, field visibility, ClientQuery+manifest searchFields
-- [ ] Widget test: render fake 2-field manifest list/form with fake repo
-
-**Done-when:** A fake “WidgetDemoEntity” works end-to-end with **zero** feature-folder CRUD code beyond codec + manifest registration.
+**Done-when (full A3, not yet met):** A fake "WidgetDemoEntity" works
+end-to-end with **zero** feature-folder CRUD code beyond codec + manifest
+registration. **Slice done-when (met):** Brand's list renders through
+`MasterListSurface` against the real backend with zero list/table code of its
+own beyond the manifest + DI factories.
 
 ---
 
-## 8. Wave A4 — Gold path: Brand + hard-case master  `[ ]`
+## 8. Wave A4 — Gold path: Brand + hard-case master  `[~]` LIST ONLY
 
 Prove EMR against real backend data.
 
-- [ ] **Brand** binding: freezed DTO, entity, mapper, codec, manifest (path `/inventory/brand`, hard delete, RBAC `Brand`)
-- [ ] Wire DI + menu item + RBAC gate
-- [ ] List / create / edit / delete online on **web + desktop**
-- [ ] **Hard case (pick one, do both if time):**
-  - **Designation** — FK → Department via async FK field
-  - **AccountGroup** — self-FK tree; parent picker excludes self/descendants
-- [ ] `docs/templates/master-manifest-recipe.md` (replaces stamp-heavy master-crud-template)
-- [ ] Bloc/widget tests for Brand binding
+- [x] **Brand** binding: hand-written DTO (not freezed, matches Track A/B
+      precedent) + entity + mapper + manifest, path `/inventory/brand`,
+      **hard delete** (verified: `brands` table has no `is_active` column),
+      RBAC module `'Inventory'` (verified against `inventory.routes.ts` —
+      **not** `'Brand'`; the backend gates the whole inventory module coarsely).
+      Files: `lib/features/inventory_brand/{brand_manifest,brand_di}.dart`,
+      `data/{brand_dto,brand_mapper}.dart`, `domain/brand.dart`.
+- [x] Wire DI (plain factories, see A3.2 note) + menu item (`menu_model.dart`)
+      + RBAC gate (`PermissionGate` in `MasterListSurface`).
+- [x] **List** online, adaptive table/cards — verified via widget test against
+      a fake repo (no live backend run yet in this session).
+- [ ] Create / edit / delete — **not built**. No form/detail Surface exists
+      (A3.3), so Brand has no way to create or mutate yet; list is read-only
+      for now.
+- [ ] **Hard case (Designation FK / AccountGroup self-FK tree)** — not
+      attempted. Both need `FieldType.fk`/`selfFk`, which don't exist yet
+      (A3.1) — correctly sequenced *after* this checkpoint, not before.
+- [ ] `docs/templates/master-manifest-recipe.md` — not written (premature
+      with one manifest).
+- [x] Tests: `test/features/inventory_brand/brand_mapper_test.dart` (DTO/mapper
+      round-trip, 5 cases) + the shared `MasterListSurface` test (A3.5) covers
+      Brand's rendering path generically.
 
-**Done-when:** Brand is production-usable online; recipe is mechanical enough to register the next master without inventing UI.
+**Done-when (full A4, not yet met):** Brand is production-usable online
+(create/edit/delete included); recipe is mechanical enough to register the
+next master without inventing UI. **Slice done-when (met):** Brand's list is
+demonstrably manifest-driven end to end — see `docs/SESSION_CONTEXT_EXPORT.md`.
 
 ---
 

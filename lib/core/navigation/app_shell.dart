@@ -1,12 +1,13 @@
+import 'package:algo_erp_front/core/navigation/binder_sidebar.dart';
 import 'package:algo_erp_front/core/navigation/menu_model.dart';
+import 'package:algo_erp_front/core/navigation/shell_header.dart';
 import 'package:algo_erp_front/core/responsive/breakpoints.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Adaptive navigation shell: a Drawer behind an AppBar on mobile, a
-/// [NavigationRail] on tablet, and an extended labeled sidebar on desktop —
-/// switching purely off [Breakpoints], with a single data-driven menu model
-/// so no destination is defined twice.
+/// Adaptive binder shell: drawer on mobile, icon spine on tablet, extended
+/// labeled spine on desktop. Single [AppMenu] model drives every form.
 class AppShell extends StatelessWidget {
   const AppShell({required this.child, super.key});
 
@@ -29,76 +30,162 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final device = Breakpoints.of(context);
     final selectedIndex = _selectedIndex(context);
+    final items = AppMenu.allItems;
+    final title = items[selectedIndex.clamp(0, items.length - 1)].label;
 
     return switch (device) {
       DeviceClass.mobile => _MobileShell(
-        selectedIndex: selectedIndex,
-        onSelect: (i) => _onSelect(context, i),
-        child: child,
-      ),
+          selectedIndex: selectedIndex,
+          title: title,
+          onSelect: (i) => _onSelect(context, i),
+          child: child,
+        ),
       DeviceClass.tablet => _RailShell(
-        extended: false,
-        selectedIndex: selectedIndex,
-        onSelect: (i) => _onSelect(context, i),
-        child: child,
-      ),
+          extended: false,
+          selectedIndex: selectedIndex,
+          onSelect: (i) => _onSelect(context, i),
+          child: child,
+        ),
       DeviceClass.desktop || DeviceClass.large => _RailShell(
-        extended: true,
-        selectedIndex: selectedIndex,
-        onSelect: (i) => _onSelect(context, i),
-        child: child,
-      ),
+          extended: true,
+          selectedIndex: selectedIndex,
+          onSelect: (i) => _onSelect(context, i),
+          child: child,
+        ),
     };
   }
 }
 
-class _MobileShell extends StatelessWidget {
+class _MobileShell extends StatefulWidget {
   const _MobileShell({
     required this.selectedIndex,
+    required this.title,
     required this.onSelect,
     required this.child,
   });
 
   final int selectedIndex;
+  final String title;
   final ValueChanged<int> onSelect;
   final Widget child;
 
   @override
+  State<_MobileShell> createState() => _MobileShellState();
+}
+
+class _MobileShellState extends State<_MobileShell> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
   Widget build(BuildContext context) {
-    final items = AppMenu.allItems;
+    final brand = context.tokens.brand;
+    final tokens = context.tokens;
+
     return Scaffold(
-      appBar: AppBar(title: Text(items[selectedIndex].label)),
-      drawer: NavigationDrawer(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (i) {
-          Navigator.of(context).pop();
-          onSelect(i);
-        },
-        children: _buildDrawerChildren(),
+      key: _scaffoldKey,
+      backgroundColor: brand.linen,
+      appBar: ShellHeader(
+        title: widget.title,
+        showMenuButton: true,
+        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
-      body: child,
+      drawer: Drawer(
+        backgroundColor: brand.paper,
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(tokens.spacing.md),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/brand/algo_mark.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    ),
+                    SizedBox(width: tokens.spacing.sm),
+                    Text(
+                      context.l10n.appTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: brand.mist),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.symmetric(
+                    vertical: tokens.spacing.sm,
+                    horizontal: tokens.spacing.sm,
+                  ),
+                  children: _drawerTiles(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: widget.child,
     );
   }
 
-  List<Widget> _buildDrawerChildren() {
+  List<Widget> _drawerTiles(BuildContext context) {
+    final tokens = context.tokens;
+    final brand = tokens.brand;
     final widgets = <Widget>[];
+    var flatIndex = 0;
+
     for (final section in AppMenu.sections) {
       if (section.title != null) {
         widgets.add(
           Padding(
-            padding: const EdgeInsets.fromLTRB(28, 16, 16, 8),
-            child: Text(section.title!),
+            padding: EdgeInsets.fromLTRB(
+              tokens.spacing.sm,
+              tokens.spacing.md,
+              tokens.spacing.sm,
+              tokens.spacing.xs,
+            ),
+            child: Text(
+              section.title!.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: brand.inkMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.06 * 11,
+                  ),
+            ),
           ),
         );
       }
       for (final item in section.items) {
+        final index = flatIndex;
+        final selected = index == widget.selectedIndex;
         widgets.add(
-          NavigationDrawerDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon ?? item.icon),
-            label: Text(item.label),
+          ListTile(
+            selected: selected,
+            selectedTileColor: brand.lagoonSoft,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(tokens.radii.md),
+            ),
+            leading: Icon(
+              selected ? (item.selectedIcon ?? item.icon) : item.icon,
+              color: selected ? brand.lagoon : brand.inkMuted,
+            ),
+            title: Text(
+              item.label,
+              style: TextStyle(
+                color: selected ? brand.lagoon : brand.ink,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            onTap: () {
+              Navigator.of(context).pop();
+              widget.onSelect(index);
+            },
           ),
         );
+        flatIndex++;
       }
     }
     return widgets;
@@ -120,28 +207,27 @@ class _RailShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = AppMenu.allItems;
+    final brand = context.tokens.brand;
+
     return Scaffold(
+      backgroundColor: brand.linen,
       body: Row(
         children: [
-          NavigationRail(
+          BinderSidebar(
+            key: const Key('binder-sidebar'),
             extended: extended,
             selectedIndex: selectedIndex,
-            onDestinationSelected: onSelect,
-            labelType: extended
-                ? NavigationRailLabelType.none
-                : NavigationRailLabelType.selected,
-            destinations: [
-              for (final item in items)
-                NavigationRailDestination(
-                  icon: Icon(item.icon),
-                  selectedIcon: Icon(item.selectedIcon ?? item.icon),
-                  label: Text(item.label),
-                ),
-            ],
+            onSelect: onSelect,
           ),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
+          VerticalDivider(width: 1, thickness: 1, color: brand.mist),
+          Expanded(
+            child: Column(
+              children: [
+                const ShellHeader(),
+                Expanded(child: child),
+              ],
+            ),
+          ),
         ],
       ),
     );
