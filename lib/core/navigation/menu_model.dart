@@ -124,6 +124,12 @@ abstract final class AppMenu {
           selectedIcon: Icons.palette,
           route: '/theme-preview',
         ),
+        MenuItemModel(
+          label: 'Widget gallery',
+          icon: Icons.widgets_outlined,
+          selectedIcon: Icons.widgets,
+          route: '/widget-gallery',
+        ),
       ],
     ),
   ];

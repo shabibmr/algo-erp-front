@@ -3,7 +3,6 @@ import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
-import 'package:algo_erp_front/core/error/safe_call.dart';
 import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,9 +99,9 @@ void main() {
       (_) async => Right(_page([b], total: 2, page: 2, limit: 1)),
     ),
     build: build,
-    seed: () => CrudLoaded<_Item>(
-      items: const [a],
-      meta: const PaginationMeta(total: 2, page: 1, limit: 1, totalPages: 2),
+    seed: () => const CrudLoaded<_Item>(
+      items: [a],
+      meta: PaginationMeta(total: 2, page: 1, limit: 1, totalPages: 2),
     ),
     act: (bloc) => bloc.add(const CrudLoadMoreRequested()),
     expect: () => [
@@ -140,9 +139,9 @@ void main() {
     setUp: () =>
         when(() => repo.create(any())).thenAnswer((_) async => const Right(c)),
     build: build,
-    seed: () => CrudLoaded<_Item>(
-      items: const [a],
-      meta: const PaginationMeta(total: 1, page: 1, limit: 20, totalPages: 1),
+    seed: () => const CrudLoaded<_Item>(
+      items: [a],
+      meta: PaginationMeta(total: 1, page: 1, limit: 20, totalPages: 1),
     ),
     act: (bloc) => bloc.add(const CrudItemCreated(c)),
     expect: () => [
