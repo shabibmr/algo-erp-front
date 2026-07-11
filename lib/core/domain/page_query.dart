@@ -21,11 +21,6 @@ class SortSpec extends Equatable {
 /// itself into HTTP query parameters (that belongs to the data-source layer).
 /// This keeps the domain free of transport concerns and lets an offline layer
 /// reuse the exact same query shape later.
-///
-/// NOTE: the backend today honours only [page]/[limit] (see
-/// `docs/backend-suggestions.md` BE-002/003/004). [search]/[filters]/[sort]
-/// are carried now so features are written once; server support becomes a
-/// one-line change in the data source, with no bloc/UI edits.
 class PageQuery extends Equatable {
   const PageQuery({
     this.page = 1,
@@ -38,11 +33,12 @@ class PageQuery extends Equatable {
   final int page;
   final int limit;
 
-  /// Free-text search term, matched server-side against the entity's natural
-  /// display field(s) once BE-002 lands.
+  /// Free-text search term, matched server-side against the entity's
+  /// `searchFields`.
   final String? search;
 
-  /// Whitelisted field → value filters (e.g. `{'status': 'posted'}`).
+  /// Field → value filters (e.g. `{'status': 'posted'}`). The server whitelists
+  /// these per entity, so an unrecognised key is a query error, not a no-op.
   final Map<String, Object?> filters;
 
   final SortSpec? sort;

@@ -13,6 +13,12 @@ class _DenyAllPermissionService implements PermissionService {
   bool can(String module, PermissionAction action) => false;
 }
 
+/// The real service, loaded with a matrix that permits `Brand:create`.
+PermissionService _allowingBrandCreate() {
+  return MatrixPermissionService()
+    ..load(const [ModulePermissions(module: 'Brand', create: true)]);
+}
+
 void main() {
   tearDown(() async => getIt.reset());
 
@@ -33,7 +39,7 @@ void main() {
   testWidgets('shows child when the service permits the action', (
     tester,
   ) async {
-    await pumpGate(tester, const FailOpenPermissionService());
+    await pumpGate(tester, _allowingBrandCreate());
     expect(find.text('allowed'), findsOneWidget);
     expect(find.text('denied'), findsNothing);
   });

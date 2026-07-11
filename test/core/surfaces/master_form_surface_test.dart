@@ -1,5 +1,4 @@
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
-import 'package:algo_erp_front/core/auth/permission_service.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -54,13 +53,22 @@ final _manifest = EntityManifest<_Widget>(
   hardDelete: true,
 );
 
+/// These tests exercise the surface, not RBAC — so permit everything and let
+/// `permission_service_test.dart` cover the real matrix.
+class _AllowAllPermissionService implements PermissionService {
+  const _AllowAllPermissionService();
+
+  @override
+  bool can(String module, PermissionAction action) => true;
+}
+
 void main() {
   late _MockRepo repo;
 
   setUpAll(() {
     registerFallbackValue(const _Widget(id: 0, name: ''));
     getIt.registerSingleton<PermissionService>(
-      const FailOpenPermissionService(),
+      const _AllowAllPermissionService(),
     );
   });
 

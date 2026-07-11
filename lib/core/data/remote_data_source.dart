@@ -19,9 +19,8 @@ abstract interface class RemoteDataSource {
   /// The resource path this source is bound to, e.g. `/inventory/brand`.
   String get resourcePath;
 
-  /// GET a page. Serializes [query] to query parameters (today: `page`/`limit`;
-  /// `search`/`filters`/`sort` are added when the backend supports them —
-  /// see `docs/backend-suggestions.md`).
+  /// GET a page. Serializes [query] to query parameters — `page`/`limit`,
+  /// plus `search`/`filters`/`sortBy`+`sortOrder`, all honoured server-side.
   Future<Paginated<JsonMap>> list(PageQuery query);
 
   /// GET one record by id.

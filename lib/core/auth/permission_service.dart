@@ -1,20 +1,50 @@
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:injectable/injectable.dart';
 
-/// Interim [PermissionService] that permits **everything**.
+/// The real, matrix-backed [PermissionService].
 ///
-/// There is no endpoint to read a role's permission matrix yet (see
-/// `docs/backend-suggestions.md` BE-001), so the client cannot know locally
-/// what the current user may do. Rather than hide functionality we might in
-/// fact be allowed to use, we fail **open**: every gate shows, and the
-/// server's `403` (mapped to `Failure.forbidden`) stays the real enforcement
-/// point. When BE-001 lands, a matrix-backed implementation drops in behind
-/// this same interface with zero changes to any `PermissionGate`/`RbacMixin`
-/// consumer.
-@LazySingleton(as: PermissionService)
-class FailOpenPermissionService implements PermissionService {
-  const FailOpenPermissionService();
+/// Holds the signed-in role's permission rows (loaded by the auth layer from
+/// `GET /auth/permissions`, or off the `permissions` array `GET /auth/me`
+/// already embeds) and answers [can] from them.
+///
+/// **Fails closed.** An unknown module, or a matrix that hasn't been loaded at
+/// all, denies — deliberately mirroring the server, which treats a missing
+/// `user_access_permissions` row as all-false (`authorize.ts`). Failing open
+/// here would show buttons the server is going to `403`; failing closed can
+/// only hide something the user could not have used anyway.
+class MatrixPermissionService
+    implements PermissionService, PermissionMatrixSink {
+  final Map<String, ModulePermissions> _matrix = {};
 
   @override
-  bool can(String module, PermissionAction action) => true;
+  void load(Iterable<ModulePermissions> permissions) {
+    _matrix
+      ..clear()
+      ..addEntries(permissions.map((p) => MapEntry(p.module, p)));
+  }
+
+  @override
+  void clear() => _matrix.clear();
+
+  @override
+  bool can(String module, PermissionAction action) =>
+      _matrix[module]?.allows(action) ?? false;
+}
+
+/// Registers one [MatrixPermissionService] instance under both of its
+/// interfaces, so the auth layer's writes through [PermissionMatrixSink] are
+/// the same object the UI reads through [PermissionService].
+@module
+abstract class PermissionModule {
+  @lazySingleton
+  MatrixPermissionService matrixPermissionService() =>
+      MatrixPermissionService();
+
+  @lazySingleton
+  PermissionService permissionService(MatrixPermissionService service) =>
+      service;
+
+  @lazySingleton
+  PermissionMatrixSink permissionMatrixSink(MatrixPermissionService service) =>
+      service;
 }

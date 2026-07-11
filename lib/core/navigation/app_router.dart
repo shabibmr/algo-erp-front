@@ -28,6 +28,14 @@ import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_
 import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_category_list_page.dart';
 import 'package:algo_erp_front/features/inventory_uom/presentation/uom_form_page.dart';
 import 'package:algo_erp_front/features/inventory_uom/presentation/uom_list_page.dart';
+import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_form_page.dart';
+import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_list_page.dart';
+import 'package:algo_erp_front/features/organization_branch/presentation/branch_form_page.dart';
+import 'package:algo_erp_front/features/organization_branch/presentation/branch_list_page.dart';
+import 'package:algo_erp_front/features/organization_currency/presentation/currency_form_page.dart';
+import 'package:algo_erp_front/features/organization_currency/presentation/currency_list_page.dart';
+import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_form_page.dart';
+import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_list_page.dart';
 import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
 import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_list_page.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +119,10 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/inventory/pricelist' => const PriceListListPage(),
                     '/employee/department' => const DepartmentListPage(),
                     '/employee/designation' => const DesignationListPage(),
+                    '/organization/branches' => const BranchListPage(),
+                    '/organization/currencies' => const CurrencyListPage(),
+                    '/organization/roles' => const UserRoleListPage(),
+                    '/organization/contacts' => const AddressBookListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
@@ -248,6 +260,74 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
               pageBuilder: (context, state) => buildPageWithMotion(
                 state: state,
                 child: PriceListFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/branches/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const BranchFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/branches/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: BranchFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/currencies/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const CurrencyFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/currencies/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: CurrencyFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/roles/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const UserRoleFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/roles/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: UserRoleFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/contacts/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const AddressBookFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/contacts/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: AddressBookFormPage(
                   mode: FormMode.edit,
                   entityId: int.parse(state.pathParameters['id']!),
                 ),

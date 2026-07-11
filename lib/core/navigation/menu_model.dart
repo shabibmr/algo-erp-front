@@ -54,6 +54,36 @@ abstract final class AppMenu {
           route: '/organization',
           requiredModule: 'CompanyProfile',
         ),
+        // Organization gates per entity rather than behind one module string,
+        // so each item names its own backend module (organization.routes.ts).
+        MenuItemModel(
+          label: 'Branch',
+          icon: Icons.store_outlined,
+          selectedIcon: Icons.store,
+          route: '/organization/branches',
+          requiredModule: 'Branch',
+        ),
+        MenuItemModel(
+          label: 'Currency',
+          icon: Icons.currency_exchange_outlined,
+          selectedIcon: Icons.currency_exchange,
+          route: '/organization/currencies',
+          requiredModule: 'Currency',
+        ),
+        MenuItemModel(
+          label: 'User role',
+          icon: Icons.admin_panel_settings_outlined,
+          selectedIcon: Icons.admin_panel_settings,
+          route: '/organization/roles',
+          requiredModule: 'UserRole',
+        ),
+        MenuItemModel(
+          label: 'Contact',
+          icon: Icons.contacts_outlined,
+          selectedIcon: Icons.contacts,
+          route: '/organization/contacts',
+          requiredModule: 'AddressBook',
+        ),
       ],
     ),
     MenuSectionModel(

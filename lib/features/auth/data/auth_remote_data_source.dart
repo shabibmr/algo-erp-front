@@ -2,6 +2,7 @@ import 'package:algo_erp_front/core/network/api_response.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/auth/data/dtos/auth_session_dto.dart';
 import 'package:algo_erp_front/features/auth/data/dtos/auth_user_dto.dart';
+import 'package:algo_erp_front/features/auth/data/dtos/permission_dto.dart';
 import 'package:injectable/injectable.dart';
 
 /// Thin transport over the `/auth/*` endpoints. Speaks only DTOs and unwraps
@@ -36,6 +37,23 @@ class AuthRemoteDataSource {
       response.data,
       (json) => AuthUserDto.fromJson(json! as Map<String, dynamic>),
     ).data!;
+  }
+
+  /// `GET /auth/permissions` — the caller's role permission matrix. Needed
+  /// after `login`, whose response carries the user but not the matrix;
+  /// `/auth/me` already embeds the same rows, so it needs no second call.
+  Future<List<PermissionDto>> permissions() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/auth/permissions',
+    );
+    final data = decodeApiResponse(
+      response.data,
+      (json) => json! as Map<String, dynamic>,
+    ).data!;
+    final rows = data['permissions'] as List? ?? const [];
+    return rows
+        .map((row) => PermissionDto.fromJson(row as Map<String, dynamic>))
+        .toList();
   }
 
   /// `POST /auth/change-password` — returns only `{success, message}`, so the

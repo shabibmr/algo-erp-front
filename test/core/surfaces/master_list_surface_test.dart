@@ -1,5 +1,4 @@
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
-import 'package:algo_erp_front/core/auth/permission_service.dart';
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
 import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
@@ -60,13 +59,22 @@ Paginated<_Widget> _page(
   );
 }
 
+/// These tests exercise the surface, not RBAC — so permit everything and let
+/// `permission_service_test.dart` cover the real matrix.
+class _AllowAllPermissionService implements PermissionService {
+  const _AllowAllPermissionService();
+
+  @override
+  bool can(String module, PermissionAction action) => true;
+}
+
 void main() {
   late _MockRepo repo;
 
   setUpAll(() {
     registerFallbackValue(const PageQuery());
     getIt.registerSingleton<PermissionService>(
-      const FailOpenPermissionService(),
+      const _AllowAllPermissionService(),
     );
   });
 

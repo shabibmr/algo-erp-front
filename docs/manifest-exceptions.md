@@ -20,6 +20,28 @@ rule, these are named here rather than forced through the recipe or used to just
 | LedgerItemMapping | `/inventory/ledger-item-mapping` | No `PUT` route; PK is Prisma `@map("_id")`-mapped with no real int FK enforced in the schema. |
 | PriceListEntry | `/inventory/pricelist-entry` | Backend has no list endpoint at all (only get-by-id/create/update/delete) — `MasterListSurface` needs a working `.list()`. |
 
+## Organization module (found while registering Wave A5's Organization batch)
+
+| Entity | Backend path | Reason deferred |
+|---|---|---|
+| FinancialYear | `/organization/financial-years` | Backend has no `DELETE` route (list/active/create/update only) — same "assumes full CRUD" gap already logged for Inventory above; second occurrence, delete-route flavor rather than PUT. |
+| CurrencyRate | `/organization/currency-rates` | Backend has only `GET`/`POST` (no `PUT`/`DELETE`) — third occurrence of the partial-CRUD gap. |
+| ConfigSetting | `/organization/config-settings` | Keyed by a string `gm_key`, not an int `id`; no create route — doesn't fit the `Repository<E, ID>` generic's implicit int-id shape without a design decision. |
+| VoucherSeries | `/organization/voucher-series` | 3 FKs (`company_id`/`branch_id`/`financial_year_id`) into 3 different entities, two of which (CompanyProfile, FinancialYear) aren't registered — blocked on those, not new work of its own. |
+| UserCredentials | `/organization/users` | Carries a `password` field — needs deliberate handling (never round-tripped back from the server, distinct widget), not a generic text field; also multi-FK (`contact_id`/`role_id`/`branch_id`). |
+| ProjectMaster | `/organization/projects` | Self-referential `parent_project_master_id` — same `FieldType.selfFk` gap as InventoryGroup above. |
+| CompanyProfile | `/organization/company-profile` | `Logo` is a `Bytes` field (binary) — same gap as ItemImage above; also no `DELETE` route (single-tenant profile). |
+
+The FinancialYear/CurrencyRate findings **confirm** the partial-CRUD gap first seen in Inventory is
+real and recurring (now 3 occurrences across 2 modules) — still not fixed this round, per the
+"watch for a second occurrence" note above, now satisfied twice over.
+
+Branch and Currency were initially blocked by a 4th occurrence of the same family (missing
+`GET /:id`, not missing `PUT`/`DELETE`) — but unlike the entries above, that gap was small enough
+to fix directly rather than defer: the 2 missing routes were added to
+`organization.routes.ts`/`organization.controller.ts`/`organization.service.ts` this round, so
+Branch and Currency are built as full masters, not listed here.
+
 ## Cross-cutting gap worth naming
 
 Five of the eleven entities above are blocked purely because the backend has **no `PUT` route**.

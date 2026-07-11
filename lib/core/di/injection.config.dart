@@ -34,11 +34,15 @@ Future<_i174.GetIt> init(
 }) async {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final registerModule = _$RegisterModule();
+  final permissionModule = _$PermissionModule();
   await gh.factoryAsync<_i460.SharedPreferences>(
     () => registerModule.prefs,
     preResolve: true,
   );
   gh.singleton<_i489.TenantContext>(() => _i489.TenantContext());
+  gh.lazySingleton<_i483.MatrixPermissionService>(
+    () => permissionModule.matrixPermissionService(),
+  );
   gh.lazySingleton<_i558.FlutterSecureStorage>(
     () => registerModule.secureStorage,
   );
@@ -46,7 +50,13 @@ Future<_i174.GetIt> init(
     () => _i1002.SecureTokenStorage(gh<_i558.FlutterSecureStorage>()),
   );
   gh.lazySingleton<_i933.PermissionService>(
-    () => const _i483.FailOpenPermissionService(),
+    () =>
+        permissionModule.permissionService(gh<_i483.MatrixPermissionService>()),
+  );
+  gh.lazySingleton<_i933.PermissionMatrixSink>(
+    () => permissionModule.permissionMatrixSink(
+      gh<_i483.MatrixPermissionService>(),
+    ),
   );
   gh.factory<_i611.ThemeCubit>(
     () => _i611.ThemeCubit(gh<_i460.SharedPreferences>()),
@@ -61,6 +71,7 @@ Future<_i174.GetIt> init(
     () => _i781.AuthRepositoryImpl(
       gh<_i767.AuthRemoteDataSource>(),
       gh<_i1002.TokenStorage>(),
+      gh<_i933.PermissionMatrixSink>(),
     ),
   );
   gh.factory<_i797.AuthBloc>(
@@ -70,3 +81,5 @@ Future<_i174.GetIt> init(
 }
 
 class _$RegisterModule extends _i291.RegisterModule {}
+
+class _$PermissionModule extends _i483.PermissionModule {}

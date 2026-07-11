@@ -70,10 +70,11 @@ class RemoteDataSourceBase implements RemoteDataSource {
     return data;
   }
 
-  /// Serializes [query] to query parameters. Today the backend honours only
-  /// `page`/`limit`; the rest are forwarded (and currently ignored) so search,
-  /// sort and filters activate with a backend change alone — see
-  /// `docs/backend-suggestions.md` (BE-002/003/004).
+  /// Serializes [query] to query parameters. The backend honours all of these
+  /// (BE-002/003/004, resolved): `search` matches an entity's `searchFields`,
+  /// `sortBy`/`sortOrder` map to Prisma's `orderBy`, and any remaining key is
+  /// read as a field filter — so a param the server doesn't recognise is not
+  /// inert, it lands in the `where` clause. Send only what it expects.
   Map<String, dynamic> _queryParameters(PageQuery query) {
     final params = <String, dynamic>{'page': query.page, 'limit': query.limit};
     final search = query.search;
@@ -83,7 +84,7 @@ class RemoteDataSourceBase implements RemoteDataSource {
     final sort = query.sort;
     if (sort != null) {
       params['sortBy'] = sort.field;
-      params['sortDir'] = sort.direction.name;
+      params['sortOrder'] = sort.direction.name;
     }
     query.filters.forEach((key, value) {
       if (value != null) params[key] = value;
