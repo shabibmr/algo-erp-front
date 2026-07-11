@@ -25,6 +25,8 @@ class EntityManifest<E> {
     this.formFields = const [],
     this.emptyEntity,
     this.hardDelete = false,
+    this.supportsUpdate = true,
+    this.supportsDelete = true,
   }) : assert(
           formFields.isEmpty || emptyEntity != null,
           'A manifest with formFields must supply emptyEntity for create mode.',
@@ -74,4 +76,16 @@ class EntityManifest<E> {
   /// Most masters soft-delete via `is_active`; a few (e.g. Brand) hard-delete
   /// because the backend table has no `is_active` column.
   final bool hardDelete;
+
+  /// Whether the backend exposes a working `PUT` for this entity. When
+  /// `false`, `MasterFormSurface`'s edit mode renders fields read-only and
+  /// hides the Save button instead of assuming every manifest with
+  /// [formFields] supports both create and update — a real, previously
+  /// silent gap (see `docs/manifest-exceptions.md`'s "assumes full CRUD"
+  /// note). Does not affect create mode.
+  final bool supportsUpdate;
+
+  /// Whether the backend exposes a working `DELETE` for this entity. When
+  /// `false`, `MasterFormSurface` hides the Delete action in edit mode.
+  final bool supportsDelete;
 }

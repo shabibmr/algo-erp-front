@@ -20,6 +20,8 @@ import 'package:algo_erp_front/features/inventory_category/presentation/category
 import 'package:algo_erp_front/features/inventory_category/presentation/category_list_page.dart';
 import 'package:algo_erp_front/features/inventory_godown/presentation/godown_form_page.dart';
 import 'package:algo_erp_front/features/inventory_godown/presentation/godown_list_page.dart';
+import 'package:algo_erp_front/features/inventory_item_property/presentation/item_property_form_page.dart';
+import 'package:algo_erp_front/features/inventory_item_property/presentation/item_property_list_page.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_form_page.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_list_page.dart';
 import 'package:algo_erp_front/features/inventory_route/presentation/route_master_form_page.dart';
@@ -34,6 +36,8 @@ import 'package:algo_erp_front/features/organization_branch/presentation/branch_
 import 'package:algo_erp_front/features/organization_branch/presentation/branch_list_page.dart';
 import 'package:algo_erp_front/features/organization_currency/presentation/currency_form_page.dart';
 import 'package:algo_erp_front/features/organization_currency/presentation/currency_list_page.dart';
+import 'package:algo_erp_front/features/organization_financial_year/presentation/financial_year_form_page.dart';
+import 'package:algo_erp_front/features/organization_financial_year/presentation/financial_year_list_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_form_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_list_page.dart';
 import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
@@ -123,6 +127,8 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/organization/currencies' => const CurrencyListPage(),
                     '/organization/roles' => const UserRoleListPage(),
                     '/organization/contacts' => const AddressBookListPage(),
+                    '/organization/fy' => const FinancialYearListPage(),
+                    '/inventory/property' => const ItemPropertyListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
@@ -328,6 +334,40 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
               pageBuilder: (context, state) => buildPageWithMotion(
                 state: state,
                 child: AddressBookFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/fy/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const FinancialYearFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/fy/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: FinancialYearFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/property/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const ItemPropertyFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/property/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: ItemPropertyFormPage(
                   mode: FormMode.edit,
                   entityId: int.parse(state.pathParameters['id']!),
                 ),

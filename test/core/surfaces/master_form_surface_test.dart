@@ -53,6 +53,18 @@ final _manifest = EntityManifest<_Widget>(
   hardDelete: true,
 );
 
+final _readOnlyEditManifest = EntityManifest<_Widget>(
+  id: 'widget-ro',
+  label: 'Widget',
+  rbacModule: 'Inventory',
+  resourcePath: '/widgets',
+  listColumns: _manifest.listColumns,
+  formFields: _manifest.formFields,
+  emptyEntity: () => const _Widget(id: 0, name: ''),
+  supportsUpdate: false,
+  supportsDelete: false,
+);
+
 /// These tests exercise the surface, not RBAC — so permit everything and let
 /// `permission_service_test.dart` cover the real matrix.
 class _AllowAllPermissionService implements PermissionService {
@@ -207,5 +219,32 @@ void main() {
 
     verify(() => repo.delete(1)).called(1);
     expect(deleted, isTrue);
+  });
+
+  testWidgets(
+      'supportsUpdate: false renders edit mode read-only with no Save/Delete',
+      (tester) async {
+    when(() => repo.getById(any())).thenAnswer(
+      (_) async => const Right(_Widget(id: 1, name: 'Existing')),
+    );
+
+    await tester.pumpWidget(
+      wrap(
+        MasterFormSurface<_Widget, int>(
+          manifest: _readOnlyEditManifest,
+          mode: FormMode.edit,
+          idOf: (w) => w.id,
+        ),
+        detailBloc: DetailBloc<_Widget, int>(repository: repo, id: 1)
+          ..add(const DetailLoadRequested()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Save'), findsNothing);
+    expect(find.text('Delete'), findsNothing);
+    final field =
+        tester.widget<TextFormField>(find.byType(TextFormField));
+    expect(field.enabled, isFalse);
   });
 }

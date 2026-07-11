@@ -171,11 +171,29 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     final action = widget.mode == FormMode.create
         ? PermissionAction.create
         : PermissionAction.update;
+    final isReadOnlyEdit =
+        widget.mode == FormMode.edit && !manifest.supportsUpdate;
+    final canDelete =
+        widget.mode == FormMode.edit && manifest.supportsDelete;
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isReadOnlyEdit) ...[
+            Container(
+              padding: EdgeInsets.all(tokens.spacing.sm),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(tokens.radii.sm),
+              ),
+              child: const Text(
+                'This entity cannot be edited — the backend has no update '
+                'endpoint for it.',
+              ),
+            ),
+            SizedBox(height: tokens.spacing.md),
+          ],
           if (_generalError != null) ...[
             Container(
               padding: EdgeInsets.all(tokens.spacing.sm),
@@ -197,7 +215,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   ? _fkDisplayCache[field.key]
                   : field.getValue(_draft as E),
               onChanged: (value) => _setField(field, value),
-              enabled: !_submitting,
+              enabled: !_submitting && !isReadOnlyEdit,
               errorText: _fieldErrors[field.errorKey],
             ),
             SizedBox(height: tokens.spacing.sm),
@@ -205,17 +223,20 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
           SizedBox(height: tokens.spacing.md),
           Row(
             children: [
-              PermissionGate(
-                module: manifest.rbacModule,
-                action: action,
-                child: FilledButton(
-                  onPressed: _submitting ? null : () => _submit(repo),
-                  child: Text(_submitting
-                      ? 'Saving...'
-                      : (widget.mode == FormMode.create ? 'Create' : 'Save')),
+              if (!isReadOnlyEdit)
+                PermissionGate(
+                  module: manifest.rbacModule,
+                  action: action,
+                  child: FilledButton(
+                    onPressed: _submitting ? null : () => _submit(repo),
+                    child: Text(_submitting
+                        ? 'Saving...'
+                        : (widget.mode == FormMode.create
+                            ? 'Create'
+                            : 'Save')),
+                  ),
                 ),
-              ),
-              if (widget.mode == FormMode.edit) ...[
+              if (canDelete) ...[
                 SizedBox(width: tokens.spacing.sm),
                 PermissionGate(
                   module: manifest.rbacModule,

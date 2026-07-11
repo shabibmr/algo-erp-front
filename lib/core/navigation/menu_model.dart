@@ -84,6 +84,13 @@ abstract final class AppMenu {
           route: '/organization/contacts',
           requiredModule: 'AddressBook',
         ),
+        MenuItemModel(
+          label: 'Financial year',
+          icon: Icons.event_note_outlined,
+          selectedIcon: Icons.event_note,
+          route: '/organization/fy',
+          requiredModule: 'FinancialYear',
+        ),
       ],
     ),
     MenuSectionModel(
@@ -162,6 +169,13 @@ abstract final class AppMenu {
           icon: Icons.price_change_outlined,
           selectedIcon: Icons.price_change,
           route: '/inventory/pricelist',
+          requiredModule: 'Inventory',
+        ),
+        MenuItemModel(
+          label: 'Item property',
+          icon: Icons.tune_outlined,
+          selectedIcon: Icons.tune,
+          route: '/inventory/property',
           requiredModule: 'Inventory',
         ),
       ],
