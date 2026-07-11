@@ -38,26 +38,30 @@ Currency are built as full masters, not listed here.
 
 ## Cross-cutting gap: resolved via `supportsUpdate`/`supportsDelete`
 
-The "assumes full CRUD" gap flagged below was hit 4 times across Inventory and Organization
+**Status: fixed in EMR** (see `EntityManifest.supportsUpdate` /
+`EntityManifest.supportsDelete` and `docs/manifest-spec.md` checklist).
+
+The old "assumes full CRUD" gap was hit 4 times across Inventory and Organization
 (ItemProperty/ItemImage missing `PUT`; FinancialYear missing `DELETE`; CurrencyRate missing both) —
 past the "watch for a second occurrence" threshold. Rather than defer a 5th entity, `EntityManifest`
 gained `supportsUpdate`/`supportsDelete` flags (default `true`), and `MasterFormSurface` now renders
-edit mode read-only (no Save button, fields disabled) when `supportsUpdate` is `false`, and hides
-the Delete action when `supportsDelete` is `false`, instead of assuming every manifest with
-`formFields` supports both.
+edit mode read-only (banner, fields disabled, no Save; `_submit` refuses update) when
+`supportsUpdate` is `false`, and hides Delete (and no-ops `_delete`) when `supportsDelete` is
+`false`, instead of assuming every manifest with `formFields` supports both.
 
-This unblocked two of the four gap entries:
-- **ItemProperty** (`/inventory/property`) — missing `PUT` only. Built as list/create/delete,
+**Unblocked and shipped** (no longer listed in the deferred tables above):
+- **ItemProperty** (`/inventory/property`) — `supportsUpdate: false`. List/create/delete +
   read-only edit.
-- **FinancialYear** (`/organization/fy`) — missing `DELETE` only (also missing `GET /:id`, fixed by
-  adding the route, same as Branch/Currency above). Built as list/create/update, no delete.
+- **FinancialYear** (`/organization/fy`) — `supportsDelete: false` (also needed `GET /:id`,
+  added like Branch/Currency). List/create/update, no delete. Full 7-file package + routes + menu.
 
 The other two stay deferred for reasons the flag doesn't reach:
-- **ItemImage** — the missing `PUT` is now fixable, but the `ImageBase64` field still has no
-  `FieldType` to render it with; a form that can create records but never set their actual payload
-  isn't worth shipping.
-- **CurrencyRate** — its one route isn't a list endpoint at all (see the table above), so this was
-  never actually a `supportsUpdate` problem.
+- **ItemImage** — the missing `PUT` is now fixable via `supportsUpdate: false`, but the
+  `ImageBase64` field still has no `FieldType` to render it with; a form that can create
+  records but never set their actual payload isn't worth shipping. Revisit when
+  `FieldType.binary` exists.
+- **CurrencyRate** — its `GET` isn't a paginated list endpoint at all (see the table above),
+  so this was never actually a `supportsUpdate` problem.
 
 One list-endpoint gap (PriceListEntry) was also seen once — not yet cross-cutting, but watch for
 a second occurrence before deciding whether it needs its own manifest flag.

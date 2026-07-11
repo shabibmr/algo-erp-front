@@ -37,7 +37,9 @@ class RouteMasterFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${routeMasterManifest.label}'
-                      : 'Edit ${routeMasterManifest.label}',
+                      : routeMasterManifest.supportsUpdate
+                          ? 'Edit ${routeMasterManifest.label}'
+                          : 'View ${routeMasterManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

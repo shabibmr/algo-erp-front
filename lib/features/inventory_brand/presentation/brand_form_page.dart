@@ -40,7 +40,9 @@ class BrandFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${brandManifest.label}'
-                      : 'Edit ${brandManifest.label}',
+                      : brandManifest.supportsUpdate
+                          ? 'Edit ${brandManifest.label}'
+                          : 'View ${brandManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

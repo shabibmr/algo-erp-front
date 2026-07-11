@@ -37,7 +37,9 @@ class BranchFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${branchManifest.label}'
-                      : 'Edit ${branchManifest.label}',
+                      : branchManifest.supportsUpdate
+                          ? 'Edit ${branchManifest.label}'
+                          : 'View ${branchManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

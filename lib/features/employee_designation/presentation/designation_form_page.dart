@@ -41,7 +41,9 @@ class DesignationFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${designationManifest.label}'
-                      : 'Edit ${designationManifest.label}',
+                      : designationManifest.supportsUpdate
+                          ? 'Edit ${designationManifest.label}'
+                          : 'View ${designationManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

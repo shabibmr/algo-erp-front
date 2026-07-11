@@ -37,7 +37,9 @@ class UomConversionFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${uomConversionManifest.label}'
-                      : 'Edit ${uomConversionManifest.label}',
+                      : uomConversionManifest.supportsUpdate
+                          ? 'Edit ${uomConversionManifest.label}'
+                          : 'View ${uomConversionManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

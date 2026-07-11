@@ -37,7 +37,9 @@ class AddressBookFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${addressBookManifest.label}'
-                      : 'Edit ${addressBookManifest.label}',
+                      : addressBookManifest.supportsUpdate
+                          ? 'Edit ${addressBookManifest.label}'
+                          : 'View ${addressBookManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

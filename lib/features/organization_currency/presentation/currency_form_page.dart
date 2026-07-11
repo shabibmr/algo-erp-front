@@ -37,7 +37,9 @@ class CurrencyFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${currencyManifest.label}'
-                      : 'Edit ${currencyManifest.label}',
+                      : currencyManifest.supportsUpdate
+                          ? 'Edit ${currencyManifest.label}'
+                          : 'View ${currencyManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

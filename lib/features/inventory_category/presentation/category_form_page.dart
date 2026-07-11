@@ -37,7 +37,9 @@ class CategoryFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${categoryManifest.label}'
-                      : 'Edit ${categoryManifest.label}',
+                      : categoryManifest.supportsUpdate
+                          ? 'Edit ${categoryManifest.label}'
+                          : 'View ${categoryManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

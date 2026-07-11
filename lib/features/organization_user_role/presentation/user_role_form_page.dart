@@ -37,7 +37,9 @@ class UserRoleFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${userRoleManifest.label}'
-                      : 'Edit ${userRoleManifest.label}',
+                      : userRoleManifest.supportsUpdate
+                          ? 'Edit ${userRoleManifest.label}'
+                          : 'View ${userRoleManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

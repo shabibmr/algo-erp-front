@@ -37,7 +37,9 @@ class GodownFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${godownManifest.label}'
-                      : 'Edit ${godownManifest.label}',
+                      : godownManifest.supportsUpdate
+                          ? 'Edit ${godownManifest.label}'
+                          : 'View ${godownManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

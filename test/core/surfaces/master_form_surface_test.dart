@@ -53,8 +53,33 @@ final _manifest = EntityManifest<_Widget>(
   hardDelete: true,
 );
 
-final _readOnlyEditManifest = EntityManifest<_Widget>(
-  id: 'widget-ro',
+/// Production shape for ItemProperty: create/list/delete, no PUT.
+final _noUpdateManifest = EntityManifest<_Widget>(
+  id: 'widget-no-update',
+  label: 'Widget',
+  rbacModule: 'Inventory',
+  resourcePath: '/widgets',
+  listColumns: _manifest.listColumns,
+  formFields: _manifest.formFields,
+  emptyEntity: () => const _Widget(id: 0, name: ''),
+  supportsUpdate: false,
+  // supportsDelete defaults true — matches ItemProperty.
+);
+
+/// Production shape for FinancialYear: full create/update, no DELETE.
+final _noDeleteManifest = EntityManifest<_Widget>(
+  id: 'widget-no-delete',
+  label: 'Widget',
+  rbacModule: 'Inventory',
+  resourcePath: '/widgets',
+  listColumns: _manifest.listColumns,
+  formFields: _manifest.formFields,
+  emptyEntity: () => const _Widget(id: 0, name: ''),
+  supportsDelete: false,
+);
+
+final _createOnlyManifest = EntityManifest<_Widget>(
+  id: 'widget-create-only',
   label: 'Widget',
   rbacModule: 'Inventory',
   resourcePath: '/widgets',
@@ -64,6 +89,8 @@ final _readOnlyEditManifest = EntityManifest<_Widget>(
   supportsUpdate: false,
   supportsDelete: false,
 );
+
+const _readOnlyBanner = 'This entity cannot be edited.';
 
 /// These tests exercise the surface, not RBAC — so permit everything and let
 /// `permission_service_test.dart` cover the real matrix.
@@ -222,29 +249,127 @@ void main() {
   });
 
   testWidgets(
-      'supportsUpdate: false renders edit mode read-only with no Save/Delete',
-      (tester) async {
-    when(() => repo.getById(any())).thenAnswer(
-      (_) async => const Right(_Widget(id: 1, name: 'Existing')),
-    );
+    'supportsUpdate: false, supportsDelete: true — read-only edit, Delete kept',
+    (tester) async {
+      // ItemProperty shape: backend has DELETE, no PUT.
+      when(() => repo.getById(any())).thenAnswer(
+        (_) async => const Right(_Widget(id: 1, name: 'Existing')),
+      );
 
-    await tester.pumpWidget(
-      wrap(
-        MasterFormSurface<_Widget, int>(
-          manifest: _readOnlyEditManifest,
-          mode: FormMode.edit,
-          idOf: (w) => w.id,
+      await tester.pumpWidget(
+        wrap(
+          MasterFormSurface<_Widget, int>(
+            manifest: _noUpdateManifest,
+            mode: FormMode.edit,
+            idOf: (w) => w.id,
+          ),
+          detailBloc: DetailBloc<_Widget, int>(repository: repo, id: 1)
+            ..add(const DetailLoadRequested()),
         ),
-        detailBloc: DetailBloc<_Widget, int>(repository: repo, id: 1)
-          ..add(const DetailLoadRequested()),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Save'), findsNothing);
-    expect(find.text('Delete'), findsNothing);
-    final field =
-        tester.widget<TextFormField>(find.byType(TextFormField));
-    expect(field.enabled, isFalse);
-  });
+      expect(find.text(_readOnlyBanner), findsOneWidget);
+      expect(find.text('Save'), findsNothing);
+      expect(find.text('Delete'), findsOneWidget);
+      final field =
+          tester.widget<TextFormField>(find.byType(TextFormField));
+      expect(field.enabled, isFalse);
+    },
+  );
+
+  testWidgets(
+    'supportsUpdate: true, supportsDelete: false — Save kept, Delete hidden',
+    (tester) async {
+      // FinancialYear shape: backend has PUT, no DELETE.
+      when(() => repo.getById(any())).thenAnswer(
+        (_) async => const Right(_Widget(id: 1, name: 'Existing')),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          MasterFormSurface<_Widget, int>(
+            manifest: _noDeleteManifest,
+            mode: FormMode.edit,
+            idOf: (w) => w.id,
+          ),
+          detailBloc: DetailBloc<_Widget, int>(repository: repo, id: 1)
+            ..add(const DetailLoadRequested()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(_readOnlyBanner), findsNothing);
+      expect(find.text('Save'), findsOneWidget);
+      expect(find.text('Delete'), findsNothing);
+      final field =
+          tester.widget<TextFormField>(find.byType(TextFormField));
+      expect(field.enabled, isTrue);
+    },
+  );
+
+  testWidgets(
+    'supportsUpdate: false, supportsDelete: false — no Save/Delete, banner',
+    (tester) async {
+      when(() => repo.getById(any())).thenAnswer(
+        (_) async => const Right(_Widget(id: 1, name: 'Existing')),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          MasterFormSurface<_Widget, int>(
+            manifest: _createOnlyManifest,
+            mode: FormMode.edit,
+            idOf: (w) => w.id,
+          ),
+          detailBloc: DetailBloc<_Widget, int>(repository: repo, id: 1)
+            ..add(const DetailLoadRequested()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(_readOnlyBanner), findsOneWidget);
+      expect(find.text('Save'), findsNothing);
+      expect(find.text('Delete'), findsNothing);
+      final field =
+          tester.widget<TextFormField>(find.byType(TextFormField));
+      expect(field.enabled, isFalse);
+    },
+  );
+
+  testWidgets(
+    'supportsUpdate: false still allows create mode submit',
+    (tester) async {
+      // Capability flags must not affect create — only edit mode.
+      _Widget? saved;
+      when(() => repo.create(any())).thenAnswer(
+        (invocation) async =>
+            Right(invocation.positionalArguments.first as _Widget),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          MasterFormSurface<_Widget, int>(
+            manifest: _noUpdateManifest,
+            mode: FormMode.create,
+            idOf: (w) => w.id,
+            onSaved: (w) => saved = w,
+          ),
+        ),
+      );
+
+      expect(find.text(_readOnlyBanner), findsNothing);
+      expect(find.text('Create'), findsOneWidget);
+      expect(find.text('Save'), findsNothing);
+
+      await tester.enterText(find.byType(TextFormField), 'Alpha');
+      await tester.tap(find.text('Create'));
+      await tester.pumpAndSettle();
+
+      final captured = verify(() => repo.create(captureAny())).captured.single
+          as _Widget;
+      expect(captured.name, 'Alpha');
+      expect(saved?.name, 'Alpha');
+    },
+  );
 }

@@ -38,7 +38,9 @@ class DepartmentFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${departmentManifest.label}'
-                      : 'Edit ${departmentManifest.label}',
+                      : departmentManifest.supportsUpdate
+                          ? 'Edit ${departmentManifest.label}'
+                          : 'View ${departmentManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

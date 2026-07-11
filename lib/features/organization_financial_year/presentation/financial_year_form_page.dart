@@ -37,7 +37,9 @@ class FinancialYearFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${financialYearManifest.label}'
-                      : 'Edit ${financialYearManifest.label}',
+                      : financialYearManifest.supportsUpdate
+                          ? 'Edit ${financialYearManifest.label}'
+                          : 'View ${financialYearManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

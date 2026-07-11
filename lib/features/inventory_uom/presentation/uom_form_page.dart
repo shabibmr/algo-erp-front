@@ -37,7 +37,9 @@ class UomFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${uomManifest.label}'
-                      : 'Edit ${uomManifest.label}',
+                      : uomManifest.supportsUpdate
+                          ? 'Edit ${uomManifest.label}'
+                          : 'View ${uomManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

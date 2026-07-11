@@ -79,13 +79,13 @@ class EntityManifest<E> {
 
   /// Whether the backend exposes a working `PUT` for this entity. When
   /// `false`, `MasterFormSurface`'s edit mode renders fields read-only and
-  /// hides the Save button instead of assuming every manifest with
-  /// [formFields] supports both create and update — a real, previously
-  /// silent gap (see `docs/manifest-exceptions.md`'s "assumes full CRUD"
-  /// note). Does not affect create mode.
+  /// hides the Save button (and form pages should title the screen "View"
+  /// rather than "Edit"). Does not affect create mode. See
+  /// `docs/manifest-spec.md` and `docs/manifest-exceptions.md`.
   final bool supportsUpdate;
 
   /// Whether the backend exposes a working `DELETE` for this entity. When
-  /// `false`, `MasterFormSurface` hides the Delete action in edit mode.
+  /// `false`, `MasterFormSurface` hides the Delete action in edit mode
+  /// and refuses delete at the action boundary as well.
   final bool supportsDelete;
 }

@@ -38,6 +38,17 @@ For a flat master with no foreign keys (Brand's shape, Department's shape):
    - `hardDelete: true` only if the backend table has no `is_active` column
      (verify against the schema, don't guess — Brand hard-deletes,
      Department/Designation soft-delete)
+   - `supportsUpdate: false` when the backend has **no working `PUT`** for
+     this entity (defaults `true`). Edit mode becomes read-only: neutral
+     banner ("This entity cannot be edited."), disabled fields, no Save;
+     `_submit` also no-ops on update. Create mode is unaffected. Worked
+     example: `itemPropertyManifest` (`/inventory/property`).
+   - `supportsDelete: false` when the backend has **no working `DELETE`**
+     (defaults `true`). Hides Delete in edit mode and no-ops `_delete`.
+     Worked example: `financialYearManifest` (`/organization/fy`).
+   - Set both to `false` for create-only entities (list + create, view-only
+     edit). Do **not** invent a separate surface — these flags are the
+     partial-CRUD recipe (see `docs/manifest-exceptions.md`).
    - `rbacModule` — the backend's coarse `authorize()` module string, which
      is **not always the entity name** (Brand/Department/Designation all
      gate on their parent module — `'Inventory'`/`'Employee'` — not a
@@ -62,7 +73,9 @@ For a flat master with no foreign keys (Brand's shape, Department's shape):
    routes. Copy `brand_list_page.dart` verbatim and rename.
 7. **`presentation/<entity>_form_page.dart`** — `RepositoryProvider` + (edit
    mode only) `BlocProvider<DetailBloc>` + `MasterFormSurface<E, ID>`.
-   Copy `brand_form_page.dart` verbatim and rename.
+   Copy `brand_form_page.dart` verbatim and rename. Title create as
+   `New ${label}`; for edit mode use `Edit ${label}` when
+   `manifest.supportsUpdate`, otherwise `View ${label}` (read-only detail).
 
 Plus **2 router entries** (`/<path>/new`, `/<path>/:id`) added directly to
 `ShellRoute.routes` in `app_router.dart` (not through the `AppMenu.allItems`

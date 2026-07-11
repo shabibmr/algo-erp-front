@@ -37,7 +37,9 @@ class ItemPropertyFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${itemPropertyManifest.label}'
-                      : 'Edit ${itemPropertyManifest.label}',
+                      : itemPropertyManifest.supportsUpdate
+                          ? 'Edit ${itemPropertyManifest.label}'
+                          : 'View ${itemPropertyManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

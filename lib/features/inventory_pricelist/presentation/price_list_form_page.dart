@@ -37,7 +37,9 @@ class PriceListFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${priceListManifest.label}'
-                      : 'Edit ${priceListManifest.label}',
+                      : priceListManifest.supportsUpdate
+                          ? 'Edit ${priceListManifest.label}'
+                          : 'View ${priceListManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

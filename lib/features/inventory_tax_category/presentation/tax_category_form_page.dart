@@ -37,7 +37,9 @@ class TaxCategoryFormPage extends StatelessWidget {
                 Text(
                   mode == FormMode.create
                       ? 'New ${taxCategoryManifest.label}'
-                      : 'Edit ${taxCategoryManifest.label}',
+                      : taxCategoryManifest.supportsUpdate
+                          ? 'Edit ${taxCategoryManifest.label}'
+                          : 'View ${taxCategoryManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

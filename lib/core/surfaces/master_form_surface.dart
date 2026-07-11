@@ -32,9 +32,10 @@ enum FormMode { create, edit }
 /// The list screen re-fetches naturally when the caller navigates back to it
 /// (its `CrudBloc` is reconstructed fresh, per `BrandListPage`'s pattern).
 ///
-/// **No separate `MasterDetailSurface`**: edit mode with every field's
-/// `enabled` gated by RBAC serves as the read-only view. Revisit only if
-/// that reads badly in practice — see `docs/manifest-spec.md`.
+/// **No separate `MasterDetailSurface`**: edit mode with fields disabled
+/// via `supportsUpdate: false` (and/or RBAC) serves as the read-only view.
+/// Form page chrome should title that case "View …" rather than "Edit …".
+/// Revisit only if that reads badly in practice — see `docs/manifest-spec.md`.
 ///
 /// Expects a `Repository<E, ID>` provided above it (via `RepositoryProvider`)
 /// and — in edit mode — a `DetailBloc<E, ID>` provided above it as well.
@@ -106,6 +107,11 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
   }
 
   Future<void> _submit(Repository<E, ID> repo) async {
+    // Defense in depth: capability flags are primarily a UI concern, but
+    // still refuse update when the manifest says the backend has no PUT.
+    if (widget.mode == FormMode.edit && !widget.manifest.supportsUpdate) {
+      return;
+    }
     final formState = _formKey.currentState;
     if (formState == null || !formState.validate()) return;
     setState(() {
@@ -151,6 +157,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
       };
 
   Future<void> _delete(BuildContext context) async {
+    if (!widget.manifest.supportsDelete) return;
     final manifest = widget.manifest;
     final confirmed = await showConfirmDialog(
       context,
@@ -187,10 +194,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(tokens.radii.sm),
               ),
-              child: const Text(
-                'This entity cannot be edited — the backend has no update '
-                'endpoint for it.',
-              ),
+              child: const Text('This entity cannot be edited.'),
             ),
             SizedBox(height: tokens.spacing.md),
           ],
@@ -237,7 +241,8 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   ),
                 ),
               if (canDelete) ...[
-                SizedBox(width: tokens.spacing.sm),
+                // Spacer only when Save is also shown (create/update path).
+                if (!isReadOnlyEdit) SizedBox(width: tokens.spacing.sm),
                 PermissionGate(
                   module: manifest.rbacModule,
                   action: PermissionAction.delete,
