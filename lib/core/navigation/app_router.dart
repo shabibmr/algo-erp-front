@@ -3,13 +3,33 @@ import 'dart:async';
 import 'package:algo_erp_front/core/navigation/app_shell.dart';
 import 'package:algo_erp_front/core/navigation/menu_model.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/theme/motion_tokens.dart';
 import 'package:algo_erp_front/core/theme/theme_preview_page.dart';
 import 'package:algo_erp_front/core/widgets/gallery/widget_gallery_page.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:algo_erp_front/features/auth/presentation/pages/login_page.dart';
 import 'package:algo_erp_front/features/desk/presentation/pages/todays_desk_page.dart';
+import 'package:algo_erp_front/features/employee_department/presentation/department_form_page.dart';
+import 'package:algo_erp_front/features/employee_department/presentation/department_list_page.dart';
+import 'package:algo_erp_front/features/employee_designation/presentation/designation_form_page.dart';
+import 'package:algo_erp_front/features/employee_designation/presentation/designation_list_page.dart';
+import 'package:algo_erp_front/features/inventory_brand/presentation/brand_form_page.dart';
 import 'package:algo_erp_front/features/inventory_brand/presentation/brand_list_page.dart';
+import 'package:algo_erp_front/features/inventory_category/presentation/category_form_page.dart';
+import 'package:algo_erp_front/features/inventory_category/presentation/category_list_page.dart';
+import 'package:algo_erp_front/features/inventory_godown/presentation/godown_form_page.dart';
+import 'package:algo_erp_front/features/inventory_godown/presentation/godown_list_page.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_form_page.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_list_page.dart';
+import 'package:algo_erp_front/features/inventory_route/presentation/route_master_form_page.dart';
+import 'package:algo_erp_front/features/inventory_route/presentation/route_master_list_page.dart';
+import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_category_form_page.dart';
+import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_category_list_page.dart';
+import 'package:algo_erp_front/features/inventory_uom/presentation/uom_form_page.dart';
+import 'package:algo_erp_front/features/inventory_uom/presentation/uom_list_page.dart';
+import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
+import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -81,10 +101,192 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/theme-preview' => const ThemePreviewPage(),
                     '/widget-gallery' => const WidgetGalleryPage(),
                     '/inventory/brand' => const BrandListPage(),
+                    '/inventory/uom' => const UomListPage(),
+                    '/inventory/category' => const CategoryListPage(),
+                    '/inventory/tax-category' => const TaxCategoryListPage(),
+                    '/inventory/godown' => const GodownListPage(),
+                    '/inventory/route' => const RouteMasterListPage(),
+                    '/inventory/conversion' =>
+                      const UomConversionListPage(),
+                    '/inventory/pricelist' => const PriceListListPage(),
+                    '/employee/department' => const DepartmentListPage(),
+                    '/employee/designation' => const DesignationListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
               ),
+            // Manifest create/edit routes — not menu items, so registered
+            // directly rather than through the AppMenu.allItems loop above.
+            GoRoute(
+              path: '/inventory/brand/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const BrandFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/brand/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: BrandFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/uom/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const UomFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/uom/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: UomFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/category/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const CategoryFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/category/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: CategoryFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/tax-category/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const TaxCategoryFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/tax-category/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: TaxCategoryFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/godown/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const GodownFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/godown/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: GodownFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/route/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const RouteMasterFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/route/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: RouteMasterFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/conversion/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const UomConversionFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/conversion/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: UomConversionFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/pricelist/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const PriceListFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/pricelist/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: PriceListFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/employee/department/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const DepartmentFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/employee/department/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: DepartmentFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/employee/designation/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const DesignationFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/employee/designation/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: DesignationFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
           ],
         ),
       ],

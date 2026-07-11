@@ -1,5 +1,6 @@
 import 'package:algo_erp_front/core/manifest/entity_manifest.dart';
 import 'package:algo_erp_front/core/manifest/field_spec.dart';
+import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:algo_erp_front/features/inventory_brand/domain/brand.dart';
 
 /// Brand's manifest — the EMR vertical slice's proving ground.
@@ -29,4 +30,25 @@ final brandManifest = EntityManifest<Brand>(
     ),
   ],
   searchFields: const ['name'],
+  formFields: [
+    FormFieldSpec<Brand>(
+      key: 'name',
+      wireKey: 'Brand_Name',
+      label: 'Name',
+      type: FieldType.text,
+      required: true,
+      getValue: (brand) => brand.name,
+      setValue: (brand, v) => brand.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Brand>(
+      key: 'description',
+      wireKey: 'Brand_Description',
+      label: 'Description',
+      type: FieldType.text,
+      getValue: (brand) => brand.description,
+      setValue: (brand, v) => brand.copyWith(description: v),
+    ),
+  ],
+  emptyEntity: () => const Brand(id: 0, name: ''),
+  hardDelete: true,
 );

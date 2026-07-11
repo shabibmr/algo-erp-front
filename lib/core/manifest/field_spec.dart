@@ -1,15 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-/// The kinds of data a [FieldSpec] can describe. Deliberately **small** —
-/// only what Brand (the EMR vertical slice's proving ground) needs.
+/// The kinds of data a [FieldSpec]/`FormFieldSpec` can describe. Grows from
+/// real pressure, not speculation — each case here is demanded by an entity
+/// actually being built (Brand, Department, Designation).
 ///
-/// This enum grows from real pressure, not speculation. The next real
-/// entities each demand a type this slice doesn't build yet:
-/// - `LedgerMaster` needs `decimal` (`Opening_Balance`) and `fk`
-///   (`account_group_id`).
-/// - `AccountGroup` needs `selfFk` (`parent_group_id`, a tree parent picker).
-/// - `AddressBook` needs `boolean` and a free-string `enum`.
-/// Add a case only when a manifest actually needs it.
+/// Still deliberately deferred: `selfFk` (needs a tree-picker widget, first
+/// required by `Department.parent_dept_id`/`AccountGroup.parent_group_id`),
+/// `enum` (no manifest needs a free-string enum yet), `json`, `binary`.
 enum FieldType {
   /// A plain string value, required or optional per `FieldSpec.required`.
   text,
@@ -17,6 +14,21 @@ enum FieldType {
   /// A read-only timestamp, formatted for display only (no form input yet —
   /// there is no form Surface in this slice).
   dateTime,
+
+  /// A whole-number value (e.g. decimal places, counts).
+  int,
+
+  /// A decimal value (money/qty) — always `package:decimal`'s `Decimal`,
+  /// never `double`.
+  decimal,
+
+  /// A boolean flag (e.g. `is_active`).
+  bool,
+
+  /// A foreign-key reference: the entity stores the related row's raw id,
+  /// but the form renders/searches by the related row's display value via
+  /// `FormFieldSpec.fkSearch`/`fkDisplayOf`/`fkResolveById`.
+  fk,
 }
 
 /// Describes one field of an entity for manifest-driven rendering.

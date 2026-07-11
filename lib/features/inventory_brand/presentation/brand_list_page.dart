@@ -9,6 +9,7 @@ import 'package:algo_erp_front/features/inventory_brand/brand_manifest.dart';
 import 'package:algo_erp_front/features/inventory_brand/domain/brand.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 /// Brand's list screen — the EMR vertical slice's one real page. Thin by
 /// design: it only provides the `CrudBloc` and hands the manifest to
@@ -34,8 +35,8 @@ class BrandListPage extends StatelessWidget {
               child: MasterListSurface<Brand>(
                 manifest: brandManifest,
                 idOf: (brand) => brand.id,
-                // Detail/form Surfaces are out of this slice's scope — tap
-                // and create are no-ops until they exist.
+                onCreate: () => context.push('/inventory/brand/new'),
+                onTap: (brand) => context.push('/inventory/brand/${brand.id}'),
               ),
             ),
           ],

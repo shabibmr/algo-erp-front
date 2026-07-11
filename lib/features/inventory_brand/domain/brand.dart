@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+const _unset = Object();
+
 /// The Brand master entity — hard-deleted (no `is_active` column on the
 /// backend `brands` table), so `Repository.delete` simply removes the row.
 class Brand extends Equatable {
@@ -13,10 +15,16 @@ class Brand extends Equatable {
   final String name;
   final String? description;
 
-  Brand copyWith({int? id, String? name, String? description}) => Brand(
+  /// [description] uses a sentinel default (rather than `??`) so passing
+  /// `description: null` actually clears a previously-set value — `??` can
+  /// never null out a field, which matters once a form needs to clear it.
+  Brand copyWith({int? id, String? name, Object? description = _unset}) =>
+      Brand(
         id: id ?? this.id,
         name: name ?? this.name,
-        description: description ?? this.description,
+        description: identical(description, _unset)
+            ? this.description
+            : description as String?,
       );
 
   @override

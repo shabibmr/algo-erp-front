@@ -1,4 +1,5 @@
 import 'package:algo_erp_front/core/manifest/field_spec.dart';
+import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:flutter/foundation.dart';
 
 /// The typed declaration a `MasterListSurface<E>` renders: what the entity is
@@ -11,7 +12,7 @@ import 'package:flutter/foundation.dart';
 /// (Brand's list, end to end) proves the pattern is worth extending.
 @immutable
 class EntityManifest<E> {
-  const EntityManifest({
+  EntityManifest({
     required this.id,
     required this.label,
     required this.rbacModule,
@@ -21,7 +22,13 @@ class EntityManifest<E> {
     this.supportsPrint = false,
     this.supportsExcel = false,
     this.shareActions = const [],
-  });
+    this.formFields = const [],
+    this.emptyEntity,
+    this.hardDelete = false,
+  }) : assert(
+          formFields.isEmpty || emptyEntity != null,
+          'A manifest with formFields must supply emptyEntity for create mode.',
+        );
 
   /// Stable identifier for this manifest (e.g. `'brand'`).
   final String id;
@@ -54,4 +61,17 @@ class EntityManifest<E> {
 
   /// Share actions supported for this entity (e.g. `'email'`, `'whatsapp'`).
   final List<String> shareActions;
+
+  /// Fields rendered by `MasterFormSurface` for create/edit, in order. Empty
+  /// means this entity has no form yet (list-only, as Brand originally was).
+  final List<FormFieldSpec<E>> formFields;
+
+  /// Builds a blank draft entity for create mode. Required whenever
+  /// [formFields] is non-empty.
+  final E Function()? emptyEntity;
+
+  /// Whether deleting this entity is permanent (drives confirmation copy).
+  /// Most masters soft-delete via `is_active`; a few (e.g. Brand) hard-delete
+  /// because the backend table has no `is_active` column.
+  final bool hardDelete;
 }
