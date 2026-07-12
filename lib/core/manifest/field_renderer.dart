@@ -12,10 +12,11 @@ import 'package:flutter/widgets.dart';
 /// Maps a [FormFieldSpec] to the widget that edits it — the single switch
 /// over [FieldType] that lets `MasterFormSurface` stay entity-agnostic.
 ///
-/// `value` carries the field's current draft value; for [FieldType.fk] it is
-/// the *resolved display object* (not the raw id) so the picker can render
-/// a label — `MasterFormSurface` is responsible for id↔object translation at
-/// its boundary, since only it holds the FK-resolution cache.
+/// `value` carries the field's current draft value; for [FieldType.fk] /
+/// [FieldType.selfFk] it is the *resolved display object* (not the raw id)
+/// so the picker can render a label — `MasterFormSurface` is responsible for
+/// id↔object translation at its boundary, since only it holds the
+/// FK-resolution cache.
 abstract final class FieldRenderer {
   static Widget build<E>({
     required FormFieldSpec<E> field,
@@ -23,6 +24,9 @@ abstract final class FieldRenderer {
     required ValueChanged<Object?> onChanged,
     required bool enabled,
     String? errorText,
+    /// Optional override for [FieldType.fk]/[FieldType.selfFk] loaders
+    /// (used by the form surface to exclude the draft row on selfFk).
+    Future<List<Object>> Function(String query)? fkLoaderOverride,
   }) {
     final isEnabled = enabled && !field.readOnly;
     String? validate(Object? v) {
@@ -81,11 +85,12 @@ abstract final class FieldRenderer {
           onChanged: onChanged,
         );
       case FieldType.fk:
+      case FieldType.selfFk:
         return FkLookupField<Object>(
           label: field.label,
           value: value,
           displayOf: field.fkDisplayOf!,
-          loader: field.fkSearch!,
+          loader: fkLoaderOverride ?? field.fkSearch!,
           helperText: field.helperText,
           enabled: isEnabled,
           onSelected: onChanged,

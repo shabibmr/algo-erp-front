@@ -1,15 +1,15 @@
 # algoERP Frontend — Manifest-Driven Execution Plan (v2)
 
-> **Status update — 2026-07-11 (post vertical-slice):** rather than building the full EMR
-> (A3) before proving it, we built a deliberately narrow **vertical slice**: the manifest
-> model (§7 A3.1, minimal `FieldType`), `MasterListSurface` only (§7 A3.3, list Surface
-> only), and Brand's list binding (§8 A4, list only — no hard-case entity, no recipe doc
-> yet). This is intentionally short of A3/A4's full done-when criteria — see the inline
-> `[~]` notes in those sections. **Decision point:** now that `/inventory/brand` renders
-> real backend data through `MasterListSurface`, decide with the user whether to extend
-> EMR (detail/form Surfaces, more masters) or fall back to v1 hand-written features before
-> building anything further. See `docs/SESSION_CONTEXT_EXPORT.md` §4 and §8 for the full
-> reasoning behind this checkpoint.
+> **Living completion matrix:** [`docs/STATUS.md`](./STATUS.md) (updated 2026-07-12) — entity-by-entity
+> checkboxes vs `feature-inventory.md`, scorecard, and recommended sprint build order. Prefer STATUS
+> for “what’s done / what’s left”; this file remains the wave narrative and EMR doctrine.
+
+> **Status update — 2026-07-12:** EMR extended past the Brand list slice. `MasterFormSurface`,
+> expanded `FieldType` (incl. `fk`), `FieldRenderer`, `buildRepository`, recipe
+> (`manifest-spec.md`), and **16 master packages** (Org + Inventory flat + Dept/Designation)
+> are in tree. Full entity matrix + next sprints: [`STATUS.md`](./STATUS.md). Sections §1 / §7 / §8
+> below were refreshed to match code; remaining wave checkboxes still use historical wording
+> where a task is only half-met.
 
 > **Curated successor to** `docs/BUILD_TASKS.md` **and** `PROMPT_EXECUTION_PLAN.md`.
 > Date: 2026-07-11 · Architecture: **ONLINE-ONLY, INTERFACE-DRIVEN, MANIFEST-RENDERED**.
@@ -49,38 +49,30 @@ The original plan ships ~40 master slices and ~18 voucher slices by **stamping n
 | Network | Dio + auth/tenant/requestId interceptors, `ApiResponse`, `Paginated`, sealed `Failure`, `safeCall` |
 | Wave 0 contracts | `Repository`, `RemoteDataSource`, `Mapper`, `PageQuery`, `CrudState`/`CrudEvent`, `PermissionService`, `ViewState`, `feature-contract.md` |
 
-### 1.2 Track A — Reuse Keystone  `[x]` DONE (as v1's Wave 0/Track A scope — NOT v2's expanded A0)
+### 1.2 Track A — Reuse Keystone  `[x]` DONE (v1 scope); expanded A0 still `[~]`
 
-**Present, compiling, tested** under `lib/core/{data,bloc,utils}`, all green
-(`flutter analyze`/`flutter test` — 62/62 passing as of 2026-07-11):
+**Present** under `lib/core/{data,bloc,utils,di}`:
 
-| Artifact | State | Gap vs this doc's original A0 wishlist |
+| Artifact | State | Gap vs original A0 wishlist |
 |----------|-------|--------------------------|
-| `RemoteDataSourceBase` | Implemented, used by Brand | No `RepoBinding` DI helper (A0.2) — deferred, see A3.2 |
-| `RemoteRepository` | Implemented, 8 tests | Same — no generic DI factory yet |
-| `CrudBloc<E,ID,F>` | Implemented, 8 tests green | Pagination/search logic is **inlined** + `debounceRestartable` transformer, not separate mixins — accepted design, not revisited |
-| `DetailBloc` | Implemented | Still no tests (no detail Surface consumes it yet) |
-| `FormMixin` | Implemented, used by Track B's `AuthBloc` | No submit lifecycle/dirty tracking beyond field-error mapping (A0.3) — not yet needed |
-| `ClientQuery` adapter (A0.4) | **Not built** | Deferred — BE-002/003/004 workaround not yet needed by Brand's list |
-| Idempotency-Key interceptor (A0.5) | **Not built** | Deferred |
-| `features/**` | Brand only (`inventory_brand/`) | The vertical slice's one binding |
+| `RemoteDataSourceBase` | Implemented | — |
+| `RemoteRepository` | Implemented + tests | — |
+| `buildRepository` / RepoBinding helper (A0.2) | **Done** (`repo_binding.dart`) | — |
+| `CrudBloc<E,ID,F>` | Implemented + tests | Pagination/search inlined + `debounceRestartable` — accepted |
+| `DetailBloc` | Implemented, used by form pages | Dedicated unit tests still thin |
+| `FormMixin` | Used by Auth + MasterFormSurface | Deeper dirty/submit FormController (A0.3) still optional |
+| `ClientQuery` adapter (A0.4) | **Not built** | BE-002/003/004 workaround |
+| Idempotency-Key interceptor (A0.5) | **Not built** | BE-005 / CR-004 |
+| Deviations documented (A0.1) | **Partial** | Prefer `feature-contract.md` + `STATUS.md` |
 
-v2's *expanded* A0 checklist (ClientQuery, idempotency shield, RepoBinding
-helper, documenting deviations) remains open — it was consciously deferred by
-the vertical-slice plan, not forgotten. Revisit at the next EMR-extension
-decision point.
+### 1.3 Status of the rest (2026-07-12)
 
-### 1.3 Status of the rest
-
-- **Track B — Identity & Access:** `[x]` DONE. Full auth stack
-  (`lib/features/auth/**`), `FailOpenPermissionService` (BE-001), router
-  guards (`/login`, `/403`, `appRouterRedirect`), 12 tests.
-- **Track C — Widget library:** `[x]` DONE. `lib/core/widgets/**` (fields,
-  chips, dialogs, filter bar, FK lookup, adaptive list, line-item grid,
-  `AsyncStateView`), `docs/widget-catalog.md`, gallery route, 14 tests.
-- **EMR vertical slice (A3/A4, partial):** `[~]` see §7/§8 below.
-- **Not started:** Mass masters (A5) · Voucher blueprints/DocumentSurface (A6/A7)
-  · Dashboard/reports/palette (A8) · Polish/QA (A9).
+- **Track B — Identity & Access:** `[x]` DONE. `lib/features/auth/**`, fail-open RBAC, router guards.
+- **Track C — Widget library:** `[x]` DONE. `lib/core/widgets/**`, catalog, gallery.
+- **Wave A3 EMR core:** `[~]` **usable** — list + form surfaces, FieldRenderer, fk/int/decimal/bool; missing `selfFk`, `binary`, ManifestRegistry, command palette. See §7.
+- **Wave A4 gold path:** `[x]` Brand **full CRUD** + Designation **FK** + recipe (`manifest-spec.md`). See §8.
+- **Wave A5 masters:** `[~]` **16 of ~50+** registered (Org/Inventory flat + HR dept/designation). Accounts **0**. Exceptions in `manifest-exceptions.md`. Matrix: `STATUS.md`.
+- **Not started:** A6 DocumentSurface / Line Engine · A7 voucher blueprints · A8 dashboard/reports/palette · A9 polish/QA · offline (parked).
 
 ### 1.4 Backend frictions that shape the plan (from `backend-suggestions.md`)
 
@@ -190,189 +182,126 @@ masters    Sales Invoice  blueprints
 
 **Folder ownership:** `lib/core/data/`, `lib/core/bloc/`, `lib/core/utils/`, tests under `test/core/`
 
-- [ ] **A0.1** Document intentional deviations in `docs/feature-contract.md`:
-  - pagination helpers = `PaginationMeta` extensions (not a class mixin)
-  - search debounce = `debounceRestartable` event transformer
-  - `CrudBloc` is `CrudBloc<E, ID, F>` (three type params)
-- [ ] **A0.2** `RepoBinding<E, ID>` (or `registerRemoteRepository`) — one DI helper that wires  
-  `RemoteDataSourceBase(path) + decode/encode/idOf → RemoteRepository` so features never copy glue.
-- [ ] **A0.3** Harden `FormMixin` → thin **`FormController` / `FormCubit` patterns**:
-  - field error map from `Failure.validation` (already)
-  - submit in-flight flag, general error, clear-on-edit
-  - no per-entity form blocs
-- [ ] **A0.4** **ClientQuery** adapter (`lib/core/data/client_query.dart`):
-  - given `List<E>` + `PageQuery` + field accessors, apply search/sort/filter **in-memory**
-  - optional wrap in repository decorator for entities without server search
-  - unit tests for multi-field search + sort dir
-- [ ] **A0.5** **Idempotency** interceptor or Dio option: attach `Idempotency-Key` (uuid) on POST; never auto-retry POST/PUT/DELETE (document in network layer)
-- [ ] **A0.6** Tests: `RemoteRepository` (decode/encode + safeCall left/right), `DetailBloc`, `ClientQuery`, expand `CrudBloc` edge cases if missing
-- [ ] **A0.7** Mark Track A complete in this file + leave parked DB excluded from analysis
+- [~] **A0.1** Document intentional deviations — partially in `feature-contract.md` / `STATUS.md`; full note optional
+- [x] **A0.2** `buildRepository` in `lib/core/di/repo_binding.dart` — used by master `*_di.dart` factories
+- [~] **A0.3** Form submit lifecycle — present on `MasterFormSurface` (`_submitting`, field errors); dedicated FormController still optional
+- [ ] **A0.4** **ClientQuery** adapter (`lib/core/data/client_query.dart`)
+- [ ] **A0.5** **Idempotency** interceptor — `Idempotency-Key` on POST
+- [~] **A0.6** Core tests present (CrudBloc, RemoteRepository path, FormMixin, surfaces); DetailBloc / ClientQuery still thin
+- [~] **A0.7** Track A engine solid; expanded A0 not fully closed
 
-**Done-when:** `flutter analyze` clean; all core tests green; DI helper usable from a one-file fake entity test.
+**Done-when (expanded):** ClientQuery + idempotency + analyze/tests green. **Practical done-when (met):** masters ship on `buildRepository` + CrudBloc without per-entity engines.
 
 ---
 
-## 5. Wave A1 — Identity & Access  `[ ]`  ∥ after A0
+## 5. Wave A1 — Identity & Access  `[x]` DONE
 
 **Folders:** `lib/features/auth/`, `lib/core/auth/`
 
-- [ ] Login / refresh / me / change-password / logout (existing API)
-- [ ] Secure token storage (already stubbed: `token_storage.dart` — complete wiring)
-- [ ] `AuthBloc`: `authenticated | unauthenticated | unknown`
-- [ ] `PermissionService` impl — **fail-open** until BE-001; still call `can()` everywhere
-- [ ] `PermissionGate` widget + go_router redirect (login / 403)
-- [ ] Adaptive login + company/branch context (session claims / headers)
-- [ ] Tests: auth flows, redirect matrix
+- [x] Login / refresh / me / change-password / logout
+- [x] Token storage wiring
+- [x] `AuthBloc` sealed states
+- [x] `FailOpenPermissionService` until BE-001
+- [x] `PermissionGate` + go_router redirect (login / 403)
+- [~] Company/branch/FY session chrome (session bar partial)
+- [x] Auth tests
 
-**Done-when:** Real login against running backend; unauthenticated shell unreachable; gates compile into menu later.
+**Done-when:** met for online auth shell.
 
 ---
 
-## 6. Wave A2 — Widget atoms + gallery  `[ ]`  ∥ after A0
+## 6. Wave A2 — Widget atoms + gallery  `[x]` DONE (charts optional leftover)
 
 **Folders:** `lib/core/widgets/`, `docs/widget-catalog.md`
 
-Build **token-only** primitives first (no paid Widgetbook — a simple `/gallery` route is enough).
+- [x] `docs/widget-catalog.md`
+- [x] Typed fields: text / number / decimal / date / currency / switch / dropdown
+- [x] Status chips, confirm dialog, filter bar
+- [ ] File/image picker, KPI card polish, owned sparklines (defer to A8 desk)
+- [x] `AsyncStateView` over `ViewState`
+- [x] Gallery: light/dark × LTR/RTL route
+- [x] Async FK lookup (`fk_lookup_field`)
+- [x] Adaptive entity list bound to list surfaces / CrudState
+- [x] Line-item grid widget exists (voucher totals engine not wired — A6)
 
-- [ ] `docs/widget-catalog.md` — props, responsive, RTL for each widget
-- [ ] Buttons, typed fields: text / number / **decimal** / date / currency / switch / enum dropdown
-- [ ] Status chips, confirm dialog, snackbar host, filter bar, page scaffold + breadcrumbs
-- [ ] Tabs / section cards, file/image picker (platform free APIs), KPI card
-- [ ] `AsyncStateView` over Wave-0 `ViewState` (skeleton / empty+CTA / error+retry)
-- [ ] Lightweight chart/sparkline wrappers we own (CustomPainter) — no commercial chart license
-- [ ] Gallery: light/dark × LTR/RTL
-
-**Contract-coupled widgets (need EMR interfaces — may land late A2 or early A3):**
-
-- [ ] Async FK lookup (against `Repository` + fake)
-- [ ] Adaptive data-table ↔ card-list bound to `CrudState`
-- [ ] Dynamic line-item grid (decimal totals via Line Engine)
-
-**Done-when:** Gallery route demos every atom; no hardcoded colors/sizes.
+**Done-when:** met for master CRUD atoms.
 
 ---
 
-## 7. Wave A3 — ★ Entity Manifest Runtime (core differentiator)  `[~]` VERTICAL SLICE ONLY
+## 7. Wave A3 — ★ Entity Manifest Runtime (core differentiator)  `[~]` USABLE
 
 **Folders:** `lib/core/manifest/`, `lib/core/surfaces/`, `docs/manifest-spec.md`
 
-### A3.1 Manifest model (typed, freezed or hand-sealed)  `[~]`
+### A3.1 Manifest model  `[~]`
 
-- [x] `FieldType` — **minimal by design**: only `text`/`dateTime` exist
-      (`lib/core/manifest/field_spec.dart`). The full set (int/decimal/bool/enum/
-      fk/selfFk/json/binary) is deliberately not built — it grows from real
-      pressure (next: `LedgerMaster` needs `decimal`+`fk`, `AccountGroup` needs
-      `selfFk`), not speculation.
-- [x] `FieldSpec<E>`: `key`, `label`, `type`, `required`, `cellValue` closure. No
-      `wireKey`/l10n key/`readOnly`/`validators`/`visibleIn` yet — not needed
-      until a form Surface exists.
-- [ ] `FkSpec` — not built.
-- [~] `EntityManifest<E>`: has `id`, `label`, `rbacModule`, `resourcePath`,
-      `listColumns[]`, `searchFields[]`. Missing `idField`, `fields[]`,
-      `formSections[]`, `deleteMode`, `treeParentField` — all deferred with
-      the (nonexistent) form/detail Surfaces they'd serve.
-- [ ] `ManifestRegistry` — not built. Only one manifest (`brandManifest`)
-      exists as a top-level `final` constant; a registry is premature with one entry.
+- [x] `FieldType`: `text`, `dateTime`, `int`, `decimal`, `bool`, `fk`
+- [ ] `selfFk`, `enum`, `json`, `binary` — still deferred (see STATUS Sprint A / exceptions)
+- [x] `FieldSpec<E>` list columns
+- [x] `FormFieldSpec<E>` with wireKey, validators, FK triple
+- [x] `EntityManifest<E>`: list + form + hardDelete + supportsUpdate/Delete + emptyEntity
+- [ ] `formSections` / `treeParentField` / ManifestRegistry
 
-### A3.2 Binding layer  `[ ]` not built
+### A3.2 Binding layer  `[~]`
 
-- [ ] `EntityCodec<E>` generic interface — Brand instead uses a bespoke
-      `BrandMapper`/`BrandDto` pair (Track A/B precedent: hand-written, no
-      freezed). Revisit generalizing once a second manifest exists.
-- [ ] `MasterBinding<E, ID>` / `RepoBinding` DI helper — not built. Brand's DI
-      is three plain factory functions in `lib/features/inventory_brand/brand_di.dart`.
-      **Intentionally not generalized yet** — see that file's doc comment.
+- [x] Hand-written DTO + Mapper per entity (no freezed required)
+- [x] `buildRepository` DI helper — all masters use it
+- [ ] Central ManifestRegistry / injectable master bindings (not required at current scale)
 
-### A3.3 Surfaces (generic UI)  `[~]`
+### A3.3 Surfaces  `[~]`
 
-- [x] `MasterListSurface<E>` (`lib/core/surfaces/master_list_surface.dart`) —
-      adaptive table/cards (via Track C's `AdaptiveEntityList`), search (via
-      `FilterBar` → `CrudSearchChanged`), infinite scroll (new: a
-      `NotificationListener<ScrollNotification>` dispatching
-      `CrudLoadMoreRequested`, since `AdaptiveEntityList` takes a plain list),
-      RBAC-gated "New" action via `PermissionGate`. Tested:
-      `test/core/surfaces/master_list_surface_test.dart`.
-- [ ] `MasterDetailSurface` — not built.
-- [ ] `MasterFormSurface` — not built.
-- [ ] `FieldRenderer` switch — not built (list-only rendering is inlined in
-      `MasterListSurface` via `FieldSpec.cellValue`; a real renderer switch
-      is only needed once `FieldType` grows past `text`/`dateTime`).
-- [ ] Route factory (`/m/:manifestId/...`) — not built. Brand is wired as a
-      normal, individually-registered route (`/inventory/brand` in
-      `app_router.dart`), not through a generic manifest-id route.
+- [x] `MasterListSurface`
+- [x] `MasterFormSurface` (edit doubles as read-only when `supportsUpdate: false`)
+- [ ] Separate `MasterDetailSurface` — **wontfix** unless form-as-view fails UX
+- [x] `FieldRenderer`
+- [ ] Generic `/m/:manifestId` route factory — still per-entity routes
 
-### A3.4 ★ Command palette  `[ ]` not built — deferred past the checkpoint
+### A3.4 ★ Command palette  `[ ]` stub in shell header only
 
-### A3.5 Spec & tests  `[~]`
+### A3.5 Spec & tests  `[x]` / `[~]`
 
-- [ ] `docs/manifest-spec.md` — not written (one entity isn't enough to
-      generalize a recipe from yet).
-- [x] Widget test: `MasterListSurface` rendered against a fake tiny manifest +
-      fake repo (loading/error/search-dispatch) — `test/core/surfaces/master_list_surface_test.dart`.
-- [ ] Registry/field-visibility/ClientQuery tests — N/A, those components don't exist yet.
+- [x] `docs/manifest-spec.md` recipe (post Brand + Designation)
+- [x] List + form surface tests + field_renderer tests
+- [ ] Registry / ClientQuery tests — N/A until those land
 
-**Done-when (full A3, not yet met):** A fake "WidgetDemoEntity" works
-end-to-end with **zero** feature-folder CRUD code beyond codec + manifest
-registration. **Slice done-when (met):** Brand's list renders through
-`MasterListSurface` against the real backend with zero list/table code of its
-own beyond the manifest + DI factories.
+**Done-when (full A3):** registry + selfFk/binary + palette. **Practical done-when (met):** masters register via 7-file recipe without new Surfaces.
 
 ---
 
-## 8. Wave A4 — Gold path: Brand + hard-case master  `[~]` LIST ONLY
+## 8. Wave A4 — Gold path: Brand + hard-case master  `[x]` DONE (selfFk still open)
 
-Prove EMR against real backend data.
+- [x] Brand full list + create/edit/delete (hard delete)
+- [x] DI + menu + routes
+- [x] Designation **FK** hard case → Department
+- [x] `docs/manifest-spec.md` recipe
+- [ ] AccountGroup **selfFk** tree — next (STATUS Sprint A)
+- [x] Brand + Designation mapper tests; shared surface tests
 
-- [x] **Brand** binding: hand-written DTO (not freezed, matches Track A/B
-      precedent) + entity + mapper + manifest, path `/inventory/brand`,
-      **hard delete** (verified: `brands` table has no `is_active` column),
-      RBAC module `'Inventory'` (verified against `inventory.routes.ts` —
-      **not** `'Brand'`; the backend gates the whole inventory module coarsely).
-      Files: `lib/features/inventory_brand/{brand_manifest,brand_di}.dart`,
-      `data/{brand_dto,brand_mapper}.dart`, `domain/brand.dart`.
-- [x] Wire DI (plain factories, see A3.2 note) + menu item (`menu_model.dart`)
-      + RBAC gate (`PermissionGate` in `MasterListSurface`).
-- [x] **List** online, adaptive table/cards — verified via widget test against
-      a fake repo (no live backend run yet in this session).
-- [ ] Create / edit / delete — **not built**. No form/detail Surface exists
-      (A3.3), so Brand has no way to create or mutate yet; list is read-only
-      for now.
-- [ ] **Hard case (Designation FK / AccountGroup self-FK tree)** — not
-      attempted. Both need `FieldType.fk`/`selfFk`, which don't exist yet
-      (A3.1) — correctly sequenced *after* this checkpoint, not before.
-- [ ] `docs/templates/master-manifest-recipe.md` — not written (premature
-      with one manifest).
-- [x] Tests: `test/features/inventory_brand/brand_mapper_test.dart` (DTO/mapper
-      round-trip, 5 cases) + the shared `MasterListSurface` test (A3.5) covers
-      Brand's rendering path generically.
-
-**Done-when (full A4, not yet met):** Brand is production-usable online
-(create/edit/delete included); recipe is mechanical enough to register the
-next master without inventing UI. **Slice done-when (met):** Brand's list is
-demonstrably manifest-driven end to end — see `docs/SESSION_CONTEXT_EXPORT.md`.
+**Done-when:** met for Brand CRUD + FK proof. Self-FK remains Sprint A unlock.
 
 ---
 
-## 9. Wave A5 — Register remaining masters (not clone them)  `[ ]`  heavily ∥
+## 9. Wave A5 — Register remaining masters (not clone them)  `[~]` IN PROGRESS
 
-For each module, work is **DTO + mapper + codec + manifest + DI line**, not new pages.
+For each module, work is **DTO + mapper + manifest + DI + thin pages**, not new Surfaces.
 
-| Parallel unit | Entities (from feature-inventory) |
-|---------------|-----------------------------------|
-| ∥ Organization | CompanyProfile, FinancialYear, Branch, Currency, CurrencyRate, VoucherSeries, AddressBook, UserRole, UserCredentials, Permissions, ProjectMaster (+ config/error as needed) |
-| ∥ Accounts | AccountGroup (tree), LedgerMaster (+ 1:1 bank/credit/tax **tabs via form sections**), BillwiseRecord, ChequeDetails |
-| ∥ Inventory | remaining ~17 masters |
-| ∥ Employee | Department (tree), Designation, EmployeeDetails (+ tabs), docs, leave, attendance, shifts, … |
-| ∥ Ancillary | TermsAndConditions, TransportationDetails |
+| Parallel unit | Status |
+|---------------|--------|
+| ∥ Organization | **5 shipped** (Branch, Currency, Role, Contact, FY); rest `[!]`/`[ ]` in STATUS |
+| ∥ Accounts | **2 shipped** (AccountGroup flat, Ledger core) |
+| ∥ Inventory | **13 shipped** flat + Item/Group/SKU/Batch; image still deferred |
+| ∥ Employee | **2 shipped** (Department, Designation) |
+| ∥ Ancillary | **0** |
 
 **Rules:**
 
-- [ ] No new list/form widgets inside a feature
-- [ ] Entity doesn’t fit FieldSpec/Surface → **STOP** + note in `docs/change-requests/` or `docs/manifest-exceptions.md` — don’t fork Surface ad-hoc
-- [ ] 1:1 extensions = extra `formSections` / tabs, same binding
-- [ ] Hierarchical = `treeParentField` + shared tree picker widget
+- [x] No new list/form widgets inside a feature (recipe enforced)
+- [x] Exceptions → `docs/manifest-exceptions.md`
+- [ ] 1:1 extensions as form sections (Ledger bank/credit/tax — Sprint A phase 2)
+- [ ] Hierarchical `treeParentField` + tree picker (`selfFk`)
 
-**Done-when:** Analyze clean; each registered master listable/editable online; coverage matrix vs `feature-inventory.md` updated.
+**Done-when:** coverage matrix in STATUS green for all listable masters; not met.
+
+**Next:** STATUS §4 Sprint A (AccountGroup + LedgerMaster).
 
 ---
 
@@ -507,10 +436,12 @@ Vouchers are not manifests of flat fields alone — they are **blueprints**.
 
 ## 17. Immediate next actions (start here)
 
-1. **A0.1–A0.7** — stabilize Track A (this unblocks all parallel work).
-2. Spin **A1 / A2 / A3** in parallel only after A0 Done-when.
-3. Do **not** create `features/inventory_brand/**` full CRUD clones — wait for A3 surfaces, then A4 binding.
-4. Keep editing this file’s checkboxes as the source of truth; leave `BUILD_TASKS.md` as historical online-first plan or mark it superseded at the top.
+1. Use **[`STATUS.md`](./STATUS.md)** for completion matrix + sprint notes.
+2. **Sprint A remainder:** `FieldType.selfFk` → parent on AccountGroup/InventoryGroup; ledger bank/credit/tax tabs.
+3. **Sprint C:** Line Engine + DocumentSurface → Sales Invoice gold (Item + Ledger unblocked).
+4. Do **not** mass-clone feature packages; keep the 7-file EMR recipe.
+5. Leave offline (`database/**`, CRs) parked until online trading path works.
+6. Keep wave narrative here; flip STATUS marks when shipping entities.
 
 ---
 

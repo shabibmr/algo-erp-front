@@ -1,0 +1,63 @@
+import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
+import 'package:algo_erp_front/core/di/injection.dart';
+import 'package:algo_erp_front/core/domain/repository.dart';
+import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/features/accounts_account_group/account_group_di.dart';
+import 'package:algo_erp_front/features/accounts_account_group/account_group_manifest.dart';
+import 'package:algo_erp_front/features/accounts_account_group/domain/account_group.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+class AccountGroupFormPage extends StatelessWidget {
+  const AccountGroupFormPage({required this.mode, super.key, this.entityId});
+
+  final FormMode mode;
+  final int? entityId;
+
+  @override
+  Widget build(BuildContext context) {
+    return RepositoryProvider<Repository<AccountGroup, int>>(
+      create: (_) => createAccountGroupRepository(getIt<DioClient>()),
+      child: Builder(
+        builder: (context) {
+          final surface = MasterFormSurface<AccountGroup, int>(
+            manifest: accountGroupManifest,
+            mode: mode,
+            idOf: (g) => g.id,
+            onSaved: (_) => context.go(accountGroupManifest.resourcePath),
+            onDeleted: () => context.go(accountGroupManifest.resourcePath),
+          );
+          return AdaptiveLayout(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mode == FormMode.create
+                      ? 'New ${accountGroupManifest.label}'
+                      : accountGroupManifest.supportsUpdate
+                          ? 'Edit ${accountGroupManifest.label}'
+                          : 'View ${accountGroupManifest.label}',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 16),
+                if (mode == FormMode.edit)
+                  BlocProvider<DetailBloc<AccountGroup, int>>(
+                    create: (ctx) => DetailBloc<AccountGroup, int>(
+                      repository: ctx.read<Repository<AccountGroup, int>>(),
+                      id: entityId!,
+                    )..add(const DetailLoadRequested()),
+                    child: surface,
+                  )
+                else
+                  surface,
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

@@ -81,12 +81,15 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     }
   }
 
+  static bool _isFkType(FieldType type) =>
+      type == FieldType.fk || type == FieldType.selfFk;
+
   void _seedFromLoaded(E entity) {
     if (_seeded) return;
     _seeded = true;
     _draft = entity;
     for (final field in widget.manifest.formFields) {
-      if (field.type != FieldType.fk) continue;
+      if (!_isFkType(field.type)) continue;
       final rawId = field.getValue(entity);
       if (rawId == null) continue;
       unawaited(
@@ -101,9 +104,21 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
   void _setField(FormFieldSpec<E> field, Object? value) {
     setState(() {
       _draft = field.setValue(_draft as E, value);
-      if (field.type == FieldType.fk) _fkDisplayCache[field.key] = value;
+      if (_isFkType(field.type)) _fkDisplayCache[field.key] = value;
       _fieldErrors = Map.of(_fieldErrors)..remove(field.errorKey);
     });
+  }
+
+  /// For [FieldType.selfFk], drop the draft row from parent candidates so the
+  /// user cannot pick self. Full cycle checks remain server-side.
+  Future<List<Object>> _fkLoader(FormFieldSpec<E> field, String query) async {
+    final items = await field.fkSearch!(query);
+    if (field.type != FieldType.selfFk || _draft == null) return items;
+    final selfId = widget.idOf(_draft as E);
+    return items.where((item) {
+      // Self-ref pickers return the same entity type as the form draft.
+      return widget.idOf(item as E) != selfId;
+    }).toList(growable: false);
   }
 
   Future<void> _submit(Repository<E, ID> repo) async {
@@ -215,12 +230,14 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
           for (final field in manifest.formFields) ...[
             FieldRenderer.build<E>(
               field: field,
-              value: field.type == FieldType.fk
+              value: _isFkType(field.type)
                   ? _fkDisplayCache[field.key]
                   : field.getValue(_draft as E),
               onChanged: (value) => _setField(field, value),
               enabled: !_submitting && !isReadOnlyEdit,
               errorText: _fieldErrors[field.errorKey],
+              fkLoaderOverride:
+                  _isFkType(field.type) ? (q) => _fkLoader(field, q) : null,
             ),
             SizedBox(height: tokens.spacing.sm),
           ],

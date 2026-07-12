@@ -4,9 +4,8 @@ import 'package:flutter/foundation.dart';
 /// real pressure, not speculation — each case here is demanded by an entity
 /// actually being built (Brand, Department, Designation).
 ///
-/// Still deliberately deferred: `selfFk` (needs a tree-picker widget, first
-/// required by `Department.parent_dept_id`/`AccountGroup.parent_group_id`),
-/// `enum` (no manifest needs a free-string enum yet), `json`, `binary`.
+/// Still deliberately deferred: `enum` (free-string + validator is fine for
+/// now), `json`, `binary`.
 enum FieldType {
   /// A plain string value, required or optional per `FieldSpec.required`.
   text,
@@ -29,6 +28,11 @@ enum FieldType {
   /// but the form renders/searches by the related row's display value via
   /// `FormFieldSpec.fkSearch`/`fkDisplayOf`/`fkResolveById`.
   fk,
+
+  /// Self-referential parent FK (same entity type as the form). Uses the same
+  /// picker as [fk]; the master form surface excludes the draft's own id from
+  /// search results. Deeper cycle checks stay on the backend.
+  selfFk,
 }
 
 /// Describes one field of an entity for manifest-driven rendering.

@@ -104,14 +104,32 @@ the raw id — extract the id at that boundary:
 setValue: (d, v) => d.copyWith(departmentId: (v! as Department).id),
 ```
 
+### Cross-module FKs
+
+Same mechanics as same-module FKs (Designation → Department). Extra rules:
+
+1. The **target** feature package exposes `createXRepository(DioClient)` from
+   its `*_di.dart` (domain/data only — never import the target’s presentation).
+2. The **consumer** manifest owns a module-level lazy repo singleton and closes
+   over it in `fkSearch` / `fkDisplayOf` / `fkResolveById`.
+3. RBAC for the screen stays the **consumer** entity’s `rbacModule` (e.g. Ledger
+   gates on `Accounts` even when picking an AddressBook contact).
+4. If the target is not registered yet, **stop** and list the entity in
+   `manifest-exceptions.md` — do not stub fake pickers.
+
+Worked same-module example: `designation_manifest.dart`.  
+Worked cross-module examples: `ledger_manifest.dart` (→ AddressBook), `inventory_item_manifest.dart` (→ Ledger, four independent FKs reusing one ledger repository).
+
 ## What's still deliberately out of scope
 
-- **`FieldType.selfFk`** — a self-referencing tree parent (e.g.
-  `Department.parent_dept_id`, `AccountGroup.parent_group_id`) needs a
-  tree-picker widget that doesn't exist yet. Omit the self-FK field from the
-  manifest entirely (as `Department`'s does) rather than forcing it through
-  `FieldType.fk` — a self-FK needs cycle prevention a flat FK picker doesn't
-  provide.
+- **`FieldType.selfFk`** — **shipped** (first consumer: InventoryGroup parent).
+  Uses the same lookup picker as `fk`; `MasterFormSurface` excludes the draft
+  row's own id. Full cycle prevention stays on the backend (as
+  `InventoryGroupService.assertNoCycle` does). Worked example:
+  `inventory_group_manifest.dart`, `account_group_manifest.dart`. Department
+  parent can adopt the same field when prioritized.
+  Optional later: indented tree UI in the list (list already shows `depth` /
+  `full_path` when the API sends them).
 - **`FieldType.enum`/`json`/`binary`** — add only when a real entity needs
   one; don't pre-build.
 - **`ManifestRegistry`** / generic `/m/:manifestId/...` routing — still

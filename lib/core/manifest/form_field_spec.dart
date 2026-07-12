@@ -26,11 +26,11 @@ class FormFieldSpec<E> {
     this.fkDisplayOf,
     this.fkResolveById,
   }) : assert(
-          type != FieldType.fk ||
+          (type != FieldType.fk && type != FieldType.selfFk) ||
               (fkSearch != null &&
                   fkDisplayOf != null &&
                   fkResolveById != null),
-          'FieldType.fk requires fkSearch, fkDisplayOf, and fkResolveById.',
+          'FieldType.fk/selfFk requires fkSearch, fkDisplayOf, and fkResolveById.',
         );
 
   /// The entity-side (mapped, camelCase) field name.
@@ -40,12 +40,13 @@ class FormFieldSpec<E> {
   final FieldType type;
 
   /// Reads the current value off the draft entity: `String?`, `int?`,
-  /// `Decimal?`, `bool?`, or `DateTime?` — or, for [FieldType.fk], the raw
-  /// foreign-key id (`Object?`).
+  /// `Decimal?`, `bool?`, or `DateTime?` — or, for [FieldType.fk]/[FieldType.selfFk],
+  /// the raw foreign-key id (`Object?`).
   final Object? Function(E entity) getValue;
 
   /// Functional update: returns a **new** `E` with this field set to
-  /// `value`. For [FieldType.fk], `value` is the raw foreign-key id.
+  /// `value`. For [FieldType.fk]/[FieldType.selfFk], `value` is the selected
+  /// related object (surface caches it); extract the id in [setValue].
   final E Function(E entity, Object? value) setValue;
 
   /// The backend's Zod-validated wire key (e.g. `'Brand_Name'`), used to
@@ -63,17 +64,16 @@ class FormFieldSpec<E> {
   final String? hintText;
   final FormFieldValidator<Object?>? validator;
 
-  /// [FieldType.fk] only: search the related entity's own list endpoint,
-  /// e.g. `(q) => departmentRepository.list(PageQuery(search: q))`.
+  /// [FieldType.fk]/[FieldType.selfFk] only: search the related entity's
+  /// list endpoint (e.g. department repository `list` with `PageQuery.search`).
   final Future<List<Object>> Function(String query)? fkSearch;
 
-  /// [FieldType.fk] only: renders a related-entity search result as display
-  /// text (e.g. a `Department`'s name).
+  /// [FieldType.fk]/[FieldType.selfFk] only: renders a related-entity search
+  /// result as display text (e.g. a `Department`'s name).
   final String Function(Object item)? fkDisplayOf;
 
-  /// [FieldType.fk] only: resolves a stored raw id back to its related
-  /// entity, to seed the picker's initial label in edit mode (the draft
-  /// entity only stores the raw id, not the related object).
+  /// [FieldType.fk]/[FieldType.selfFk] only: resolves a stored raw id back to
+  /// its related entity, to seed the picker's initial label in edit mode.
   final Future<Object?> Function(Object id)? fkResolveById;
 
   /// The key server validation errors are matched against.

@@ -8,11 +8,11 @@ rule, these are named here rather than forced through the recipe or used to just
 
 | Entity | Backend path | Reason deferred |
 |---|---|---|
-| InventoryGroup | `/inventory/group` | Self-referencing `parent_group_id` — needs `FieldType.selfFk` + a tree-picker widget, neither of which exist yet. |
-| InventoryItem | `/inventory/item` | ~50 fields; 4 FKs into `ledger_master`, which lives in the Accounts domain, not Inventory — needs a design decision on cross-module FK repositories before it fits the single-FK recipe (Designation→Department is same-module). |
+| ~~InventoryGroup~~ | `/inventory/group` | **Shipped** as `inventory_group` with `FieldType.selfFk` parent (self excluded in picker; cycle checks server-side). List shows `full_path`/`depth` from API. |
+| InventoryItem (extras) | `/inventory/item` | Core + group FK shipped. Ancillary columns (HSN, KOT, times, weight, …) still off the form until needed. |
 | Ingredient (BOM) | `/inventory/ingredient` | Two FKs into the *same* target entity (`sales_item_id` and `purchase_item_id`, both → InventoryItem) with different semantic roles. The recipe's only worked FK example (Designation→Department) is one FK per target; a second FK to the same entity needs two independent `FormFieldSpec.fk` fields with distinct `fkSearch`/`fkDisplayOf` closures pointed at the same repository — untested shape. |
-| SKUMaster | `/inventory/sku` | FK → InventoryItem, which isn't registered yet. Blocked on InventoryItem, not new work of its own. |
-| ItemBatch | `/inventory/batch` | FK → InventoryItem, same blocker as SKUMaster. |
+| ~~SKUMaster~~ | `/inventory/sku` | **Shipped** as `inventory_sku` (hard delete; FK → Item; legacy `ITEM_ID` required). |
+| ~~ItemBatch~~ | `/inventory/batch` | **Shipped** as `inventory_batch` (soft delete; required FK `item_id` → Item). |
 | ItemImage | `/inventory/image` | No `PUT` route (same gap ItemProperty had, below) plus an `ImageBase64` field — `FieldType.binary` doesn't exist, and a create-only form that can't actually set the image isn't worth shipping. Revisit once `supportsUpdate` *and* a binary field type both exist. |
 | RouteCustomerMapping | `/inventory/route/customer-mapping` | No `PUT` route; `customer_ledger_id` FK is cross-module (Accounts). |
 | RouteMapping | `/inventory/route/mapping` | No `PUT` route; `salesperson_employee_id` FK is cross-module (Employee). |

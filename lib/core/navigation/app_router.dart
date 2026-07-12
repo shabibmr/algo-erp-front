@@ -7,6 +7,10 @@ import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/theme/motion_tokens.dart';
 import 'package:algo_erp_front/core/theme/theme_preview_page.dart';
 import 'package:algo_erp_front/core/widgets/gallery/widget_gallery_page.dart';
+import 'package:algo_erp_front/features/accounts_account_group/presentation/account_group_form_page.dart';
+import 'package:algo_erp_front/features/accounts_account_group/presentation/account_group_list_page.dart';
+import 'package:algo_erp_front/features/accounts_ledger/presentation/ledger_form_page.dart';
+import 'package:algo_erp_front/features/accounts_ledger/presentation/ledger_list_page.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:algo_erp_front/features/auth/presentation/pages/login_page.dart';
 import 'package:algo_erp_front/features/desk/presentation/pages/todays_desk_page.dart';
@@ -14,22 +18,32 @@ import 'package:algo_erp_front/features/employee_department/presentation/departm
 import 'package:algo_erp_front/features/employee_department/presentation/department_list_page.dart';
 import 'package:algo_erp_front/features/employee_designation/presentation/designation_form_page.dart';
 import 'package:algo_erp_front/features/employee_designation/presentation/designation_list_page.dart';
+import 'package:algo_erp_front/features/inventory_batch/presentation/item_batch_form_page.dart';
+import 'package:algo_erp_front/features/inventory_batch/presentation/item_batch_list_page.dart';
 import 'package:algo_erp_front/features/inventory_brand/presentation/brand_form_page.dart';
 import 'package:algo_erp_front/features/inventory_brand/presentation/brand_list_page.dart';
 import 'package:algo_erp_front/features/inventory_category/presentation/category_form_page.dart';
 import 'package:algo_erp_front/features/inventory_category/presentation/category_list_page.dart';
 import 'package:algo_erp_front/features/inventory_godown/presentation/godown_form_page.dart';
 import 'package:algo_erp_front/features/inventory_godown/presentation/godown_list_page.dart';
+import 'package:algo_erp_front/features/inventory_group/presentation/inventory_group_form_page.dart';
+import 'package:algo_erp_front/features/inventory_group/presentation/inventory_group_list_page.dart';
+import 'package:algo_erp_front/features/inventory_item/presentation/inventory_item_form_page.dart';
+import 'package:algo_erp_front/features/inventory_item/presentation/inventory_item_list_page.dart';
 import 'package:algo_erp_front/features/inventory_item_property/presentation/item_property_form_page.dart';
 import 'package:algo_erp_front/features/inventory_item_property/presentation/item_property_list_page.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_form_page.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_list_page.dart';
 import 'package:algo_erp_front/features/inventory_route/presentation/route_master_form_page.dart';
 import 'package:algo_erp_front/features/inventory_route/presentation/route_master_list_page.dart';
+import 'package:algo_erp_front/features/inventory_sku/presentation/sku_master_form_page.dart';
+import 'package:algo_erp_front/features/inventory_sku/presentation/sku_master_list_page.dart';
 import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_category_form_page.dart';
 import 'package:algo_erp_front/features/inventory_tax_category/presentation/tax_category_list_page.dart';
 import 'package:algo_erp_front/features/inventory_uom/presentation/uom_form_page.dart';
 import 'package:algo_erp_front/features/inventory_uom/presentation/uom_list_page.dart';
+import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
+import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_list_page.dart';
 import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_form_page.dart';
 import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_list_page.dart';
 import 'package:algo_erp_front/features/organization_branch/presentation/branch_form_page.dart';
@@ -40,8 +54,6 @@ import 'package:algo_erp_front/features/organization_financial_year/presentation
 import 'package:algo_erp_front/features/organization_financial_year/presentation/financial_year_list_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_form_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_list_page.dart';
-import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
-import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -112,6 +124,10 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/dashboard' => const TodaysDeskPage(),
                     '/theme-preview' => const ThemePreviewPage(),
                     '/widget-gallery' => const WidgetGalleryPage(),
+                    '/inventory/item' => const InventoryItemListPage(),
+                    '/inventory/group' => const InventoryGroupListPage(),
+                    '/inventory/sku' => const SkuMasterListPage(),
+                    '/inventory/batch' => const ItemBatchListPage(),
                     '/inventory/brand' => const BrandListPage(),
                     '/inventory/uom' => const UomListPage(),
                     '/inventory/category' => const CategoryListPage(),
@@ -129,12 +145,116 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/organization/contacts' => const AddressBookListPage(),
                     '/organization/fy' => const FinancialYearListPage(),
                     '/inventory/property' => const ItemPropertyListPage(),
+                    '/accounts/groups' => const AccountGroupListPage(),
+                    '/accounts/ledgers' => const LedgerListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
               ),
             // Manifest create/edit routes — not menu items, so registered
             // directly rather than through the AppMenu.allItems loop above.
+            GoRoute(
+              path: '/accounts/groups/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const AccountGroupFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/accounts/groups/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: AccountGroupFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/accounts/ledgers/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const LedgerFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/accounts/ledgers/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: LedgerFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/item/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const InventoryItemFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/item/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: InventoryItemFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/group/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const InventoryGroupFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/group/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: InventoryGroupFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/sku/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const SkuMasterFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/sku/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: SkuMasterFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/batch/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const ItemBatchFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/inventory/batch/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: ItemBatchFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
             GoRoute(
               path: '/inventory/brand/new',
               pageBuilder: (context, state) => buildPageWithMotion(
