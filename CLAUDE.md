@@ -29,12 +29,13 @@ flutter test test/features/auth/auth_bloc_test.dart
 flutter test test/features/auth/auth_bloc_test.dart --plain-name 'AuthStarted'
 ```
 
-Run the app (three flavor entrypoints; see the port gotcha below before using `make run-dev`):
+Run the app — three flavor entrypoints, each with its own `API_BASE_URL` baked in as a default, so
+`make run-dev` needs no override:
 
 ```bash
-flutter run -t lib/main_dev.dart --dart-define=API_BASE_URL=http://localhost:5000
-flutter run -t lib/main_staging.dart --dart-define=API_BASE_URL=https://staging-api.algoerp.internal
-flutter run -t lib/main_prod.dart --dart-define=API_BASE_URL=https://api.algoerp.com
+make run-dev        # flutter run -t lib/main_dev.dart      --dart-define=API_BASE_URL=http://localhost:5000
+make run-staging    # flutter run -t lib/main_staging.dart  --dart-define=API_BASE_URL=https://staging-api.algoerp.internal
+make run-prod       # flutter run -t lib/main_prod.dart     --dart-define=API_BASE_URL=https://api.algoerp.com
 # add -d chrome | -d windows | -d android | ... to pick a device
 ```
 
@@ -123,9 +124,8 @@ Rules that are easy to get wrong:
 Full detail in `docs/api-contract.md`; live gaps and their status in `docs/backend-suggestions.md`
 (a living log — append a `BE-NNN` entry when you hit a new backend limitation).
 
-- **Port.** `lib/main_dev.dart` and the `Makefile` default to `http://localhost:3000`, but the backend
-  actually runs on **5000**. Pass `--dart-define=API_BASE_URL=http://localhost:5000`. Dev seed login
-  is `brand.tester` / `BrandTest123!`.
+- **Port.** The backend listens on **5000** (`models/backend/.env`), which is what the dev flavor
+  targets. Dev seed login is `brand.tester` / `BrandTest123!`.
 - **No `/api/v1` prefix.** Routers mount at the root: `/auth`, `/inventory`, `/organization`,
   `/accounts`, `/employee`, `/transactions`, `/reports`.
 - **Envelope.** `{ success, message?, data?, error?: { message, code?, details? }, requestId? }`.

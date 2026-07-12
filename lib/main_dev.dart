@@ -10,7 +10,7 @@ Future<void> main() async {
       flavor: Flavor.dev,
       apiBaseUrl: String.fromEnvironment(
         'API_BASE_URL',
-        defaultValue: 'http://localhost:3000',
+        defaultValue: 'http://localhost:5000',
       ),
     ),
   );

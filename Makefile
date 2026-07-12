@@ -16,7 +16,7 @@ test:
 	flutter test
 
 run-dev:
-	flutter run -t lib/main_dev.dart --dart-define=API_BASE_URL=http://localhost:3000
+	flutter run -t lib/main_dev.dart --dart-define=API_BASE_URL=http://localhost:5000
 
 run-staging:
 	flutter run -t lib/main_staging.dart --dart-define=API_BASE_URL=https://staging-api.algoerp.internal
