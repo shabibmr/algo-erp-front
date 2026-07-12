@@ -7,25 +7,25 @@ class GodownMapper implements Mapper<GodownDto, Godown> {
 
   @override
   Godown toEntity(GodownDto dto) => Godown(
-        id: dto.id,
-        name: dto.godownName,
-        code: dto.godownCode,
-        location: dto.godownLocation,
-        narration: dto.godownNarration,
-        isProfitCentre: dto.isProfitCentre,
-        isDefault: dto.isDefault,
-        isProduction: dto.isProduction,
-      );
+    id: dto.id,
+    name: dto.godownName,
+    code: dto.godownCode,
+    location: dto.godownLocation,
+    narration: dto.godownNarration,
+    isProfitCentre: dto.isProfitCentre,
+    isDefault: dto.isDefault,
+    isProduction: dto.isProduction,
+  );
 
   @override
   GodownDto toDto(Godown entity) => GodownDto(
-        id: entity.id,
-        godownName: entity.name,
-        godownCode: entity.code,
-        godownLocation: entity.location,
-        godownNarration: entity.narration,
-        isProfitCentre: entity.isProfitCentre,
-        isDefault: entity.isDefault,
-        isProduction: entity.isProduction,
-      );
+    id: entity.id,
+    godownName: entity.name,
+    godownCode: entity.code,
+    godownLocation: entity.location,
+    godownNarration: entity.narration,
+    isProfitCentre: entity.isProfitCentre,
+    isDefault: entity.isDefault,
+    isProduction: entity.isProduction,
+  );
 }

@@ -9,8 +9,9 @@ import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dar
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
 import 'package:decimal/decimal.dart';
 
-final _inventoryItemRepository =
-    createInventoryItemRepository(getIt<DioClient>());
+final _inventoryItemRepository = createInventoryItemRepository(
+  getIt<DioClient>(),
+);
 
 /// Item batch master. Soft delete. RBAC coarse `'Inventory'`.
 final itemBatchManifest = EntityManifest<ItemBatch>(
@@ -66,12 +67,12 @@ final itemBatchManifest = EntityManifest<ItemBatch>(
       type: FieldType.fk,
       required: true,
       getValue: (b) => b.itemId == 0 ? null : b.itemId,
-      setValue: (b, v) => b.copyWith(
-        itemId: v == null ? 0 : (v as InventoryItem).id,
-      ),
+      setValue: (b, v) =>
+          b.copyWith(itemId: v == null ? 0 : (v as InventoryItem).id),
       fkSearch: (query) async {
-        final result =
-            await _inventoryItemRepository.list(PageQuery(search: query));
+        final result = await _inventoryItemRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {
@@ -141,10 +142,10 @@ final itemBatchManifest = EntityManifest<ItemBatch>(
     ),
   ],
   emptyEntity: () => ItemBatch(
-        id: 0,
-        itemId: 0,
-        batchNumber: '',
-        costPrice: Decimal.zero,
-        sellingPrice: Decimal.zero,
-      ),
+    id: 0,
+    itemId: 0,
+    batchNumber: '',
+    costPrice: Decimal.zero,
+    sellingPrice: Decimal.zero,
+  ),
 );

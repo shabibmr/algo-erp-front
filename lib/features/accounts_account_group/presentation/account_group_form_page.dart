@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class AccountGroupFormPage extends StatelessWidget {
       create: (_) => createAccountGroupRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            accountGroupCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(accountGroupManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<AccountGroup, int>(
             manifest: accountGroupManifest,
             mode: mode,
             idOf: (g) => g.id,
-            onSaved: (_) => context.go(accountGroupManifest.resourcePath),
-            onDeleted: () => context.go(accountGroupManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class AccountGroupFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${accountGroupManifest.label}'
                       : accountGroupManifest.supportsUpdate
-                          ? 'Edit ${accountGroupManifest.label}'
-                          : 'View ${accountGroupManifest.label}',
+                      ? 'Edit ${accountGroupManifest.label}'
+                      : 'View ${accountGroupManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

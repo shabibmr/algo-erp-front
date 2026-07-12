@@ -22,15 +22,14 @@ class Category extends Equatable {
     String? name,
     Object? code = _unset,
     Object? description = _unset,
-  }) =>
-      Category(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        description: identical(description, _unset)
-            ? this.description
-            : description as String?,
-      );
+  }) => Category(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    description: identical(description, _unset)
+        ? this.description
+        : description as String?,
+  );
 
   @override
   List<Object?> get props => [id, name, code, description];

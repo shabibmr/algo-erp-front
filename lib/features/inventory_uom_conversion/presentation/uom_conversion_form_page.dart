@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class UomConversionFormPage extends StatelessWidget {
       create: (_) => createUomConversionRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            uomConversionCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(uomConversionManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<UomConversion, int>(
             manifest: uomConversionManifest,
             mode: mode,
             idOf: (u) => u.id,
-            onSaved: (_) => context.go(uomConversionManifest.resourcePath),
-            onDeleted: () => context.go(uomConversionManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,16 +47,15 @@ class UomConversionFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${uomConversionManifest.label}'
                       : uomConversionManifest.supportsUpdate
-                          ? 'Edit ${uomConversionManifest.label}'
-                          : 'View ${uomConversionManifest.label}',
+                      ? 'Edit ${uomConversionManifest.label}'
+                      : 'View ${uomConversionManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),
                 if (mode == FormMode.edit)
                   BlocProvider<DetailBloc<UomConversion, int>>(
                     create: (ctx) => DetailBloc<UomConversion, int>(
-                      repository:
-                          ctx.read<Repository<UomConversion, int>>(),
+                      repository: ctx.read<Repository<UomConversion, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,

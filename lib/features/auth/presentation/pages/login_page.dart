@@ -54,9 +54,7 @@ class _LoginPageState extends State<LoginPage> {
           if (state is AuthFailure) {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(content: Text(state.failure.message)),
-              );
+              ..showSnackBar(SnackBar(content: Text(state.failure.message)));
           }
         },
         builder: (context, state) {
@@ -69,9 +67,8 @@ class _LoginPageState extends State<LoginPage> {
             usernameController: _usernameController,
             passwordController: _passwordController,
             obscurePassword: _obscurePassword,
-            onToggleObscure: () => setState(
-              () => _obscurePassword = !_obscurePassword,
-            ),
+            onToggleObscure: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
             isLoading: isLoading,
             fieldErrors: fieldErrors,
             onSubmit: _submit,
@@ -163,16 +160,16 @@ class _DeskWashPanel extends StatelessWidget {
                 Text(
                   context.l10n.appTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 SizedBox(height: tokens.spacing.sm),
                 Text(
                   "Your company's desk — open for the day.",
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
                 ),
                 const Spacer(flex: 2),
               ],
@@ -283,9 +280,7 @@ class _LoginForm extends StatelessWidget {
           Text(
             'Sign in to your desk',
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: brand.inkMuted,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
           ),
           SizedBox(height: tokens.spacing.xl),
           TextFormField(

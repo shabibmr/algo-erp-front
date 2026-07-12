@@ -25,7 +25,7 @@ rule, these are named here rather than forced through the recipe or used to just
 |---|---|---|
 | CurrencyRate | `/organization/rates` | `GET /rates` is a currency+date lookup (`getExchangeRate(currencyId, date)`), not a paginated list — doesn't return the `{items, meta}` shape `MasterListSurface` needs regardless of CRUD completeness. No `PUT`/`DELETE` either. Doesn't fit the recipe even with `supportsUpdate`/`supportsDelete`. |
 | ConfigSetting | `/organization/config-settings` | Keyed by a string `gm_key`, not an int `id`; no create route — doesn't fit the `Repository<E, ID>` generic's implicit int-id shape without a design decision. |
-| VoucherSeries | `/organization/voucher-series` | 3 FKs (`company_id`/`branch_id`/`financial_year_id`) into 3 different entities, two of which (CompanyProfile, FinancialYear) aren't registered — blocked on those, not new work of its own. |
+| ~~VoucherSeries~~ | `/organization/voucher-series` | **Shipped** as `organization_voucher_series`. `company_id` remains plain int (CompanyProfile deferred); branch + FY are optional FKs. `require_approval` toggles optional SI approval workflow. |
 | UserCredentials | `/organization/users` | Carries a `password` field — needs deliberate handling (never round-tripped back from the server, distinct widget), not a generic text field; also multi-FK (`contact_id`/`role_id`/`branch_id`). |
 | ProjectMaster | `/organization/projects` | Self-referential `parent_project_master_id` — same `FieldType.selfFk` gap as InventoryGroup above. |
 | CompanyProfile | `/organization/company-profile` | `Logo` is a `Bytes` field (binary) — same gap as ItemImage above; also no `DELETE` route (single-tenant profile). |

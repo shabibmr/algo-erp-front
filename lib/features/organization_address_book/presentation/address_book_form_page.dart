@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class AddressBookFormPage extends StatelessWidget {
       create: (_) => createAddressBookRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            addressBookCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(addressBookManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<AddressBook, int>(
             manifest: addressBookManifest,
             mode: mode,
             idOf: (contact) => contact.id,
-            onSaved: (_) => context.go(addressBookManifest.resourcePath),
-            onDeleted: () => context.go(addressBookManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class AddressBookFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${addressBookManifest.label}'
                       : addressBookManifest.supportsUpdate
-                          ? 'Edit ${addressBookManifest.label}'
-                          : 'View ${addressBookManifest.label}',
+                      ? 'Edit ${addressBookManifest.label}'
+                      : 'View ${addressBookManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

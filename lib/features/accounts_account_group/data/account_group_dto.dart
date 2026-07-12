@@ -34,20 +34,20 @@ class AccountGroupDto extends Equatable {
 
   /// `id`/timestamps and path fields are server-generated / read-only.
   Map<String, dynamic> toJson() => {
-        'Group_Name': groupName,
-        if (groupCode != null && groupCode!.isNotEmpty) 'group_code': groupCode,
-        'parent_group_id': parentGroupId,
-        'is_system_defined': isSystemDefined,
-      };
+    'Group_Name': groupName,
+    if (groupCode != null && groupCode!.isNotEmpty) 'group_code': groupCode,
+    'parent_group_id': parentGroupId,
+    'is_system_defined': isSystemDefined,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        groupName,
-        groupCode,
-        parentGroupId,
-        isSystemDefined,
-        fullPath,
-        depth,
-      ];
+    id,
+    groupName,
+    groupCode,
+    parentGroupId,
+    isSystemDefined,
+    fullPath,
+    depth,
+  ];
 }

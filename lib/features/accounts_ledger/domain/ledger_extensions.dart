@@ -25,17 +25,16 @@ class LedgerBankDetails extends Equatable {
     Object? iban = _unset,
     Object? swiftCode = _unset,
     Object? branchName = _unset,
-  }) =>
-      LedgerBankDetails(
-        accountNumber: accountNumber ?? this.accountNumber,
-        iban: identical(iban, _unset) ? this.iban : iban as String?,
-        swiftCode: identical(swiftCode, _unset)
-            ? this.swiftCode
-            : swiftCode as String?,
-        branchName: identical(branchName, _unset)
-            ? this.branchName
-            : branchName as String?,
-      );
+  }) => LedgerBankDetails(
+    accountNumber: accountNumber ?? this.accountNumber,
+    iban: identical(iban, _unset) ? this.iban : iban as String?,
+    swiftCode: identical(swiftCode, _unset)
+        ? this.swiftCode
+        : swiftCode as String?,
+    branchName: identical(branchName, _unset)
+        ? this.branchName
+        : branchName as String?,
+  );
 
   @override
   List<Object?> get props => [accountNumber, iban, swiftCode, branchName];
@@ -66,32 +65,31 @@ class LedgerCreditSettings extends Equatable {
     int? creditPeriodDays,
     Object? paymentTerms = _unset,
     Object? cautionDeposit = _unset,
-  }) =>
-      LedgerCreditSettings(
-        creditLimit: identical(creditLimit, _unset)
-            ? this.creditLimit
-            : creditLimit as Decimal?,
-        creditPeriodDays: creditPeriodDays ?? this.creditPeriodDays,
-        paymentTerms: identical(paymentTerms, _unset)
-            ? this.paymentTerms
-            : paymentTerms as String?,
-        cautionDeposit: identical(cautionDeposit, _unset)
-            ? this.cautionDeposit
-            : cautionDeposit as Decimal?,
-      );
+  }) => LedgerCreditSettings(
+    creditLimit: identical(creditLimit, _unset)
+        ? this.creditLimit
+        : creditLimit as Decimal?,
+    creditPeriodDays: creditPeriodDays ?? this.creditPeriodDays,
+    paymentTerms: identical(paymentTerms, _unset)
+        ? this.paymentTerms
+        : paymentTerms as String?,
+    cautionDeposit: identical(cautionDeposit, _unset)
+        ? this.cautionDeposit
+        : cautionDeposit as Decimal?,
+  );
 
   @override
-  List<Object?> get props =>
-      [creditLimit, creditPeriodDays, paymentTerms, cautionDeposit];
+  List<Object?> get props => [
+    creditLimit,
+    creditPeriodDays,
+    paymentTerms,
+    cautionDeposit,
+  ];
 }
 
 /// 1:1 `ledger_tax_settings` — nested as `taxSettings`.
 class LedgerTaxSettings extends Equatable {
-  const LedgerTaxSettings({
-    this.trn,
-    this.taxCategoryId,
-    this.typeOfSupply,
-  });
+  const LedgerTaxSettings({this.trn, this.taxCategoryId, this.typeOfSupply});
 
   final String? trn;
   final int? taxCategoryId;
@@ -106,16 +104,15 @@ class LedgerTaxSettings extends Equatable {
     Object? trn = _unset,
     Object? taxCategoryId = _unset,
     Object? typeOfSupply = _unset,
-  }) =>
-      LedgerTaxSettings(
-        trn: identical(trn, _unset) ? this.trn : trn as String?,
-        taxCategoryId: identical(taxCategoryId, _unset)
-            ? this.taxCategoryId
-            : taxCategoryId as int?,
-        typeOfSupply: identical(typeOfSupply, _unset)
-            ? this.typeOfSupply
-            : typeOfSupply as String?,
-      );
+  }) => LedgerTaxSettings(
+    trn: identical(trn, _unset) ? this.trn : trn as String?,
+    taxCategoryId: identical(taxCategoryId, _unset)
+        ? this.taxCategoryId
+        : taxCategoryId as int?,
+    typeOfSupply: identical(typeOfSupply, _unset)
+        ? this.typeOfSupply
+        : typeOfSupply as String?,
+  );
 
   @override
   List<Object?> get props => [trn, taxCategoryId, typeOfSupply];

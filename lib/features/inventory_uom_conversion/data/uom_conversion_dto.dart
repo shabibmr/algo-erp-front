@@ -30,14 +30,20 @@ class UomConversionDto extends Equatable {
   final String? narration;
 
   Map<String, dynamic> toJson() => {
-        'baseUnit': baseUnit,
-        'toUnit': toUnit,
-        'conValue': conValue,
-        'itemID': itemId,
-        'narration': narration,
-      };
+    'baseUnit': baseUnit,
+    'toUnit': toUnit,
+    'conValue': conValue,
+    'itemID': itemId,
+    'narration': narration,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, baseUnit, toUnit, conValue, itemId, narration];
+  List<Object?> get props => [
+    id,
+    baseUnit,
+    toUnit,
+    conValue,
+    itemId,
+    narration,
+  ];
 }

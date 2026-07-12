@@ -1,7 +1,4 @@
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
-import 'package:algo_erp_front/core/bloc/crud_contract.dart';
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/features/organization_branch/branch_di.dart';
@@ -16,9 +13,10 @@ class BranchListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CrudBloc<Branch, int, void>>(
-      create: (_) => createBranchCrudBloc(getIt<DioClient>())
-        ..add(const CrudLoadRequested()),
+    // `.value`, not `create:` — the bloc is owned by the CrudBlocScope
+    // in AppShell so the form route shares it. See branchCrudBloc.
+    return BlocProvider<CrudBloc<Branch, int, void>>.value(
+      value: branchCrudBloc(context),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

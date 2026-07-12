@@ -7,19 +7,19 @@ class DesignationMapper implements Mapper<DesignationDto, Designation> {
 
   @override
   Designation toEntity(DesignationDto dto) => Designation(
-        id: dto.id,
-        code: dto.designationCode,
-        name: dto.designationName,
-        departmentId: dto.departmentId,
-        isActive: dto.isActive,
-      );
+    id: dto.id,
+    code: dto.designationCode,
+    name: dto.designationName,
+    departmentId: dto.departmentId,
+    isActive: dto.isActive,
+  );
 
   @override
   DesignationDto toDto(Designation entity) => DesignationDto(
-        id: entity.id,
-        designationCode: entity.code,
-        designationName: entity.name,
-        departmentId: entity.departmentId,
-        isActive: entity.isActive,
-      );
+    id: entity.id,
+    designationCode: entity.code,
+    designationName: entity.name,
+    departmentId: entity.departmentId,
+    isActive: entity.isActive,
+  );
 }

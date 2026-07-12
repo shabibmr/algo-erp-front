@@ -116,97 +116,95 @@ class InventoryItem extends Equatable {
     bool? isService,
     bool? isPerishable,
     bool? isActive,
-  }) =>
-      InventoryItem(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: code ?? this.code,
-        alias: identical(alias, _unset) ? this.alias : alias as String?,
-        partNumber: identical(partNumber, _unset)
-            ? this.partNumber
-            : partNumber as String?,
-        description: identical(description, _unset)
-            ? this.description
-            : description as String?,
-        nameArabic: identical(nameArabic, _unset)
-            ? this.nameArabic
-            : nameArabic as String?,
-        inventoryGroupId: identical(inventoryGroupId, _unset)
-            ? this.inventoryGroupId
-            : inventoryGroupId as int?,
-        legacyGroupKey: identical(legacyGroupKey, _unset)
-            ? this.legacyGroupKey
-            : legacyGroupKey as String?,
-        uomId: identical(uomId, _unset) ? this.uomId : uomId as int?,
-        brandId: identical(brandId, _unset) ? this.brandId : brandId as int?,
-        categoryId: identical(categoryId, _unset)
-            ? this.categoryId
-            : categoryId as int?,
-        taxCategoryId: identical(taxCategoryId, _unset)
-            ? this.taxCategoryId
-            : taxCategoryId as int?,
-        salesGlLedgerId: identical(salesGlLedgerId, _unset)
-            ? this.salesGlLedgerId
-            : salesGlLedgerId as int?,
-        defaultPurchaseLedgerId: identical(defaultPurchaseLedgerId, _unset)
-            ? this.defaultPurchaseLedgerId
-            : defaultPurchaseLedgerId as int?,
-        defaultSalesReturnLedgerId:
-            identical(defaultSalesReturnLedgerId, _unset)
-                ? this.defaultSalesReturnLedgerId
-                : defaultSalesReturnLedgerId as int?,
-        defaultPurchaseReturnLedgerId:
-            identical(defaultPurchaseReturnLedgerId, _unset)
-                ? this.defaultPurchaseReturnLedgerId
-                : defaultPurchaseReturnLedgerId as int?,
-        price: price ?? this.price,
-        basePrice: basePrice ?? this.basePrice,
-        standardCost: standardCost ?? this.standardCost,
-        vatRate: vatRate ?? this.vatRate,
-        openingStock: openingStock ?? this.openingStock,
-        reorderLevel: reorderLevel ?? this.reorderLevel,
-        isPurchaseItem: isPurchaseItem ?? this.isPurchaseItem,
-        isSalesItem: isSalesItem ?? this.isSalesItem,
-        isStockItem: isStockItem ?? this.isStockItem,
-        isSerialized: isSerialized ?? this.isSerialized,
-        isBatchTracked: isBatchTracked ?? this.isBatchTracked,
-        isService: isService ?? this.isService,
-        isPerishable: isPerishable ?? this.isPerishable,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => InventoryItem(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: code ?? this.code,
+    alias: identical(alias, _unset) ? this.alias : alias as String?,
+    partNumber: identical(partNumber, _unset)
+        ? this.partNumber
+        : partNumber as String?,
+    description: identical(description, _unset)
+        ? this.description
+        : description as String?,
+    nameArabic: identical(nameArabic, _unset)
+        ? this.nameArabic
+        : nameArabic as String?,
+    inventoryGroupId: identical(inventoryGroupId, _unset)
+        ? this.inventoryGroupId
+        : inventoryGroupId as int?,
+    legacyGroupKey: identical(legacyGroupKey, _unset)
+        ? this.legacyGroupKey
+        : legacyGroupKey as String?,
+    uomId: identical(uomId, _unset) ? this.uomId : uomId as int?,
+    brandId: identical(brandId, _unset) ? this.brandId : brandId as int?,
+    categoryId: identical(categoryId, _unset)
+        ? this.categoryId
+        : categoryId as int?,
+    taxCategoryId: identical(taxCategoryId, _unset)
+        ? this.taxCategoryId
+        : taxCategoryId as int?,
+    salesGlLedgerId: identical(salesGlLedgerId, _unset)
+        ? this.salesGlLedgerId
+        : salesGlLedgerId as int?,
+    defaultPurchaseLedgerId: identical(defaultPurchaseLedgerId, _unset)
+        ? this.defaultPurchaseLedgerId
+        : defaultPurchaseLedgerId as int?,
+    defaultSalesReturnLedgerId: identical(defaultSalesReturnLedgerId, _unset)
+        ? this.defaultSalesReturnLedgerId
+        : defaultSalesReturnLedgerId as int?,
+    defaultPurchaseReturnLedgerId:
+        identical(defaultPurchaseReturnLedgerId, _unset)
+        ? this.defaultPurchaseReturnLedgerId
+        : defaultPurchaseReturnLedgerId as int?,
+    price: price ?? this.price,
+    basePrice: basePrice ?? this.basePrice,
+    standardCost: standardCost ?? this.standardCost,
+    vatRate: vatRate ?? this.vatRate,
+    openingStock: openingStock ?? this.openingStock,
+    reorderLevel: reorderLevel ?? this.reorderLevel,
+    isPurchaseItem: isPurchaseItem ?? this.isPurchaseItem,
+    isSalesItem: isSalesItem ?? this.isSalesItem,
+    isStockItem: isStockItem ?? this.isStockItem,
+    isSerialized: isSerialized ?? this.isSerialized,
+    isBatchTracked: isBatchTracked ?? this.isBatchTracked,
+    isService: isService ?? this.isService,
+    isPerishable: isPerishable ?? this.isPerishable,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        code,
-        alias,
-        partNumber,
-        description,
-        nameArabic,
-        inventoryGroupId,
-        legacyGroupKey,
-        uomId,
-        brandId,
-        categoryId,
-        taxCategoryId,
-        salesGlLedgerId,
-        defaultPurchaseLedgerId,
-        defaultSalesReturnLedgerId,
-        defaultPurchaseReturnLedgerId,
-        price,
-        basePrice,
-        standardCost,
-        vatRate,
-        openingStock,
-        reorderLevel,
-        isPurchaseItem,
-        isSalesItem,
-        isStockItem,
-        isSerialized,
-        isBatchTracked,
-        isService,
-        isPerishable,
-        isActive,
-      ];
+    id,
+    name,
+    code,
+    alias,
+    partNumber,
+    description,
+    nameArabic,
+    inventoryGroupId,
+    legacyGroupKey,
+    uomId,
+    brandId,
+    categoryId,
+    taxCategoryId,
+    salesGlLedgerId,
+    defaultPurchaseLedgerId,
+    defaultSalesReturnLedgerId,
+    defaultPurchaseReturnLedgerId,
+    price,
+    basePrice,
+    standardCost,
+    vatRate,
+    openingStock,
+    reorderLevel,
+    isPurchaseItem,
+    isSalesItem,
+    isStockItem,
+    isSerialized,
+    isBatchTracked,
+    isService,
+    isPerishable,
+    isActive,
+  ];
 }

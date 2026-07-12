@@ -7,21 +7,21 @@ class UomMapper implements Mapper<UomDto, Uom> {
 
   @override
   Uom toEntity(UomDto dto) => Uom(
-        id: dto.id,
-        name: dto.uomName,
-        code: dto.uomCode,
-        decimalPlaces: dto.decimalPlaces,
-        symbol: dto.uomSymbol,
-        isComposite: dto.isComposite,
-      );
+    id: dto.id,
+    name: dto.uomName,
+    code: dto.uomCode,
+    decimalPlaces: dto.decimalPlaces,
+    symbol: dto.uomSymbol,
+    isComposite: dto.isComposite,
+  );
 
   @override
   UomDto toDto(Uom entity) => UomDto(
-        id: entity.id,
-        uomName: entity.name,
-        uomCode: entity.code,
-        decimalPlaces: entity.decimalPlaces,
-        uomSymbol: entity.symbol,
-        isComposite: entity.isComposite,
-      );
+    id: entity.id,
+    uomName: entity.name,
+    uomCode: entity.code,
+    decimalPlaces: entity.decimalPlaces,
+    uomSymbol: entity.symbol,
+    isComposite: entity.isComposite,
+  );
 }

@@ -20,13 +20,13 @@ import 'package:algo_erp_front/features/inventory_uom/uom_di.dart';
 import 'package:decimal/decimal.dart';
 
 /// Lazy FK targets — same-module (Brand/UOM/group/…) + cross-module Ledger.
-final _inventoryGroupRepository =
-    createInventoryGroupRepository(getIt<DioClient>());
+final _inventoryGroupRepository = createInventoryGroupRepository(
+  getIt<DioClient>(),
+);
 final _uomRepository = createUomRepository(getIt<DioClient>());
 final _brandRepository = createBrandRepository(getIt<DioClient>());
 final _categoryRepository = createCategoryRepository(getIt<DioClient>());
-final _taxCategoryRepository =
-    createTaxCategoryRepository(getIt<DioClient>());
+final _taxCategoryRepository = createTaxCategoryRepository(getIt<DioClient>());
 final _ledgerRepository = createLedgerRepository(getIt<DioClient>());
 
 Future<List<Object>> _searchLedgers(String query) async {
@@ -150,17 +150,13 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final g = v as InventoryGroup;
         final legacy = g.groupId.isNotEmpty
             ? g.groupId
-            : (g.code != null && g.code!.isNotEmpty
-                ? g.code
-                : g.id.toString());
-        return i.copyWith(
-          inventoryGroupId: g.id,
-          legacyGroupKey: legacy,
-        );
+            : (g.code != null && g.code!.isNotEmpty ? g.code : g.id.toString());
+        return i.copyWith(inventoryGroupId: g.id, legacyGroupKey: legacy);
       },
       fkSearch: (query) async {
-        final result =
-            await _inventoryGroupRepository.list(PageQuery(search: query));
+        final result = await _inventoryGroupRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {
@@ -181,9 +177,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'UOM',
       type: FieldType.fk,
       getValue: (i) => i.uomId,
-      setValue: (i, v) => i.copyWith(
-        uomId: v == null ? null : (v as Uom).id,
-      ),
+      setValue: (i, v) => i.copyWith(uomId: v == null ? null : (v as Uom).id),
       fkSearch: (query) async {
         final result = await _uomRepository.list(PageQuery(search: query));
         return result.fold((_) => const [], (page) => page.items);
@@ -204,9 +198,8 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'Brand',
       type: FieldType.fk,
       getValue: (i) => i.brandId,
-      setValue: (i, v) => i.copyWith(
-        brandId: v == null ? null : (v as Brand).id,
-      ),
+      setValue: (i, v) =>
+          i.copyWith(brandId: v == null ? null : (v as Brand).id),
       fkSearch: (query) async {
         final result = await _brandRepository.list(PageQuery(search: query));
         return result.fold((_) => const [], (page) => page.items);
@@ -223,12 +216,10 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'Category',
       type: FieldType.fk,
       getValue: (i) => i.categoryId,
-      setValue: (i, v) => i.copyWith(
-        categoryId: v == null ? null : (v as Category).id,
-      ),
+      setValue: (i, v) =>
+          i.copyWith(categoryId: v == null ? null : (v as Category).id),
       fkSearch: (query) async {
-        final result =
-            await _categoryRepository.list(PageQuery(search: query));
+        final result = await _categoryRepository.list(PageQuery(search: query));
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) => (item as Category).name,
@@ -243,12 +234,12 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'Tax category',
       type: FieldType.fk,
       getValue: (i) => i.taxCategoryId,
-      setValue: (i, v) => i.copyWith(
-        taxCategoryId: v == null ? null : (v as TaxCategory).id,
-      ),
+      setValue: (i, v) =>
+          i.copyWith(taxCategoryId: v == null ? null : (v as TaxCategory).id),
       fkSearch: (query) async {
-        final result =
-            await _taxCategoryRepository.list(PageQuery(search: query));
+        final result = await _taxCategoryRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {
@@ -267,8 +258,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.decimal,
       required: true,
       getValue: (i) => i.price,
-      setValue: (i, v) =>
-          i.copyWith(price: (v as Decimal?) ?? Decimal.zero),
+      setValue: (i, v) => i.copyWith(price: (v as Decimal?) ?? Decimal.zero),
     ),
     FormFieldSpec<InventoryItem>(
       key: 'basePrice',
@@ -294,8 +284,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'VAT rate %',
       type: FieldType.decimal,
       getValue: (i) => i.vatRate,
-      setValue: (i, v) =>
-          i.copyWith(vatRate: (v as Decimal?) ?? Decimal.zero),
+      setValue: (i, v) => i.copyWith(vatRate: (v as Decimal?) ?? Decimal.zero),
     ),
     FormFieldSpec<InventoryItem>(
       key: 'openingStock',
@@ -321,9 +310,8 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       label: 'Sales GL ledger',
       type: FieldType.fk,
       getValue: (i) => i.salesGlLedgerId,
-      setValue: (i, v) => i.copyWith(
-        salesGlLedgerId: v == null ? null : (v as Ledger).id,
-      ),
+      setValue: (i, v) =>
+          i.copyWith(salesGlLedgerId: v == null ? null : (v as Ledger).id),
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
       fkResolveById: _resolveLedger,
@@ -361,8 +349,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.fk,
       getValue: (i) => i.defaultPurchaseReturnLedgerId,
       setValue: (i, v) => i.copyWith(
-        defaultPurchaseReturnLedgerId:
-            v == null ? null : (v as Ledger).id,
+        defaultPurchaseReturnLedgerId: v == null ? null : (v as Ledger).id,
       ),
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
@@ -434,14 +421,14 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
     ),
   ],
   emptyEntity: () => InventoryItem(
-        id: 0,
-        name: '',
-        code: '',
-        price: Decimal.zero,
-        basePrice: Decimal.zero,
-        standardCost: Decimal.zero,
-        vatRate: Decimal.zero,
-        openingStock: Decimal.zero,
-        reorderLevel: Decimal.zero,
-      ),
+    id: 0,
+    name: '',
+    code: '',
+    price: Decimal.zero,
+    basePrice: Decimal.zero,
+    standardCost: Decimal.zero,
+    vatRate: Decimal.zero,
+    openingStock: Decimal.zero,
+    reorderLevel: Decimal.zero,
+  ),
 );

@@ -12,10 +12,10 @@ import 'package:algo_erp_front/features/organization_address_book/domain/address
 import 'package:decimal/decimal.dart';
 
 /// Lazy FK targets — same pattern as Designation → Department.
-final _accountGroupRepository =
-    createAccountGroupRepository(getIt<DioClient>());
-final _addressBookRepository =
-    createAddressBookRepository(getIt<DioClient>());
+final _accountGroupRepository = createAccountGroupRepository(
+  getIt<DioClient>(),
+);
+final _addressBookRepository = createAddressBookRepository(getIt<DioClient>());
 
 /// Ledger master. RBAC is coarse `'Accounts'`.
 ///
@@ -109,12 +109,12 @@ final ledgerManifest = EntityManifest<Ledger>(
       label: 'Account group',
       type: FieldType.fk,
       getValue: (l) => l.accountGroupId,
-      setValue: (l, v) => l.copyWith(
-        accountGroupId: v == null ? null : (v as AccountGroup).id,
-      ),
+      setValue: (l, v) =>
+          l.copyWith(accountGroupId: v == null ? null : (v as AccountGroup).id),
       fkSearch: (query) async {
-        final result =
-            await _accountGroupRepository.list(PageQuery(search: query));
+        final result = await _accountGroupRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {
@@ -133,12 +133,12 @@ final ledgerManifest = EntityManifest<Ledger>(
       label: 'Contact',
       type: FieldType.fk,
       getValue: (l) => l.contactId,
-      setValue: (l, v) => l.copyWith(
-        contactId: v == null ? null : (v as AddressBook).id,
-      ),
+      setValue: (l, v) =>
+          l.copyWith(contactId: v == null ? null : (v as AddressBook).id),
       fkSearch: (query) async {
-        final result =
-            await _addressBookRepository.list(PageQuery(search: query));
+        final result = await _addressBookRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) => (item as AddressBook).name,
@@ -170,9 +170,8 @@ final ledgerManifest = EntityManifest<Ledger>(
       type: FieldType.decimal,
       required: true,
       getValue: (l) => l.openingBalance,
-      setValue: (l, v) => l.copyWith(
-        openingBalance: (v as Decimal?) ?? Decimal.zero,
-      ),
+      setValue: (l, v) =>
+          l.copyWith(openingBalance: (v as Decimal?) ?? Decimal.zero),
     ),
     FormFieldSpec<Ledger>(
       key: 'openingBalanceDate',
@@ -191,9 +190,5 @@ final ledgerManifest = EntityManifest<Ledger>(
       setValue: (l, v) => l.copyWith(isSystemDefined: v as bool?),
     ),
   ],
-  emptyEntity: () => Ledger(
-        id: 0,
-        name: '',
-        openingBalance: Decimal.zero,
-      ),
+  emptyEntity: () => Ledger(id: 0, name: '', openingBalance: Decimal.zero),
 );

@@ -84,11 +84,7 @@ final uomConversionManifest = EntityManifest<UomConversion>(
       setValue: (u, v) => u.copyWith(narration: v),
     ),
   ],
-  emptyEntity: () => const UomConversion(
-    id: 0,
-    baseUnit: '',
-    toUnit: '',
-    conversionValue: '',
-  ),
+  emptyEntity: () =>
+      const UomConversion(id: 0, baseUnit: '', toUnit: '', conversionValue: ''),
   hardDelete: true,
 );

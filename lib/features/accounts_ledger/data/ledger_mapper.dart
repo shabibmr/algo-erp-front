@@ -30,23 +30,23 @@ class LedgerMapper implements Mapper<LedgerDto, Ledger> {
 
   @override
   LedgerDto toDto(Ledger entity) => LedgerDto(
-        id: entity.id,
-        ledgerName: entity.name,
-        ledgerCode: entity.code,
-        ledgerType: entity.ledgerType,
-        accountGroupId: entity.accountGroupId,
-        contactId: entity.contactId,
-        currencyCode: entity.currencyCode,
-        isSystemDefined: entity.isSystemDefined,
-        isActive: entity.isActive,
-        openingBalance: entity.openingBalance.toString(),
-        openingBalanceDate: entity.openingBalanceDate,
-        bankDetails:
-            entity.bank.shouldWrite ? _bankToDto(entity.bank) : null,
-        creditSettings:
-            entity.credit.shouldWrite ? _creditToDto(entity.credit) : null,
-        taxSettings: entity.tax.shouldWrite ? _taxToDto(entity.tax) : null,
-      );
+    id: entity.id,
+    ledgerName: entity.name,
+    ledgerCode: entity.code,
+    ledgerType: entity.ledgerType,
+    accountGroupId: entity.accountGroupId,
+    contactId: entity.contactId,
+    currencyCode: entity.currencyCode,
+    isSystemDefined: entity.isSystemDefined,
+    isActive: entity.isActive,
+    openingBalance: entity.openingBalance.toString(),
+    openingBalanceDate: entity.openingBalanceDate,
+    bankDetails: entity.bank.shouldWrite ? _bankToDto(entity.bank) : null,
+    creditSettings: entity.credit.shouldWrite
+        ? _creditToDto(entity.credit)
+        : null,
+    taxSettings: entity.tax.shouldWrite ? _taxToDto(entity.tax) : null,
+  );
 
   static LedgerBankDetails _bankToEntity(LedgerBankDetailsDto? dto) {
     if (dto == null) return const LedgerBankDetails();

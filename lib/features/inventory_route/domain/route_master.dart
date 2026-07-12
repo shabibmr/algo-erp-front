@@ -26,15 +26,14 @@ class RouteMaster extends Equatable {
     String? routeCode,
     Object? name = _unset,
     Object? description = _unset,
-  }) =>
-      RouteMaster(
-        id: id ?? this.id,
-        routeCode: routeCode ?? this.routeCode,
-        name: identical(name, _unset) ? this.name : name as String?,
-        description: identical(description, _unset)
-            ? this.description
-            : description as String?,
-      );
+  }) => RouteMaster(
+    id: id ?? this.id,
+    routeCode: routeCode ?? this.routeCode,
+    name: identical(name, _unset) ? this.name : name as String?,
+    description: identical(description, _unset)
+        ? this.description
+        : description as String?,
+  );
 
   @override
   List<Object?> get props => [id, routeCode, name, description];

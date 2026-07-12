@@ -7,17 +7,17 @@ class RouteMasterMapper implements Mapper<RouteMasterDto, RouteMaster> {
 
   @override
   RouteMaster toEntity(RouteMasterDto dto) => RouteMaster(
-        id: dto.id,
-        routeCode: dto.routeId,
-        name: dto.routeName,
-        description: dto.description,
-      );
+    id: dto.id,
+    routeCode: dto.routeId,
+    name: dto.routeName,
+    description: dto.description,
+  );
 
   @override
   RouteMasterDto toDto(RouteMaster entity) => RouteMasterDto(
-        id: entity.id,
-        routeId: entity.routeCode,
-        routeName: entity.name,
-        description: entity.description,
-      );
+    id: entity.id,
+    routeId: entity.routeCode,
+    routeName: entity.name,
+    description: entity.description,
+  );
 }

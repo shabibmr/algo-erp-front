@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class ItemBatchFormPage extends StatelessWidget {
       create: (_) => createItemBatchRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            itemBatchCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(itemBatchManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<ItemBatch, int>(
             manifest: itemBatchManifest,
             mode: mode,
             idOf: (b) => b.id,
-            onSaved: (_) => context.go(itemBatchManifest.resourcePath),
-            onDeleted: () => context.go(itemBatchManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class ItemBatchFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${itemBatchManifest.label}'
                       : itemBatchManifest.supportsUpdate
-                          ? 'Edit ${itemBatchManifest.label}'
-                          : 'View ${itemBatchManifest.label}',
+                      ? 'Edit ${itemBatchManifest.label}'
+                      : 'View ${itemBatchManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

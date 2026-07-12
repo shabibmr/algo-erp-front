@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class TaxCategoryFormPage extends StatelessWidget {
       create: (_) => createTaxCategoryRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            taxCategoryCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(taxCategoryManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<TaxCategory, int>(
             manifest: taxCategoryManifest,
             mode: mode,
             idOf: (t) => t.id,
-            onSaved: (_) => context.go(taxCategoryManifest.resourcePath),
-            onDeleted: () => context.go(taxCategoryManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class TaxCategoryFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${taxCategoryManifest.label}'
                       : taxCategoryManifest.supportsUpdate
-                          ? 'Edit ${taxCategoryManifest.label}'
-                          : 'View ${taxCategoryManifest.label}',
+                      ? 'Edit ${taxCategoryManifest.label}'
+                      : 'View ${taxCategoryManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

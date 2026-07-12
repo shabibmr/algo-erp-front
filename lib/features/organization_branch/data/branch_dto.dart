@@ -12,13 +12,13 @@ class BranchDto extends Equatable {
   });
 
   factory BranchDto.fromJson(Map<String, dynamic> json) => BranchDto(
-        id: json['id'] as int,
-        branchCode: json['branch_code'] as String,
-        branchName: json['branch_name'] as String,
-        companyId: json['company_id'] as int,
-        address: json['address'] as String?,
-        isActive: json['is_active'] as bool? ?? true,
-      );
+    id: json['id'] as int,
+    branchCode: json['branch_code'] as String,
+    branchName: json['branch_name'] as String,
+    companyId: json['company_id'] as int,
+    address: json['address'] as String?,
+    isActive: json['is_active'] as bool? ?? true,
+  );
 
   final int id;
   final String branchCode;
@@ -31,13 +31,19 @@ class BranchDto extends Equatable {
   /// is omitted too: it is the soft-delete flag, owned by `DELETE`, and
   /// `branchSchema` does not accept it on create/update.
   Map<String, dynamic> toJson() => {
-        'branch_code': branchCode,
-        'branch_name': branchName,
-        'company_id': companyId,
-        'address': address,
-      };
+    'branch_code': branchCode,
+    'branch_name': branchName,
+    'company_id': companyId,
+    'address': address,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, branchCode, branchName, companyId, address, isActive];
+  List<Object?> get props => [
+    id,
+    branchCode,
+    branchName,
+    companyId,
+    address,
+    isActive,
+  ];
 }

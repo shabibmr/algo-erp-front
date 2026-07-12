@@ -48,32 +48,32 @@ class SkuMasterDto extends Equatable {
   final String? skuValue;
 
   Map<String, dynamic> toJson() => {
-        'ITEM_ID': itemId,
-        if (skuCode != null && skuCode!.isNotEmpty) 'sku_code': skuCode,
-        'inventory_item_id': inventoryItemId,
-        if (skuName != null && skuName!.isNotEmpty) 'sku_name': skuName,
-        if (barcode != null && barcode!.isNotEmpty) 'barcode': barcode,
-        if (rate != null) 'rate': double.tryParse(rate!) ?? 0,
-        if (skuDescription != null && skuDescription!.isNotEmpty)
-          'SKU_DESCRIPTION': skuDescription,
-        'SKU_TYPE': skuType,
-        if (skuPossibleValues != null && skuPossibleValues!.isNotEmpty)
-          'SKU_POSSIBLE_VALUES': skuPossibleValues,
-        if (skuValue != null && skuValue!.isNotEmpty) 'SKU_VALUE': skuValue,
-      };
+    'ITEM_ID': itemId,
+    if (skuCode != null && skuCode!.isNotEmpty) 'sku_code': skuCode,
+    'inventory_item_id': inventoryItemId,
+    if (skuName != null && skuName!.isNotEmpty) 'sku_name': skuName,
+    if (barcode != null && barcode!.isNotEmpty) 'barcode': barcode,
+    if (rate != null) 'rate': double.tryParse(rate!) ?? 0,
+    if (skuDescription != null && skuDescription!.isNotEmpty)
+      'SKU_DESCRIPTION': skuDescription,
+    'SKU_TYPE': skuType,
+    if (skuPossibleValues != null && skuPossibleValues!.isNotEmpty)
+      'SKU_POSSIBLE_VALUES': skuPossibleValues,
+    if (skuValue != null && skuValue!.isNotEmpty) 'SKU_VALUE': skuValue,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        itemId,
-        skuCode,
-        inventoryItemId,
-        skuName,
-        barcode,
-        rate,
-        skuDescription,
-        skuType,
-        skuPossibleValues,
-        skuValue,
-      ];
+    id,
+    itemId,
+    skuCode,
+    inventoryItemId,
+    skuName,
+    barcode,
+    rate,
+    skuDescription,
+    skuType,
+    skuPossibleValues,
+    skuValue,
+  ];
 }

@@ -7,23 +7,23 @@ class AccountGroupMapper implements Mapper<AccountGroupDto, AccountGroup> {
 
   @override
   AccountGroup toEntity(AccountGroupDto dto) => AccountGroup(
-        id: dto.id,
-        name: dto.groupName,
-        code: dto.groupCode,
-        parentGroupId: dto.parentGroupId,
-        isSystemDefined: dto.isSystemDefined,
-        fullPath: dto.fullPath,
-        depth: dto.depth,
-      );
+    id: dto.id,
+    name: dto.groupName,
+    code: dto.groupCode,
+    parentGroupId: dto.parentGroupId,
+    isSystemDefined: dto.isSystemDefined,
+    fullPath: dto.fullPath,
+    depth: dto.depth,
+  );
 
   @override
   AccountGroupDto toDto(AccountGroup entity) => AccountGroupDto(
-        id: entity.id,
-        groupName: entity.name,
-        groupCode: entity.code,
-        parentGroupId: entity.parentGroupId,
-        isSystemDefined: entity.isSystemDefined,
-        fullPath: entity.fullPath,
-        depth: entity.depth,
-      );
+    id: entity.id,
+    groupName: entity.name,
+    groupCode: entity.code,
+    parentGroupId: entity.parentGroupId,
+    isSystemDefined: entity.isSystemDefined,
+    fullPath: entity.fullPath,
+    depth: entity.depth,
+  );
 }

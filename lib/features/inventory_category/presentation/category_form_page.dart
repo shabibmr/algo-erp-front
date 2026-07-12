@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class CategoryFormPage extends StatelessWidget {
       create: (_) => createCategoryRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            categoryCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(categoryManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<Category, int>(
             manifest: categoryManifest,
             mode: mode,
             idOf: (c) => c.id,
-            onSaved: (_) => context.go(categoryManifest.resourcePath),
-            onDeleted: () => context.go(categoryManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class CategoryFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${categoryManifest.label}'
                       : categoryManifest.supportsUpdate
-                          ? 'Edit ${categoryManifest.label}'
-                          : 'View ${categoryManifest.label}',
+                      ? 'Edit ${categoryManifest.label}'
+                      : 'View ${categoryManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

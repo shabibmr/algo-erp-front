@@ -8,8 +8,7 @@ import 'package:algo_erp_front/features/inventory_tax_category/domain/tax_catego
 import 'package:algo_erp_front/features/inventory_tax_category/tax_category_di.dart';
 import 'package:decimal/decimal.dart';
 
-final _taxCategoryRepository =
-    createTaxCategoryRepository(getIt<DioClient>());
+final _taxCategoryRepository = createTaxCategoryRepository(getIt<DioClient>());
 
 /// Bank tab fields — nested wire keys match Zod `bankDetails.*`.
 final ledgerBankFormFields = <FormFieldSpec<Ledger>>[
@@ -20,9 +19,8 @@ final ledgerBankFormFields = <FormFieldSpec<Ledger>>[
     type: FieldType.text,
     helperText: 'Required to save bank details',
     getValue: (l) => l.bank.accountNumber,
-    setValue: (l, v) => l.copyWith(
-      bank: l.bank.copyWith(accountNumber: v as String? ?? ''),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(bank: l.bank.copyWith(accountNumber: v as String? ?? '')),
   ),
   FormFieldSpec<Ledger>(
     key: 'bank.iban',
@@ -30,9 +28,7 @@ final ledgerBankFormFields = <FormFieldSpec<Ledger>>[
     label: 'IBAN',
     type: FieldType.text,
     getValue: (l) => l.bank.iban,
-    setValue: (l, v) => l.copyWith(
-      bank: l.bank.copyWith(iban: v as String?),
-    ),
+    setValue: (l, v) => l.copyWith(bank: l.bank.copyWith(iban: v as String?)),
   ),
   FormFieldSpec<Ledger>(
     key: 'bank.swiftCode',
@@ -40,9 +36,8 @@ final ledgerBankFormFields = <FormFieldSpec<Ledger>>[
     label: 'SWIFT code',
     type: FieldType.text,
     getValue: (l) => l.bank.swiftCode,
-    setValue: (l, v) => l.copyWith(
-      bank: l.bank.copyWith(swiftCode: v as String?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(bank: l.bank.copyWith(swiftCode: v as String?)),
   ),
   FormFieldSpec<Ledger>(
     key: 'bank.branchName',
@@ -50,9 +45,8 @@ final ledgerBankFormFields = <FormFieldSpec<Ledger>>[
     label: 'Branch name',
     type: FieldType.text,
     getValue: (l) => l.bank.branchName,
-    setValue: (l, v) => l.copyWith(
-      bank: l.bank.copyWith(branchName: v as String?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(bank: l.bank.copyWith(branchName: v as String?)),
   ),
 ];
 
@@ -64,9 +58,8 @@ final ledgerCreditFormFields = <FormFieldSpec<Ledger>>[
     label: 'Credit limit',
     type: FieldType.decimal,
     getValue: (l) => l.credit.creditLimit,
-    setValue: (l, v) => l.copyWith(
-      credit: l.credit.copyWith(creditLimit: v as Decimal?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(credit: l.credit.copyWith(creditLimit: v as Decimal?)),
   ),
   FormFieldSpec<Ledger>(
     key: 'credit.creditPeriodDays',
@@ -74,9 +67,8 @@ final ledgerCreditFormFields = <FormFieldSpec<Ledger>>[
     label: 'Credit period (days)',
     type: FieldType.int,
     getValue: (l) => l.credit.creditPeriodDays,
-    setValue: (l, v) => l.copyWith(
-      credit: l.credit.copyWith(creditPeriodDays: v as int? ?? 0),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(credit: l.credit.copyWith(creditPeriodDays: v as int? ?? 0)),
   ),
   FormFieldSpec<Ledger>(
     key: 'credit.paymentTerms',
@@ -84,9 +76,8 @@ final ledgerCreditFormFields = <FormFieldSpec<Ledger>>[
     label: 'Payment terms',
     type: FieldType.text,
     getValue: (l) => l.credit.paymentTerms,
-    setValue: (l, v) => l.copyWith(
-      credit: l.credit.copyWith(paymentTerms: v as String?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(credit: l.credit.copyWith(paymentTerms: v as String?)),
   ),
   FormFieldSpec<Ledger>(
     key: 'credit.cautionDeposit',
@@ -94,9 +85,8 @@ final ledgerCreditFormFields = <FormFieldSpec<Ledger>>[
     label: 'Caution deposit',
     type: FieldType.decimal,
     getValue: (l) => l.credit.cautionDeposit,
-    setValue: (l, v) => l.copyWith(
-      credit: l.credit.copyWith(cautionDeposit: v as Decimal?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(credit: l.credit.copyWith(cautionDeposit: v as Decimal?)),
   ),
 ];
 
@@ -108,9 +98,7 @@ final ledgerTaxFormFields = <FormFieldSpec<Ledger>>[
     label: 'TRN',
     type: FieldType.text,
     getValue: (l) => l.tax.trn,
-    setValue: (l, v) => l.copyWith(
-      tax: l.tax.copyWith(trn: v as String?),
-    ),
+    setValue: (l, v) => l.copyWith(tax: l.tax.copyWith(trn: v as String?)),
   ),
   FormFieldSpec<Ledger>(
     key: 'tax.taxCategoryId',
@@ -124,8 +112,9 @@ final ledgerTaxFormFields = <FormFieldSpec<Ledger>>[
       ),
     ),
     fkSearch: (query) async {
-      final result =
-          await _taxCategoryRepository.list(PageQuery(search: query));
+      final result = await _taxCategoryRepository.list(
+        PageQuery(search: query),
+      );
       return result.fold((_) => const [], (page) => page.items);
     },
     fkDisplayOf: (item) {
@@ -143,19 +132,17 @@ final ledgerTaxFormFields = <FormFieldSpec<Ledger>>[
     label: 'Type of supply',
     type: FieldType.text,
     getValue: (l) => l.tax.typeOfSupply,
-    setValue: (l, v) => l.copyWith(
-      tax: l.tax.copyWith(typeOfSupply: v as String?),
-    ),
+    setValue: (l, v) =>
+        l.copyWith(tax: l.tax.copyWith(typeOfSupply: v as String?)),
   ),
 ];
 
 /// All form fields (core + extensions) for error seeding / FK resolve.
 List<FormFieldSpec<Ledger>> allLedgerFormFields(
   List<FormFieldSpec<Ledger>> core,
-) =>
-    [
-      ...core,
-      ...ledgerBankFormFields,
-      ...ledgerCreditFormFields,
-      ...ledgerTaxFormFields,
-    ];
+) => [
+  ...core,
+  ...ledgerBankFormFields,
+  ...ledgerCreditFormFields,
+  ...ledgerTaxFormFields,
+];

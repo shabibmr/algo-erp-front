@@ -7,17 +7,17 @@ class TaxCategoryMapper implements Mapper<TaxCategoryDto, TaxCategory> {
 
   @override
   TaxCategory toEntity(TaxCategoryDto dto) => TaxCategory(
-        id: dto.id,
-        name: dto.taxName,
-        rate: dto.taxRate,
-        isActive: dto.isActive,
-      );
+    id: dto.id,
+    name: dto.taxName,
+    rate: dto.taxRate,
+    isActive: dto.isActive,
+  );
 
   @override
   TaxCategoryDto toDto(TaxCategory entity) => TaxCategoryDto(
-        id: entity.id,
-        taxName: entity.name,
-        taxRate: entity.rate,
-        isActive: entity.isActive,
-      );
+    id: entity.id,
+    taxName: entity.name,
+    taxRate: entity.rate,
+    isActive: entity.isActive,
+  );
 }

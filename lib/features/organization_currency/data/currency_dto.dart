@@ -14,14 +14,14 @@ class CurrencyDto extends Equatable {
   });
 
   factory CurrencyDto.fromJson(Map<String, dynamic> json) => CurrencyDto(
-        id: json['id'] as int,
-        isoCode: json['iso_code'] as String,
-        currencyName: json['currency_name'] as String,
-        symbol: json['symbol'] as String?,
-        decimalPlaces: json['decimal_places'] as int? ?? 2,
-        isBaseCurrency: json['is_base_currency'] as bool? ?? false,
-        isActive: json['is_active'] as bool? ?? true,
-      );
+    id: json['id'] as int,
+    isoCode: json['iso_code'] as String,
+    currencyName: json['currency_name'] as String,
+    symbol: json['symbol'] as String?,
+    decimalPlaces: json['decimal_places'] as int? ?? 2,
+    isBaseCurrency: json['is_base_currency'] as bool? ?? false,
+    isActive: json['is_active'] as bool? ?? true,
+  );
 
   final int id;
   final String isoCode;
@@ -34,21 +34,21 @@ class CurrencyDto extends Equatable {
   /// `id`/timestamps are server-generated and never sent on write. `is_active`
   /// is omitted: it is the soft-delete flag, owned by `DELETE`.
   Map<String, dynamic> toJson() => {
-        'iso_code': isoCode,
-        'currency_name': currencyName,
-        'symbol': symbol,
-        'decimal_places': decimalPlaces,
-        'is_base_currency': isBaseCurrency,
-      };
+    'iso_code': isoCode,
+    'currency_name': currencyName,
+    'symbol': symbol,
+    'decimal_places': decimalPlaces,
+    'is_base_currency': isBaseCurrency,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        isoCode,
-        currencyName,
-        symbol,
-        decimalPlaces,
-        isBaseCurrency,
-        isActive,
-      ];
+    id,
+    isoCode,
+    currencyName,
+    symbol,
+    decimalPlaces,
+    isBaseCurrency,
+    isActive,
+  ];
 }

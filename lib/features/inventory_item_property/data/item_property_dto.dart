@@ -25,10 +25,10 @@ class ItemPropertyDto extends Equatable {
 
   /// `id` is server-generated and never sent on write.
   Map<String, dynamic> toJson() => {
-        'Property_ID': propertyId,
-        'Item_ID': itemId,
-        'Default_Value': defaultValue,
-      };
+    'Property_ID': propertyId,
+    'Item_ID': itemId,
+    'Default_Value': defaultValue,
+  };
 
   @override
   List<Object?> get props => [id, propertyId, itemId, defaultValue];

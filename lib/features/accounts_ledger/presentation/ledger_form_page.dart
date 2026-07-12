@@ -1,7 +1,7 @@
 import 'dart:async';
-
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/bloc/form_mixin.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
@@ -44,8 +44,8 @@ class LedgerFormPage extends StatelessWidget {
           final title = mode == FormMode.create
               ? 'New ${ledgerManifest.label}'
               : ledgerManifest.supportsUpdate
-                  ? 'Edit ${ledgerManifest.label}'
-                  : 'View ${ledgerManifest.label}';
+              ? 'Edit ${ledgerManifest.label}'
+              : 'View ${ledgerManifest.label}';
           return AdaptiveLayout(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,8 +56,7 @@ class LedgerFormPage extends StatelessWidget {
                   child: mode == FormMode.edit
                       ? BlocProvider<DetailBloc<Ledger, int>>(
                           create: (ctx) => DetailBloc<Ledger, int>(
-                            repository:
-                                ctx.read<Repository<Ledger, int>>(),
+                            repository: ctx.read<Repository<Ledger, int>>(),
                             id: entityId!,
                           )..add(const DetailLoadRequested()),
                           child: _LedgerTabbedForm(mode: mode),
@@ -165,34 +164,40 @@ class _LedgerTabbedFormState extends State<_LedgerTabbedForm>
         ? await repo.create(draft)
         : await repo.update(draft.id, draft);
     if (!mounted) return;
-    result.fold(
-      (failure) {
-        setState(() {
-          _submitting = false;
-          _fieldErrors = fieldErrorsFrom(failure);
-          _generalError =
-              failure is ValidationFailure ? null : _messageOf(failure);
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _formKey.currentState?.validate();
-        });
-      },
-      (_) => context.go(ledgerManifest.resourcePath),
-    );
+    result.fold((failure) {
+      setState(() {
+        _submitting = false;
+        _fieldErrors = fieldErrorsFrom(failure);
+        _generalError = failure is ValidationFailure
+            ? null
+            : _messageOf(failure);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _formKey.currentState?.validate();
+      });
+    }, (_) => _refreshListAndReturn(context));
+  }
+
+  /// This form persists through the repository itself (see [_submit]), so the
+  /// shared list bloc is told to refetch — never CrudItemCreated/Updated,
+  /// which perform the write themselves and would save the ledger twice.
+  void _refreshListAndReturn(BuildContext context) {
+    ledgerCrudBloc(context).add(const CrudRefreshRequested());
+    context.go(ledgerManifest.resourcePath);
   }
 
   String _messageOf(Failure failure) => switch (failure) {
-        NetworkFailure(:final message) => message,
-        TimeoutFailure(:final message) => message,
-        UnauthorizedFailure(:final message) => message,
-        ForbiddenFailure(:final message) => message,
-        ValidationFailure(:final message) => message,
-        NotFoundFailure(:final message) => message,
-        ConflictFailure(:final message) => message,
-        ServerFailure(:final message) => message,
-        CacheFailure(:final message) => message,
-        UnknownFailure(:final message) => message,
-      };
+    NetworkFailure(:final message) => message,
+    TimeoutFailure(:final message) => message,
+    UnauthorizedFailure(:final message) => message,
+    ForbiddenFailure(:final message) => message,
+    ValidationFailure(:final message) => message,
+    NotFoundFailure(:final message) => message,
+    ConflictFailure(:final message) => message,
+    ServerFailure(:final message) => message,
+    CacheFailure(:final message) => message,
+    UnknownFailure(:final message) => message,
+  };
 
   Future<void> _delete(BuildContext context) async {
     if (!ledgerManifest.supportsDelete) return;
@@ -225,8 +230,9 @@ class _LedgerTabbedFormState extends State<_LedgerTabbedForm>
             onChanged: (value) => _setField(field, value),
             enabled: !_submitting && !isReadOnlyEdit,
             errorText: _fieldErrors[field.errorKey],
-            fkLoaderOverride:
-                _isFkType(field.type) ? (q) => _fkLoader(field, q) : null,
+            fkLoaderOverride: _isFkType(field.type)
+                ? (q) => _fkLoader(field, q)
+                : null,
           ),
           SizedBox(height: tokens.spacing.sm),
         ],
@@ -308,8 +314,8 @@ class _LedgerTabbedFormState extends State<_LedgerTabbedForm>
                       _submitting
                           ? 'Saving...'
                           : (widget.mode == FormMode.create
-                              ? 'Create'
-                              : 'Save'),
+                                ? 'Create'
+                                : 'Save'),
                     ),
                   ),
                 ),
@@ -342,7 +348,7 @@ class _LedgerTabbedFormState extends State<_LedgerTabbedForm>
     return BlocListener<DetailBloc<Ledger, int>, DetailState<Ledger>>(
       listener: (context, state) {
         if (state is DetailDeleted<Ledger>) {
-          context.go(ledgerManifest.resourcePath);
+          _refreshListAndReturn(context);
         }
       },
       child: BlocBuilder<DetailBloc<Ledger, int>, DetailState<Ledger>>(
@@ -350,9 +356,9 @@ class _LedgerTabbedFormState extends State<_LedgerTabbedForm>
           if (state is DetailLoaded<Ledger>) _seedFromLoaded(state.entity);
           return AsyncStateView<Ledger>(
             state: state.toViewState(),
-            onRetry: () => context
-                .read<DetailBloc<Ledger, int>>()
-                .add(const DetailLoadRequested()),
+            onRetry: () => context.read<DetailBloc<Ledger, int>>().add(
+              const DetailLoadRequested(),
+            ),
             builder: (context, _) => _buildForm(repo),
           );
         },

@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -26,12 +27,20 @@ class BrandFormPage extends StatelessWidget {
       create: (_) => createBrandRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            brandCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(brandManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<Brand, int>(
             manifest: brandManifest,
             mode: mode,
             idOf: (brand) => brand.id,
-            onSaved: (_) => context.go(brandManifest.resourcePath),
-            onDeleted: () => context.go(brandManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -41,8 +50,8 @@ class BrandFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${brandManifest.label}'
                       : brandManifest.supportsUpdate
-                          ? 'Edit ${brandManifest.label}'
-                          : 'View ${brandManifest.label}',
+                      ? 'Edit ${brandManifest.label}'
+                      : 'View ${brandManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

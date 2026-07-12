@@ -33,28 +33,26 @@ class AccountGroup extends Equatable {
     bool? isSystemDefined,
     Object? fullPath = _unset,
     Object? depth = _unset,
-  }) =>
-      AccountGroup(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        parentGroupId: identical(parentGroupId, _unset)
-            ? this.parentGroupId
-            : parentGroupId as int?,
-        isSystemDefined: isSystemDefined ?? this.isSystemDefined,
-        fullPath:
-            identical(fullPath, _unset) ? this.fullPath : fullPath as String?,
-        depth: identical(depth, _unset) ? this.depth : depth as int?,
-      );
+  }) => AccountGroup(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    parentGroupId: identical(parentGroupId, _unset)
+        ? this.parentGroupId
+        : parentGroupId as int?,
+    isSystemDefined: isSystemDefined ?? this.isSystemDefined,
+    fullPath: identical(fullPath, _unset) ? this.fullPath : fullPath as String?,
+    depth: identical(depth, _unset) ? this.depth : depth as int?,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        code,
-        parentGroupId,
-        isSystemDefined,
-        fullPath,
-        depth,
-      ];
+    id,
+    name,
+    code,
+    parentGroupId,
+    isSystemDefined,
+    fullPath,
+    depth,
+  ];
 }

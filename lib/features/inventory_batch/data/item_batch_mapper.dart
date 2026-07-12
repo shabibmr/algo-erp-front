@@ -10,25 +10,25 @@ class ItemBatchMapper implements Mapper<ItemBatchDto, ItemBatch> {
 
   @override
   ItemBatch toEntity(ItemBatchDto dto) => ItemBatch(
-        id: dto.id,
-        itemId: dto.itemId,
-        batchNumber: dto.batchNumber,
-        manufacturingDate: dto.manufacturingDate,
-        expirationDate: dto.expirationDate,
-        costPrice: _d(dto.costPrice),
-        sellingPrice: _d(dto.sellingPrice),
-        isActive: dto.isActive,
-      );
+    id: dto.id,
+    itemId: dto.itemId,
+    batchNumber: dto.batchNumber,
+    manufacturingDate: dto.manufacturingDate,
+    expirationDate: dto.expirationDate,
+    costPrice: _d(dto.costPrice),
+    sellingPrice: _d(dto.sellingPrice),
+    isActive: dto.isActive,
+  );
 
   @override
   ItemBatchDto toDto(ItemBatch entity) => ItemBatchDto(
-        id: entity.id,
-        itemId: entity.itemId,
-        batchNumber: entity.batchNumber,
-        manufacturingDate: entity.manufacturingDate,
-        expirationDate: entity.expirationDate,
-        costPrice: entity.costPrice.toString(),
-        sellingPrice: entity.sellingPrice.toString(),
-        isActive: entity.isActive,
-      );
+    id: entity.id,
+    itemId: entity.itemId,
+    batchNumber: entity.batchNumber,
+    manufacturingDate: entity.manufacturingDate,
+    expirationDate: entity.expirationDate,
+    costPrice: entity.costPrice.toString(),
+    sellingPrice: entity.sellingPrice.toString(),
+    isActive: entity.isActive,
+  );
 }

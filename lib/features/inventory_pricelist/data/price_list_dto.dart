@@ -16,18 +16,18 @@ class PriceListDto extends Equatable {
   });
 
   factory PriceListDto.fromJson(Map<String, dynamic> json) => PriceListDto(
-        id: json['Price_List_ID'] as int,
-        priceListName: json['Price_List_Name'] as String,
-        startDate: json['Price_List_Start_Date'] == null
-            ? null
-            : DateTime.parse(json['Price_List_Start_Date'] as String),
-        endDate: json['Price_List_End_Date'] == null
-            ? null
-            : DateTime.parse(json['Price_List_End_Date'] as String),
-        isDefault: json['Price_List_Default'] as bool? ?? false,
-        showInPos: json['Price_List_ShowInPos'] as bool? ?? true,
-        isOnline: json['Price_List_isOnline'] as bool? ?? false,
-      );
+    id: json['Price_List_ID'] as int,
+    priceListName: json['Price_List_Name'] as String,
+    startDate: json['Price_List_Start_Date'] == null
+        ? null
+        : DateTime.parse(json['Price_List_Start_Date'] as String),
+    endDate: json['Price_List_End_Date'] == null
+        ? null
+        : DateTime.parse(json['Price_List_End_Date'] as String),
+    isDefault: json['Price_List_Default'] as bool? ?? false,
+    showInPos: json['Price_List_ShowInPos'] as bool? ?? true,
+    isOnline: json['Price_List_isOnline'] as bool? ?? false,
+  );
 
   final int id;
   final String priceListName;
@@ -38,15 +38,22 @@ class PriceListDto extends Equatable {
   final bool isOnline;
 
   Map<String, dynamic> toJson() => {
-        'Price_List_Name': priceListName,
-        'Price_List_Start_Date': startDate?.toIso8601String(),
-        'Price_List_End_Date': endDate?.toIso8601String(),
-        'Price_List_Default': isDefault,
-        'Price_List_ShowInPos': showInPos,
-        'Price_List_isOnline': isOnline,
-      };
+    'Price_List_Name': priceListName,
+    'Price_List_Start_Date': startDate?.toIso8601String(),
+    'Price_List_End_Date': endDate?.toIso8601String(),
+    'Price_List_Default': isDefault,
+    'Price_List_ShowInPos': showInPos,
+    'Price_List_isOnline': isOnline,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, priceListName, startDate, endDate, isDefault, showInPos, isOnline];
+  List<Object?> get props => [
+    id,
+    priceListName,
+    startDate,
+    endDate,
+    isDefault,
+    showInPos,
+    isOnline,
+  ];
 }

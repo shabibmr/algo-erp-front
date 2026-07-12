@@ -7,23 +7,23 @@ class PriceListMapper implements Mapper<PriceListDto, PriceList> {
 
   @override
   PriceList toEntity(PriceListDto dto) => PriceList(
-        id: dto.id,
-        name: dto.priceListName,
-        startDate: dto.startDate,
-        endDate: dto.endDate,
-        isDefault: dto.isDefault,
-        showInPos: dto.showInPos,
-        isOnline: dto.isOnline,
-      );
+    id: dto.id,
+    name: dto.priceListName,
+    startDate: dto.startDate,
+    endDate: dto.endDate,
+    isDefault: dto.isDefault,
+    showInPos: dto.showInPos,
+    isOnline: dto.isOnline,
+  );
 
   @override
   PriceListDto toDto(PriceList entity) => PriceListDto(
-        id: entity.id,
-        priceListName: entity.name,
-        startDate: entity.startDate,
-        endDate: entity.endDate,
-        isDefault: entity.isDefault,
-        showInPos: entity.showInPos,
-        isOnline: entity.isOnline,
-      );
+    id: entity.id,
+    priceListName: entity.name,
+    startDate: entity.startDate,
+    endDate: entity.endDate,
+    isDefault: entity.isDefault,
+    showInPos: entity.showInPos,
+    isOnline: entity.isOnline,
+  );
 }

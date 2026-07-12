@@ -9,8 +9,9 @@ import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
 import 'package:algo_erp_front/features/inventory_sku/domain/sku_master.dart';
 import 'package:decimal/decimal.dart';
 
-final _inventoryItemRepository =
-    createInventoryItemRepository(getIt<DioClient>());
+final _inventoryItemRepository = createInventoryItemRepository(
+  getIt<DioClient>(),
+);
 
 /// SKU master. Hard delete. RBAC coarse `'Inventory'`.
 final skuMasterManifest = EntityManifest<SkuMaster>(
@@ -65,8 +66,9 @@ final skuMasterManifest = EntityManifest<SkuMaster>(
         );
       },
       fkSearch: (query) async {
-        final result =
-            await _inventoryItemRepository.list(PageQuery(search: query));
+        final result = await _inventoryItemRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {

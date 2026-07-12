@@ -33,25 +33,24 @@ class Currency extends Equatable {
     int? decimalPlaces,
     bool? isBaseCurrency,
     bool? isActive,
-  }) =>
-      Currency(
-        id: id ?? this.id,
-        isoCode: isoCode ?? this.isoCode,
-        name: name ?? this.name,
-        symbol: identical(symbol, _unset) ? this.symbol : symbol as String?,
-        decimalPlaces: decimalPlaces ?? this.decimalPlaces,
-        isBaseCurrency: isBaseCurrency ?? this.isBaseCurrency,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => Currency(
+    id: id ?? this.id,
+    isoCode: isoCode ?? this.isoCode,
+    name: name ?? this.name,
+    symbol: identical(symbol, _unset) ? this.symbol : symbol as String?,
+    decimalPlaces: decimalPlaces ?? this.decimalPlaces,
+    isBaseCurrency: isBaseCurrency ?? this.isBaseCurrency,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        isoCode,
-        name,
-        symbol,
-        decimalPlaces,
-        isBaseCurrency,
-        isActive,
-      ];
+    id,
+    isoCode,
+    name,
+    symbol,
+    decimalPlaces,
+    isBaseCurrency,
+    isActive,
+  ];
 }

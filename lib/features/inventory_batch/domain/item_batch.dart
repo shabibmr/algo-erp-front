@@ -35,31 +35,30 @@ class ItemBatch extends Equatable {
     Decimal? costPrice,
     Decimal? sellingPrice,
     bool? isActive,
-  }) =>
-      ItemBatch(
-        id: id ?? this.id,
-        itemId: itemId ?? this.itemId,
-        batchNumber: batchNumber ?? this.batchNumber,
-        manufacturingDate: identical(manufacturingDate, _unset)
-            ? this.manufacturingDate
-            : manufacturingDate as DateTime?,
-        expirationDate: identical(expirationDate, _unset)
-            ? this.expirationDate
-            : expirationDate as DateTime?,
-        costPrice: costPrice ?? this.costPrice,
-        sellingPrice: sellingPrice ?? this.sellingPrice,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => ItemBatch(
+    id: id ?? this.id,
+    itemId: itemId ?? this.itemId,
+    batchNumber: batchNumber ?? this.batchNumber,
+    manufacturingDate: identical(manufacturingDate, _unset)
+        ? this.manufacturingDate
+        : manufacturingDate as DateTime?,
+    expirationDate: identical(expirationDate, _unset)
+        ? this.expirationDate
+        : expirationDate as DateTime?,
+    costPrice: costPrice ?? this.costPrice,
+    sellingPrice: sellingPrice ?? this.sellingPrice,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        itemId,
-        batchNumber,
-        manufacturingDate,
-        expirationDate,
-        costPrice,
-        sellingPrice,
-        isActive,
-      ];
+    id,
+    itemId,
+    batchNumber,
+    manufacturingDate,
+    expirationDate,
+    costPrice,
+    sellingPrice,
+    isActive,
+  ];
 }

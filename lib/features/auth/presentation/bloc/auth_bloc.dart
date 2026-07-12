@@ -18,8 +18,7 @@ export 'auth_state.dart';
 /// the forms can bind them to inputs.
 @injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> with FormMixin {
-  AuthBloc(this._repository, this._tokenStorage)
-    : super(const AuthInitial()) {
+  AuthBloc(this._repository, this._tokenStorage) : super(const AuthInitial()) {
     on<AuthStarted>(_onStarted);
     on<AuthLoginRequested>(_onLogin);
     on<AuthLogoutRequested>(_onLogout);
@@ -55,9 +54,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with FormMixin {
       password: event.password,
     );
     result.fold(
-      (failure) => emit(
-        AuthFailure(failure, fieldErrors: fieldErrorsFrom(failure)),
-      ),
+      (failure) =>
+          emit(AuthFailure(failure, fieldErrors: fieldErrorsFrom(failure))),
       (user) => emit(AuthAuthenticated(user)),
     );
   }

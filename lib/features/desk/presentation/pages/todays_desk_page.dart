@@ -58,8 +58,8 @@ class _Greeting extends StatelessWidget {
     final salutation = hour < 12
         ? 'Good morning'
         : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+        ? 'Good afternoon'
+        : 'Good evening';
     final who = (name != null && name!.isNotEmpty) ? name! : 'there';
 
     return Column(
@@ -68,16 +68,16 @@ class _Greeting extends StatelessWidget {
         Text(
           '$salutation, $who',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: brand.ink,
-                fontWeight: FontWeight.w600,
-              ),
+            color: brand.ink,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         SizedBox(height: tokens.spacing.xs),
         Text(
           "Here's your desk for today.",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: brand.inkMuted,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: brand.inkMuted),
         ),
       ],
     );
@@ -97,9 +97,9 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: brand.ink,
-              fontWeight: FontWeight.w600,
-            ),
+          color: brand.ink,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -124,10 +124,7 @@ class _PaperCard extends StatelessWidget {
       elevation: tokens.elevation.level1,
       shadowColor: brand.ink.withValues(alpha: 0.06),
       shape: shape,
-      child: Padding(
-        padding: EdgeInsets.all(tokens.spacing.md),
-        child: child,
-      ),
+      child: Padding(padding: EdgeInsets.all(tokens.spacing.md), child: child),
     );
   }
 }
@@ -148,11 +145,7 @@ class _NeedsYouSection extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.sticky_note_2_outlined,
-                color: brand.brass,
-                size: 28,
-              ),
+              Icon(Icons.sticky_note_2_outlined, color: brand.brass, size: 28),
               SizedBox(width: tokens.spacing.md),
               Expanded(
                 child: Column(
@@ -166,9 +159,9 @@ class _NeedsYouSection extends StatelessWidget {
                     Text(
                       'Drafts, approvals, and credit alerts will land here '
                       'once those reports connect.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: brand.inkMuted,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
                     ),
                   ],
                 ),
@@ -197,11 +190,7 @@ class _ContinueSection extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.history_outlined,
-                color: brand.lagoon,
-                size: 28,
-              ),
+              Icon(Icons.history_outlined, color: brand.lagoon, size: 28),
               SizedBox(width: tokens.spacing.md),
               Expanded(
                 child: Column(
@@ -215,9 +204,9 @@ class _ContinueSection extends StatelessWidget {
                     Text(
                       'Masters and vouchers you open will show up here so '
                       'you can pick up where you left off.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: brand.inkMuted,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
                     ),
                   ],
                 ),
@@ -258,9 +247,9 @@ class _QuietPulseSection extends StatelessWidget {
                 child: Text(
                   'Live counts will appear when they answer '
                   '"what should I do next?" — not as vanity stats.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: brand.inkMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
                 ),
               ),
             ],

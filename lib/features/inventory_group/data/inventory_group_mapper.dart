@@ -8,29 +8,29 @@ class InventoryGroupMapper
 
   @override
   InventoryGroup toEntity(InventoryGroupDto dto) => InventoryGroup(
-        id: dto.id,
-        groupId: dto.groupId,
-        name: dto.groupName,
-        code: dto.groupCode,
-        parentGroupId: dto.parentGroupId,
-        groupType: dto.groupType,
-        nameArabic: dto.groupNameArabic,
-        fullPath: dto.fullPath,
-        depth: dto.depth,
-      );
+    id: dto.id,
+    groupId: dto.groupId,
+    name: dto.groupName,
+    code: dto.groupCode,
+    parentGroupId: dto.parentGroupId,
+    groupType: dto.groupType,
+    nameArabic: dto.groupNameArabic,
+    fullPath: dto.fullPath,
+    depth: dto.depth,
+  );
 
   @override
   InventoryGroupDto toDto(InventoryGroup entity) => InventoryGroupDto(
-        id: entity.id,
-        groupId: entity.groupId,
-        groupName: entity.name,
-        groupCode: entity.code,
-        parentGroupId: entity.parentGroupId,
-        // Mirror parent int FK into legacy Parent_ID when present.
-        parentId: entity.parentGroupId?.toString(),
-        groupType: entity.groupType,
-        groupNameArabic: entity.nameArabic,
-        fullPath: entity.fullPath,
-        depth: entity.depth,
-      );
+    id: entity.id,
+    groupId: entity.groupId,
+    groupName: entity.name,
+    groupCode: entity.code,
+    parentGroupId: entity.parentGroupId,
+    // Mirror parent int FK into legacy Parent_ID when present.
+    parentId: entity.parentGroupId?.toString(),
+    groupType: entity.groupType,
+    groupNameArabic: entity.nameArabic,
+    fullPath: entity.fullPath,
+    depth: entity.depth,
+  );
 }

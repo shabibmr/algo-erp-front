@@ -14,15 +14,15 @@ class GodownDto extends Equatable {
   });
 
   factory GodownDto.fromJson(Map<String, dynamic> json) => GodownDto(
-        id: json['id'] as int,
-        godownName: json['Godown_Name'] as String,
-        godownCode: json['godown_code'] as String?,
-        godownLocation: json['Godown_Location'] as String?,
-        godownNarration: json['Godown_Narration'] as String?,
-        isProfitCentre: json['is_profit_centre'] as bool? ?? false,
-        isDefault: json['is_default'] as bool? ?? false,
-        isProduction: json['is_production'] as bool? ?? false,
-      );
+    id: json['id'] as int,
+    godownName: json['Godown_Name'] as String,
+    godownCode: json['godown_code'] as String?,
+    godownLocation: json['Godown_Location'] as String?,
+    godownNarration: json['Godown_Narration'] as String?,
+    isProfitCentre: json['is_profit_centre'] as bool? ?? false,
+    isDefault: json['is_default'] as bool? ?? false,
+    isProduction: json['is_production'] as bool? ?? false,
+  );
 
   final int id;
   final String godownName;
@@ -34,24 +34,24 @@ class GodownDto extends Equatable {
   final bool isProduction;
 
   Map<String, dynamic> toJson() => {
-        'Godown_Name': godownName,
-        'godown_code': godownCode,
-        'Godown_Location': godownLocation,
-        'Godown_Narration': godownNarration,
-        'is_profit_centre': isProfitCentre,
-        'is_default': isDefault,
-        'is_production': isProduction,
-      };
+    'Godown_Name': godownName,
+    'godown_code': godownCode,
+    'Godown_Location': godownLocation,
+    'Godown_Narration': godownNarration,
+    'is_profit_centre': isProfitCentre,
+    'is_default': isDefault,
+    'is_production': isProduction,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        godownName,
-        godownCode,
-        godownLocation,
-        godownNarration,
-        isProfitCentre,
-        isDefault,
-        isProduction,
-      ];
+    id,
+    godownName,
+    godownCode,
+    godownLocation,
+    godownNarration,
+    isProfitCentre,
+    isDefault,
+    isProduction,
+  ];
 }

@@ -7,21 +7,21 @@ class UomConversionMapper implements Mapper<UomConversionDto, UomConversion> {
 
   @override
   UomConversion toEntity(UomConversionDto dto) => UomConversion(
-        id: dto.id,
-        baseUnit: dto.baseUnit,
-        toUnit: dto.toUnit,
-        conversionValue: dto.conValue,
-        itemId: dto.itemId,
-        narration: dto.narration,
-      );
+    id: dto.id,
+    baseUnit: dto.baseUnit,
+    toUnit: dto.toUnit,
+    conversionValue: dto.conValue,
+    itemId: dto.itemId,
+    narration: dto.narration,
+  );
 
   @override
   UomConversionDto toDto(UomConversion entity) => UomConversionDto(
-        id: entity.id,
-        baseUnit: entity.baseUnit,
-        toUnit: entity.toUnit,
-        conValue: entity.conversionValue,
-        itemId: entity.itemId,
-        narration: entity.narration,
-      );
+    id: entity.id,
+    baseUnit: entity.baseUnit,
+    toUnit: entity.toUnit,
+    conValue: entity.conversionValue,
+    itemId: entity.itemId,
+    narration: entity.narration,
+  );
 }

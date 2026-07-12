@@ -73,44 +73,44 @@ class Ledger extends Equatable {
     LedgerBankDetails? bank,
     LedgerCreditSettings? credit,
     LedgerTaxSettings? tax,
-  }) =>
-      Ledger(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        ledgerType: ledgerType ?? this.ledgerType,
-        accountGroupId: identical(accountGroupId, _unset)
-            ? this.accountGroupId
-            : accountGroupId as int?,
-        contactId:
-            identical(contactId, _unset) ? this.contactId : contactId as int?,
-        currencyCode: currencyCode ?? this.currencyCode,
-        isSystemDefined: isSystemDefined ?? this.isSystemDefined,
-        isActive: isActive ?? this.isActive,
-        openingBalance: openingBalance ?? this.openingBalance,
-        openingBalanceDate: identical(openingBalanceDate, _unset)
-            ? this.openingBalanceDate
-            : openingBalanceDate as DateTime?,
-        bank: bank ?? this.bank,
-        credit: credit ?? this.credit,
-        tax: tax ?? this.tax,
-      );
+  }) => Ledger(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    ledgerType: ledgerType ?? this.ledgerType,
+    accountGroupId: identical(accountGroupId, _unset)
+        ? this.accountGroupId
+        : accountGroupId as int?,
+    contactId: identical(contactId, _unset)
+        ? this.contactId
+        : contactId as int?,
+    currencyCode: currencyCode ?? this.currencyCode,
+    isSystemDefined: isSystemDefined ?? this.isSystemDefined,
+    isActive: isActive ?? this.isActive,
+    openingBalance: openingBalance ?? this.openingBalance,
+    openingBalanceDate: identical(openingBalanceDate, _unset)
+        ? this.openingBalanceDate
+        : openingBalanceDate as DateTime?,
+    bank: bank ?? this.bank,
+    credit: credit ?? this.credit,
+    tax: tax ?? this.tax,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        code,
-        ledgerType,
-        accountGroupId,
-        contactId,
-        currencyCode,
-        isSystemDefined,
-        isActive,
-        openingBalance,
-        openingBalanceDate,
-        bank,
-        credit,
-        tax,
-      ];
+    id,
+    name,
+    code,
+    ledgerType,
+    accountGroupId,
+    contactId,
+    currencyCode,
+    isSystemDefined,
+    isActive,
+    openingBalance,
+    openingBalanceDate,
+    bank,
+    credit,
+    tax,
+  ];
 }

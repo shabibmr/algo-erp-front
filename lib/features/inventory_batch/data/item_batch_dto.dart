@@ -60,24 +60,24 @@ class ItemBatchDto extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'item_id': itemId,
-        'batch_number': batchNumber,
-        'manufacturing_date': _dateOnly(manufacturingDate),
-        'expiration_date': _dateOnly(expirationDate),
-        'cost_price': double.tryParse(costPrice) ?? 0,
-        'selling_price': double.tryParse(sellingPrice) ?? 0,
-        'is_active': isActive,
-      };
+    'item_id': itemId,
+    'batch_number': batchNumber,
+    'manufacturing_date': _dateOnly(manufacturingDate),
+    'expiration_date': _dateOnly(expirationDate),
+    'cost_price': double.tryParse(costPrice) ?? 0,
+    'selling_price': double.tryParse(sellingPrice) ?? 0,
+    'is_active': isActive,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        itemId,
-        batchNumber,
-        manufacturingDate,
-        expirationDate,
-        costPrice,
-        sellingPrice,
-        isActive,
-      ];
+    id,
+    itemId,
+    batchNumber,
+    manufacturingDate,
+    expirationDate,
+    costPrice,
+    sellingPrice,
+    isActive,
+  ];
 }

@@ -5,11 +5,7 @@ const _unset = Object();
 /// The Brand master entity — hard-deleted (no `is_active` column on the
 /// backend `brands` table), so `Repository.delete` simply removes the row.
 class Brand extends Equatable {
-  const Brand({
-    required this.id,
-    required this.name,
-    this.description,
-  });
+  const Brand({required this.id, required this.name, this.description});
 
   final int id;
   final String name;

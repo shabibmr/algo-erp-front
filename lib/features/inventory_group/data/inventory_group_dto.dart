@@ -42,27 +42,27 @@ class InventoryGroupDto extends Equatable {
   final int? depth;
 
   Map<String, dynamic> toJson() => {
-        'Group_ID': groupId,
-        'Group_Name': groupName,
-        if (groupCode != null && groupCode!.isNotEmpty) 'group_code': groupCode,
-        'parent_group_id': parentGroupId,
-        if (parentId != null && parentId!.isNotEmpty) 'Parent_ID': parentId,
-        if (groupType != null && groupType!.isNotEmpty) 'Group_Type': groupType,
-        if (groupNameArabic != null && groupNameArabic!.isNotEmpty)
-          'GroupNameArabic': groupNameArabic,
-      };
+    'Group_ID': groupId,
+    'Group_Name': groupName,
+    if (groupCode != null && groupCode!.isNotEmpty) 'group_code': groupCode,
+    'parent_group_id': parentGroupId,
+    if (parentId != null && parentId!.isNotEmpty) 'Parent_ID': parentId,
+    if (groupType != null && groupType!.isNotEmpty) 'Group_Type': groupType,
+    if (groupNameArabic != null && groupNameArabic!.isNotEmpty)
+      'GroupNameArabic': groupNameArabic,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        groupId,
-        groupName,
-        groupCode,
-        parentGroupId,
-        parentId,
-        groupType,
-        groupNameArabic,
-        fullPath,
-        depth,
-      ];
+    id,
+    groupId,
+    groupName,
+    groupCode,
+    parentGroupId,
+    parentId,
+    groupType,
+    groupNameArabic,
+    fullPath,
+    depth,
+  ];
 }

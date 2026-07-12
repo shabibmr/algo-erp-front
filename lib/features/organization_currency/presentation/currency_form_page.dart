@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class CurrencyFormPage extends StatelessWidget {
       create: (_) => createCurrencyRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            currencyCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(currencyManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<Currency, int>(
             manifest: currencyManifest,
             mode: mode,
             idOf: (currency) => currency.id,
-            onSaved: (_) => context.go(currencyManifest.resourcePath),
-            onDeleted: () => context.go(currencyManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class CurrencyFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${currencyManifest.label}'
                       : currencyManifest.supportsUpdate
-                          ? 'Edit ${currencyManifest.label}'
-                          : 'View ${currencyManifest.label}',
+                      ? 'Edit ${currencyManifest.label}'
+                      : 'View ${currencyManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

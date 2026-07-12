@@ -33,21 +33,26 @@ class PriceList extends Equatable {
     bool? isDefault,
     bool? showInPos,
     bool? isOnline,
-  }) =>
-      PriceList(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        startDate: identical(startDate, _unset)
-            ? this.startDate
-            : startDate as DateTime?,
-        endDate:
-            identical(endDate, _unset) ? this.endDate : endDate as DateTime?,
-        isDefault: isDefault ?? this.isDefault,
-        showInPos: showInPos ?? this.showInPos,
-        isOnline: isOnline ?? this.isOnline,
-      );
+  }) => PriceList(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    startDate: identical(startDate, _unset)
+        ? this.startDate
+        : startDate as DateTime?,
+    endDate: identical(endDate, _unset) ? this.endDate : endDate as DateTime?,
+    isDefault: isDefault ?? this.isDefault,
+    showInPos: showInPos ?? this.showInPos,
+    isOnline: isOnline ?? this.isOnline,
+  );
 
   @override
-  List<Object?> get props =>
-      [id, name, startDate, endDate, isDefault, showInPos, isOnline];
+  List<Object?> get props => [
+    id,
+    name,
+    startDate,
+    endDate,
+    isDefault,
+    showInPos,
+    isOnline,
+  ];
 }

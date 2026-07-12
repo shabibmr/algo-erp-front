@@ -11,11 +11,7 @@ class UserRole extends Equatable {
   final String name;
   final String? description;
 
-  UserRole copyWith({
-    int? id,
-    String? name,
-    Object? description = _unset,
-  }) =>
+  UserRole copyWith({int? id, String? name, Object? description = _unset}) =>
       UserRole(
         id: id ?? this.id,
         name: name ?? this.name,

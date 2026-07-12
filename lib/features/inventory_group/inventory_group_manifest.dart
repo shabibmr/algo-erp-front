@@ -8,8 +8,9 @@ import 'package:algo_erp_front/features/inventory_group/domain/inventory_group.d
 import 'package:algo_erp_front/features/inventory_group/inventory_group_di.dart';
 
 /// Self-repo for parent selfFk (same pattern as cross-module FKs).
-final _inventoryGroupRepository =
-    createInventoryGroupRepository(getIt<DioClient>());
+final _inventoryGroupRepository = createInventoryGroupRepository(
+  getIt<DioClient>(),
+);
 
 /// Inventory group tree nodes. First consumer of [FieldType.selfFk].
 final inventoryGroupManifest = EntityManifest<InventoryGroup>(
@@ -104,8 +105,9 @@ final inventoryGroupManifest = EntityManifest<InventoryGroup>(
         parentGroupId: v == null ? null : (v as InventoryGroup).id,
       ),
       fkSearch: (query) async {
-        final result =
-            await _inventoryGroupRepository.list(PageQuery(search: query));
+        final result = await _inventoryGroupRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {

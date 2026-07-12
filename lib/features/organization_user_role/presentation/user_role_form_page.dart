@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class UserRoleFormPage extends StatelessWidget {
       create: (_) => createUserRoleRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            userRoleCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(userRoleManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<UserRole, int>(
             manifest: userRoleManifest,
             mode: mode,
             idOf: (role) => role.id,
-            onSaved: (_) => context.go(userRoleManifest.resourcePath),
-            onDeleted: () => context.go(userRoleManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class UserRoleFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${userRoleManifest.label}'
                       : userRoleManifest.supportsUpdate
-                          ? 'Edit ${userRoleManifest.label}'
-                          : 'View ${userRoleManifest.label}',
+                      ? 'Edit ${userRoleManifest.label}'
+                      : 'View ${userRoleManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

@@ -11,10 +11,10 @@ class BrandDto extends Equatable {
   });
 
   factory BrandDto.fromJson(Map<String, dynamic> json) => BrandDto(
-        id: json['id'] as int,
-        brandName: json['Brand_Name'] as String,
-        brandDescription: json['Brand_Description'] as String?,
-      );
+    id: json['id'] as int,
+    brandName: json['Brand_Name'] as String,
+    brandDescription: json['Brand_Description'] as String?,
+  );
 
   final int id;
   final String brandName;
@@ -23,9 +23,9 @@ class BrandDto extends Equatable {
   /// Only the two zod-validated fields are ever sent — `id`/timestamps are
   /// server-generated and never accepted on write.
   Map<String, dynamic> toJson() => {
-        'Brand_Name': brandName,
-        'Brand_Description': brandDescription,
-      };
+    'Brand_Name': brandName,
+    'Brand_Description': brandDescription,
+  };
 
   @override
   List<Object?> get props => [id, brandName, brandDescription];

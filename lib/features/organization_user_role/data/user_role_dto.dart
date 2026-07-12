@@ -11,10 +11,10 @@ class UserRoleDto extends Equatable {
   });
 
   factory UserRoleDto.fromJson(Map<String, dynamic> json) => UserRoleDto(
-        id: json['id'] as int,
-        roleName: json['role_name'] as String,
-        description: json['description'] as String?,
-      );
+    id: json['id'] as int,
+    roleName: json['role_name'] as String,
+    description: json['description'] as String?,
+  );
 
   final int id;
   final String roleName;
@@ -22,9 +22,9 @@ class UserRoleDto extends Equatable {
 
   /// `id`/timestamps are server-generated and never sent on write.
   Map<String, dynamic> toJson() => {
-        'role_name': roleName,
-        'description': description,
-      };
+    'role_name': roleName,
+    'description': description,
+  };
 
   @override
   List<Object?> get props => [id, roleName, description];

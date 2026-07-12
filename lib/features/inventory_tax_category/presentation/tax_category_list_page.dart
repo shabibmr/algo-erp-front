@@ -1,7 +1,4 @@
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
-import 'package:algo_erp_front/core/bloc/crud_contract.dart';
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/features/inventory_tax_category/domain/tax_category.dart';
@@ -16,9 +13,10 @@ class TaxCategoryListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CrudBloc<TaxCategory, int, void>>(
-      create: (_) => createTaxCategoryCrudBloc(getIt<DioClient>())
-        ..add(const CrudLoadRequested()),
+    // `.value`, not `create:` — the bloc is owned by the CrudBlocScope
+    // in AppShell so the form route shares it. See taxCategoryCrudBloc.
+    return BlocProvider<CrudBloc<TaxCategory, int, void>>.value(
+      value: taxCategoryCrudBloc(context),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,8 +31,7 @@ class TaxCategoryListPage extends StatelessWidget {
                 manifest: taxCategoryManifest,
                 idOf: (t) => t.id,
                 onCreate: () => context.push('/inventory/tax-category/new'),
-                onTap: (t) =>
-                    context.push('/inventory/tax-category/${t.id}'),
+                onTap: (t) => context.push('/inventory/tax-category/${t.id}'),
               ),
             ),
           ],

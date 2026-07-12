@@ -39,24 +39,24 @@ class FinancialYearDto extends Equatable {
 
   /// `id`/timestamps are server-generated and never sent on write.
   Map<String, dynamic> toJson() => {
-        'fy_code': fyCode,
-        'display_name': displayName,
-        'start_date': startDate,
-        'end_date': endDate,
-        'company_id': companyId,
-        'status': status,
-        'is_default': isDefault,
-      };
+    'fy_code': fyCode,
+    'display_name': displayName,
+    'start_date': startDate,
+    'end_date': endDate,
+    'company_id': companyId,
+    'status': status,
+    'is_default': isDefault,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        fyCode,
-        displayName,
-        startDate,
-        endDate,
-        companyId,
-        status,
-        isDefault,
-      ];
+    id,
+    fyCode,
+    displayName,
+    startDate,
+    endDate,
+    companyId,
+    status,
+    isDefault,
+  ];
 }

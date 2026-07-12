@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_bloc_scope.dart';
 import 'package:algo_erp_front/core/navigation/binder_sidebar.dart';
 import 'package:algo_erp_front/core/navigation/menu_model.dart';
 import 'package:algo_erp_front/core/navigation/shell_header.dart';
@@ -33,26 +34,30 @@ class AppShell extends StatelessWidget {
     final items = AppMenu.allItems;
     final title = items[selectedIndex.clamp(0, items.length - 1)].label;
 
-    return switch (device) {
-      DeviceClass.mobile => _MobileShell(
+    // Above every shell route, so a master's list and form routes — which are
+    // siblings, not ancestors — resolve the same CrudBloc.
+    return CrudBlocScope(
+      child: switch (device) {
+        DeviceClass.mobile => _MobileShell(
           selectedIndex: selectedIndex,
           title: title,
           onSelect: (i) => _onSelect(context, i),
           child: child,
         ),
-      DeviceClass.tablet => _RailShell(
+        DeviceClass.tablet => _RailShell(
           extended: false,
           selectedIndex: selectedIndex,
           onSelect: (i) => _onSelect(context, i),
           child: child,
         ),
-      DeviceClass.desktop || DeviceClass.large => _RailShell(
+        DeviceClass.desktop || DeviceClass.large => _RailShell(
           extended: true,
           selectedIndex: selectedIndex,
           onSelect: (i) => _onSelect(context, i),
           child: child,
         ),
-    };
+      },
+    );
   }
 }
 
@@ -150,10 +155,10 @@ class _MobileShellState extends State<_MobileShell> {
             child: Text(
               section.title!.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: brand.inkMuted,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.06 * 11,
-                  ),
+                color: brand.inkMuted,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.06 * 11,
+              ),
             ),
           ),
         );

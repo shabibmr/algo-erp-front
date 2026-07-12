@@ -7,8 +7,9 @@ import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/accounts_account_group/account_group_di.dart';
 import 'package:algo_erp_front/features/accounts_account_group/domain/account_group.dart';
 
-final _accountGroupRepository =
-    createAccountGroupRepository(getIt<DioClient>());
+final _accountGroupRepository = createAccountGroupRepository(
+  getIt<DioClient>(),
+);
 
 /// Account-group master with optional parent (`FieldType.selfFk`).
 /// `rbacModule` is the coarse `'Accounts'` string.
@@ -74,12 +75,12 @@ final accountGroupManifest = EntityManifest<AccountGroup>(
       type: FieldType.selfFk,
       helperText: 'Optional hierarchy parent (cannot select self)',
       getValue: (g) => g.parentGroupId,
-      setValue: (g, v) => g.copyWith(
-        parentGroupId: v == null ? null : (v as AccountGroup).id,
-      ),
+      setValue: (g, v) =>
+          g.copyWith(parentGroupId: v == null ? null : (v as AccountGroup).id),
       fkSearch: (query) async {
-        final result =
-            await _accountGroupRepository.list(PageQuery(search: query));
+        final result = await _accountGroupRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {

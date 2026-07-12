@@ -34,31 +34,28 @@ class Godown extends Equatable {
     bool? isProfitCentre,
     bool? isDefault,
     bool? isProduction,
-  }) =>
-      Godown(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        location: identical(location, _unset)
-            ? this.location
-            : location as String?,
-        narration: identical(narration, _unset)
-            ? this.narration
-            : narration as String?,
-        isProfitCentre: isProfitCentre ?? this.isProfitCentre,
-        isDefault: isDefault ?? this.isDefault,
-        isProduction: isProduction ?? this.isProduction,
-      );
+  }) => Godown(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    location: identical(location, _unset) ? this.location : location as String?,
+    narration: identical(narration, _unset)
+        ? this.narration
+        : narration as String?,
+    isProfitCentre: isProfitCentre ?? this.isProfitCentre,
+    isDefault: isDefault ?? this.isDefault,
+    isProduction: isProduction ?? this.isProduction,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        code,
-        location,
-        narration,
-        isProfitCentre,
-        isDefault,
-        isProduction,
-      ];
+    id,
+    name,
+    code,
+    location,
+    narration,
+    isProfitCentre,
+    isDefault,
+    isProduction,
+  ];
 }

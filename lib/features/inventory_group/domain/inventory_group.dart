@@ -41,36 +41,34 @@ class InventoryGroup extends Equatable {
     Object? nameArabic = _unset,
     Object? fullPath = _unset,
     Object? depth = _unset,
-  }) =>
-      InventoryGroup(
-        id: id ?? this.id,
-        groupId: groupId ?? this.groupId,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        parentGroupId: identical(parentGroupId, _unset)
-            ? this.parentGroupId
-            : parentGroupId as int?,
-        groupType: identical(groupType, _unset)
-            ? this.groupType
-            : groupType as String?,
-        nameArabic: identical(nameArabic, _unset)
-            ? this.nameArabic
-            : nameArabic as String?,
-        fullPath:
-            identical(fullPath, _unset) ? this.fullPath : fullPath as String?,
-        depth: identical(depth, _unset) ? this.depth : depth as int?,
-      );
+  }) => InventoryGroup(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    parentGroupId: identical(parentGroupId, _unset)
+        ? this.parentGroupId
+        : parentGroupId as int?,
+    groupType: identical(groupType, _unset)
+        ? this.groupType
+        : groupType as String?,
+    nameArabic: identical(nameArabic, _unset)
+        ? this.nameArabic
+        : nameArabic as String?,
+    fullPath: identical(fullPath, _unset) ? this.fullPath : fullPath as String?,
+    depth: identical(depth, _unset) ? this.depth : depth as int?,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        groupId,
-        name,
-        code,
-        parentGroupId,
-        groupType,
-        nameArabic,
-        fullPath,
-        depth,
-      ];
+    id,
+    groupId,
+    name,
+    code,
+    parentGroupId,
+    groupType,
+    nameArabic,
+    fullPath,
+    depth,
+  ];
 }

@@ -305,42 +305,38 @@ For each module, work is **DTO + mapper + manifest + DI + thin pages**, not new 
 
 ---
 
-## 10. Wave A6 — ★ Document Surface + Sales Invoice gold  `[ ]`
+## 10. Wave A6 — ★ Document Surface + Sales Invoice gold  `[~]`
 
 Vouchers are not manifests of flat fields alone — they are **blueprints**.
 
 ### A6.1 Decimal Line Engine (domain kernel)
 
-- [ ] Pure Dart: line net, tax, discount, document totals — all `Decimal`
-- [ ] Property tests / fixtures matching backend posting expectations where known
-- [ ] Zero UI dependency
+- [x] Pure Dart: line net, tax, discount, document totals — all `Decimal`
+- [x] Unit tests matching backend posting math (discount then tax-on-net, 2dp)
+- [x] Zero UI dependency (`lib/core/domain/line_engine/`)
 
 ### A6.2 `VoucherBlueprint`
 
-- [ ] party: customer | supplier | none | dual-ledger
-- [ ] lineShape: itemQty | ledgerAmount | debitCredit
-- [ ] flags: affectsGl, affectsStock, needsGodown, needsBatch
-- [ ] lifecycle: which of draft/approve/cancel/reject apply
-- [ ] endpoints: create, list, get, edit, approve, cancel, reject
-- [ ] rbacModule
+- [x] party / lineShape / flags / lifecycle / endpoints / rbacModule
+- [x] Seed: `VoucherBlueprints.salesInvoice`
 
 ### A6.3 DocumentSurface
 
-- [ ] Header form (FK party + live outstanding/credit when API allows)
-- [ ] Dynamic line grid (A2 widget) bound to Line Engine
-- [ ] Save draft vs post **online** (server authoritative numbering)
-- [ ] List + filters (ClientQuery until BE-003)
-- [ ] Read-only view + GL preview if API returns it
-- [ ] Lifecycle buttons per status + reason capture + RBAC
-- [ ] Print-friendly layout (browser print CSS / Flutter print)
+- [x] Header slot + line grid bound to Line Engine + totals + Post (RBAC)
+- [ ] Save draft vs post for types that support Draft
+- [ ] List filters / ClientQuery
+- [ ] Read-only view + GL preview
+- [ ] Full lifecycle toolbar (approve/reject/cancel + reason)
+- [ ] Print-friendly layout
 
 ### A6.4 Sales Invoice gold
 
-- [ ] Full blueprint + binding for Sales Invoice
-- [ ] `docs/templates/voucher-blueprint-recipe.md` + seed of `voucher-type-matrix.md`
-- [ ] Tests: totals engine, lifecycle visibility, create happy path (mock repo)
+- [x] Blueprint + list + post form (`transactions_sales_invoice`)
+- [x] `docs/templates/voucher-blueprint-recipe.md` + `voucher-type-matrix.md`
+- [x] Tests: Line Engine + SI DTO
 
-**Done-when:** Create and post Sales Invoice online; totals stable; template ready for other types.
+**Done-when (MVP):** Create and post Sales Invoice online; totals stable; template ready.  
+**Still open:** detail view, cancel/approve UI, draft-only path polish.
 
 ---
 
@@ -438,7 +434,7 @@ Vouchers are not manifests of flat fields alone — they are **blueprints**.
 
 1. Use **[`STATUS.md`](./STATUS.md)** for completion matrix + sprint notes.
 2. **Sprint A remainder:** `FieldType.selfFk` → parent on AccountGroup/InventoryGroup; ledger bank/credit/tax tabs.
-3. **Sprint C:** Line Engine + DocumentSurface → Sales Invoice gold (Item + Ledger unblocked).
+3. **Sprint D:** Register next voucher blueprints on DocumentSurface (Purchase SI, Payment, …).
 4. Do **not** mass-clone feature packages; keep the 7-file EMR recipe.
 5. Leave offline (`database/**`, CRs) parked until online trading path works.
 6. Keep wave narrative here; flip STATUS marks when shipping entities.

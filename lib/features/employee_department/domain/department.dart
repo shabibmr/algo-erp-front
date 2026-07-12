@@ -18,12 +18,7 @@ class Department extends Equatable {
   final String name;
   final bool isActive;
 
-  Department copyWith({
-    int? id,
-    String? code,
-    String? name,
-    bool? isActive,
-  }) =>
+  Department copyWith({int? id, String? code, String? name, bool? isActive}) =>
       Department(
         id: id ?? this.id,
         code: code ?? this.code,

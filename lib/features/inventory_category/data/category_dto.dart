@@ -11,11 +11,11 @@ class CategoryDto extends Equatable {
   });
 
   factory CategoryDto.fromJson(Map<String, dynamic> json) => CategoryDto(
-        id: json['id'] as int,
-        categoryName: json['category_name'] as String,
-        categoryCode: json['category_code'] as String?,
-        description: json['Description'] as String?,
-      );
+    id: json['id'] as int,
+    categoryName: json['category_name'] as String,
+    categoryCode: json['category_code'] as String?,
+    description: json['Description'] as String?,
+  );
 
   final int id;
   final String categoryName;
@@ -23,10 +23,10 @@ class CategoryDto extends Equatable {
   final String? description;
 
   Map<String, dynamic> toJson() => {
-        'category_name': categoryName,
-        'category_code': categoryCode,
-        'Description': description,
-      };
+    'category_name': categoryName,
+    'category_code': categoryCode,
+    'Description': description,
+  };
 
   @override
   List<Object?> get props => [id, categoryName, categoryCode, description];

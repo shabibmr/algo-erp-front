@@ -52,19 +52,18 @@ void main() {
 
   CrudBloc<_Item, int, void> build({
     Duration debounce = const Duration(milliseconds: 20),
-  }) =>
-      CrudBloc<_Item, int, void>(
-        repository: repo,
-        idOf: (e) => e.id,
-        searchDebounce: debounce,
-      );
+  }) => CrudBloc<_Item, int, void>(
+    repository: repo,
+    idOf: (e) => e.id,
+    searchDebounce: debounce,
+  );
 
   group('load', () {
     blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
       'emits [loading, loaded] on success',
-      setUp: () => when(() => repo.list(any())).thenAnswer(
-        (_) async => Right(_page([a, b], total: 2)),
-      ),
+      setUp: () => when(
+        () => repo.list(any()),
+      ).thenAnswer((_) async => Right(_page([a, b], total: 2))),
       build: build,
       act: (bloc) => bloc.add(const CrudLoadRequested()),
       expect: () => [
@@ -77,9 +76,9 @@ void main() {
 
     blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
       'emits [loading, error] when the repository fails',
-      setUp: () => when(() => repo.list(any())).thenAnswer(
-        (_) async => const Left(Failure.network('offline')),
-      ),
+      setUp: () => when(
+        () => repo.list(any()),
+      ).thenAnswer((_) async => const Left(Failure.network('offline'))),
       build: build,
       act: (bloc) => bloc.add(const CrudLoadRequested()),
       expect: () => [
@@ -95,9 +94,9 @@ void main() {
 
   blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
     'loadMore appends the next page and requests page 2',
-    setUp: () => when(() => repo.list(any())).thenAnswer(
-      (_) async => Right(_page([b], total: 2, page: 2, limit: 1)),
-    ),
+    setUp: () => when(
+      () => repo.list(any()),
+    ).thenAnswer((_) async => Right(_page([b], total: 2, page: 2, limit: 1))),
     build: build,
     seed: () => const CrudLoaded<_Item>(
       items: [a],
@@ -109,17 +108,17 @@ void main() {
       isA<CrudLoaded<_Item>>().having((s) => s.items, 'items', [a, b]),
     ],
     verify: (_) {
-      final query = verify(() => repo.list(captureAny())).captured.last
-          as PageQuery;
+      final query =
+          verify(() => repo.list(captureAny())).captured.last as PageQuery;
       expect(query.page, 2);
     },
   );
 
   blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
     'search debounces then loads with the search term',
-    setUp: () => when(() => repo.list(any())).thenAnswer(
-      (_) async => Right(_page([a], total: 1)),
-    ),
+    setUp: () => when(
+      () => repo.list(any()),
+    ).thenAnswer((_) async => Right(_page([a], total: 1))),
     build: build,
     act: (bloc) => bloc.add(const CrudSearchChanged('app')),
     wait: const Duration(milliseconds: 60),
@@ -154,8 +153,9 @@ void main() {
 
   blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
     'update replaces the item in place',
-    setUp: () => when(() => repo.update(any(), any()))
-        .thenAnswer((_) async => const Right(_Item(1, 'Apricot'))),
+    setUp: () => when(
+      () => repo.update(any(), any()),
+    ).thenAnswer((_) async => const Right(_Item(1, 'Apricot'))),
     build: build,
     seed: () => const CrudLoaded<_Item>(
       items: [a, b],
@@ -173,8 +173,9 @@ void main() {
 
   blocTest<CrudBloc<_Item, int, void>, CrudState<_Item>>(
     'delete optimistically removes the item on success',
-    setUp: () => when(() => repo.delete(any()))
-        .thenAnswer((_) async => const Right(unit)),
+    setUp: () => when(
+      () => repo.delete(any()),
+    ).thenAnswer((_) async => const Right(unit)),
     build: build,
     seed: () => const CrudLoaded<_Item>(
       items: [a, b],
@@ -186,32 +187,36 @@ void main() {
     ],
   );
 
-  test('delete failure reports on mutationFailures and restores the list',
-      () async {
-    when(() => repo.list(any()))
-        .thenAnswer((_) async => Right(_page([a, b], total: 2)));
-    when(() => repo.delete(any()))
-        .thenAnswer((_) async => const Left(Failure.server('boom')));
+  test(
+    'delete failure reports on mutationFailures and restores the list',
+    () async {
+      when(
+        () => repo.list(any()),
+      ).thenAnswer((_) async => Right(_page([a, b], total: 2)));
+      when(
+        () => repo.delete(any()),
+      ).thenAnswer((_) async => const Left(Failure.server('boom')));
 
-    final bloc = build();
-    final failures = <Failure>[];
-    final sub = bloc.mutationFailures.listen(failures.add);
+      final bloc = build();
+      final failures = <Failure>[];
+      final sub = bloc.mutationFailures.listen(failures.add);
 
-    // Drive the bloc into a loaded state through a real load.
-    bloc.add(const CrudLoadRequested());
-    await Future<void>.delayed(const Duration(milliseconds: 30));
-    expect(bloc.state, isA<CrudLoaded<_Item>>());
+      // Drive the bloc into a loaded state through a real load.
+      bloc.add(const CrudLoadRequested());
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(bloc.state, isA<CrudLoaded<_Item>>());
 
-    // Optimistic remove → delete fails → refresh restores server truth.
-    bloc.add(const CrudItemDeleted(a));
-    await Future<void>.delayed(const Duration(milliseconds: 60));
+      // Optimistic remove → delete fails → refresh restores server truth.
+      bloc.add(const CrudItemDeleted(a));
+      await Future<void>.delayed(const Duration(milliseconds: 60));
 
-    expect(failures, [const Failure.server('boom')]);
-    final state = bloc.state;
-    expect(state, isA<CrudLoaded<_Item>>());
-    expect((state as CrudLoaded<_Item>).items, [a, b]);
+      expect(failures, [const Failure.server('boom')]);
+      final state = bloc.state;
+      expect(state, isA<CrudLoaded<_Item>>());
+      expect((state as CrudLoaded<_Item>).items, [a, b]);
 
-    await sub.cancel();
-    await bloc.close();
-  });
+      await sub.cancel();
+      await bloc.close();
+    },
+  );
 }

@@ -34,16 +34,14 @@ class Branch extends Equatable {
     int? companyId,
     Object? address = _unset,
     bool? isActive,
-  }) =>
-      Branch(
-        id: id ?? this.id,
-        code: code ?? this.code,
-        name: name ?? this.name,
-        companyId: companyId ?? this.companyId,
-        address:
-            identical(address, _unset) ? this.address : address as String?,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => Branch(
+    id: id ?? this.id,
+    code: code ?? this.code,
+    name: name ?? this.name,
+    companyId: companyId ?? this.companyId,
+    address: identical(address, _unset) ? this.address : address as String?,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [id, code, name, companyId, address, isActive];

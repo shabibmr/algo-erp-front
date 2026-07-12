@@ -24,14 +24,13 @@ class Designation extends Equatable {
     String? name,
     int? departmentId,
     bool? isActive,
-  }) =>
-      Designation(
-        id: id ?? this.id,
-        code: code ?? this.code,
-        name: name ?? this.name,
-        departmentId: departmentId ?? this.departmentId,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => Designation(
+    id: id ?? this.id,
+    code: code ?? this.code,
+    name: name ?? this.name,
+    departmentId: departmentId ?? this.departmentId,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [id, code, name, departmentId, isActive];

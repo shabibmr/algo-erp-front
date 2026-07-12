@@ -1,7 +1,4 @@
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
-import 'package:algo_erp_front/core/bloc/crud_contract.dart';
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/features/organization_user_role/domain/user_role.dart';
@@ -16,9 +13,10 @@ class UserRoleListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CrudBloc<UserRole, int, void>>(
-      create: (_) => createUserRoleCrudBloc(getIt<DioClient>())
-        ..add(const CrudLoadRequested()),
+    // `.value`, not `create:` — the bloc is owned by the CrudBlocScope
+    // in AppShell so the form route shares it. See userRoleCrudBloc.
+    return BlocProvider<CrudBloc<UserRole, int, void>>.value(
+      value: userRoleCrudBloc(context),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,8 +31,7 @@ class UserRoleListPage extends StatelessWidget {
                 manifest: userRoleManifest,
                 idOf: (role) => role.id,
                 onCreate: () => context.push('/organization/roles/new'),
-                onTap: (role) =>
-                    context.push('/organization/roles/${role.id}'),
+                onTap: (role) => context.push('/organization/roles/${role.id}'),
               ),
             ),
           ],

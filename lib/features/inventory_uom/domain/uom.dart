@@ -28,17 +28,22 @@ class Uom extends Equatable {
     int? decimalPlaces,
     Object? symbol = _unset,
     bool? isComposite,
-  }) =>
-      Uom(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        code: identical(code, _unset) ? this.code : code as String?,
-        decimalPlaces: decimalPlaces ?? this.decimalPlaces,
-        symbol: identical(symbol, _unset) ? this.symbol : symbol as String?,
-        isComposite: isComposite ?? this.isComposite,
-      );
+  }) => Uom(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    code: identical(code, _unset) ? this.code : code as String?,
+    decimalPlaces: decimalPlaces ?? this.decimalPlaces,
+    symbol: identical(symbol, _unset) ? this.symbol : symbol as String?,
+    isComposite: isComposite ?? this.isComposite,
+  );
 
   @override
-  List<Object?> get props =>
-      [id, name, code, decimalPlaces, symbol, isComposite];
+  List<Object?> get props => [
+    id,
+    name,
+    code,
+    decimalPlaces,
+    symbol,
+    isComposite,
+  ];
 }

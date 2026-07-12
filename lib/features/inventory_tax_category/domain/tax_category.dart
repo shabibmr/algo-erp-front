@@ -23,13 +23,12 @@ class TaxCategory extends Equatable {
     String? name,
     Decimal? rate,
     bool? isActive,
-  }) =>
-      TaxCategory(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        rate: rate ?? this.rate,
-        isActive: isActive ?? this.isActive,
-      );
+  }) => TaxCategory(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    rate: rate ?? this.rate,
+    isActive: isActive ?? this.isActive,
+  );
 
   @override
   List<Object?> get props => [id, name, rate, isActive];

@@ -54,6 +54,12 @@ import 'package:algo_erp_front/features/organization_financial_year/presentation
 import 'package:algo_erp_front/features/organization_financial_year/presentation/financial_year_list_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_form_page.dart';
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_list_page.dart';
+import 'package:algo_erp_front/features/organization_voucher_series/presentation/voucher_series_form_page.dart';
+import 'package:algo_erp_front/features/organization_voucher_series/presentation/voucher_series_list_page.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_detail_page.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_form_page.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_html_pdf_page.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -144,15 +150,53 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
                     '/organization/roles' => const UserRoleListPage(),
                     '/organization/contacts' => const AddressBookListPage(),
                     '/organization/fy' => const FinancialYearListPage(),
+                    '/organization/voucher-series' =>
+                      const VoucherSeriesListPage(),
                     '/inventory/property' => const ItemPropertyListPage(),
                     '/accounts/groups' => const AccountGroupListPage(),
                     '/accounts/ledgers' => const LedgerListPage(),
+                    '/transactions/sales-invoices' =>
+                      const SalesInvoiceListPage(),
                     _ => _PlaceholderPage(title: item.label),
                   },
                 ),
               ),
             // Manifest create/edit routes — not menu items, so registered
             // directly rather than through the AppMenu.allItems loop above.
+            GoRoute(
+              path: '/transactions/sales-invoices/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const SalesInvoiceFormPage(),
+              ),
+            ),
+            GoRoute(
+              path: '/transactions/sales-invoices/:id/edit',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: SalesInvoiceFormPage(
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/transactions/sales-invoices/:id/pdf',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: SalesInvoiceHtmlPdfPage(
+                  id: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/transactions/sales-invoices/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: SalesInvoiceDetailPage(
+                  id: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
             GoRoute(
               path: '/accounts/groups/new',
               pageBuilder: (context, state) => buildPageWithMotion(
@@ -471,6 +515,23 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
               pageBuilder: (context, state) => buildPageWithMotion(
                 state: state,
                 child: FinancialYearFormPage(
+                  mode: FormMode.edit,
+                  entityId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/voucher-series/new',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: const VoucherSeriesFormPage(mode: FormMode.create),
+              ),
+            ),
+            GoRoute(
+              path: '/organization/voucher-series/:id',
+              pageBuilder: (context, state) => buildPageWithMotion(
+                state: state,
+                child: VoucherSeriesFormPage(
                   mode: FormMode.edit,
                   entityId: int.parse(state.pathParameters['id']!),
                 ),

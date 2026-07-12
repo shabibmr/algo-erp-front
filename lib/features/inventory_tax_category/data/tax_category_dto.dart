@@ -11,13 +11,12 @@ class TaxCategoryDto extends Equatable {
     required this.isActive,
   });
 
-  factory TaxCategoryDto.fromJson(Map<String, dynamic> json) =>
-      TaxCategoryDto(
-        id: json['id'] as int,
-        taxName: json['tax_name'] as String,
-        taxRate: Decimal.parse(json['tax_rate'].toString()),
-        isActive: json['is_active'] as bool? ?? true,
-      );
+  factory TaxCategoryDto.fromJson(Map<String, dynamic> json) => TaxCategoryDto(
+    id: json['id'] as int,
+    taxName: json['tax_name'] as String,
+    taxRate: Decimal.parse(json['tax_rate'].toString()),
+    isActive: json['is_active'] as bool? ?? true,
+  );
 
   final int id;
   final String taxName;
@@ -25,10 +24,10 @@ class TaxCategoryDto extends Equatable {
   final bool isActive;
 
   Map<String, dynamic> toJson() => {
-        'tax_name': taxName,
-        'tax_rate': taxRate.toDouble(),
-        'is_active': isActive,
-      };
+    'tax_name': taxName,
+    'tax_rate': taxRate.toDouble(),
+    'is_active': isActive,
+  };
 
   @override
   List<Object?> get props => [id, taxName, taxRate, isActive];

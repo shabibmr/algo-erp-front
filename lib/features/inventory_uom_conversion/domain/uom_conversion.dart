@@ -33,19 +33,24 @@ class UomConversion extends Equatable {
     String? conversionValue,
     Object? itemId = _unset,
     Object? narration = _unset,
-  }) =>
-      UomConversion(
-        id: id ?? this.id,
-        baseUnit: baseUnit ?? this.baseUnit,
-        toUnit: toUnit ?? this.toUnit,
-        conversionValue: conversionValue ?? this.conversionValue,
-        itemId: identical(itemId, _unset) ? this.itemId : itemId as String?,
-        narration: identical(narration, _unset)
-            ? this.narration
-            : narration as String?,
-      );
+  }) => UomConversion(
+    id: id ?? this.id,
+    baseUnit: baseUnit ?? this.baseUnit,
+    toUnit: toUnit ?? this.toUnit,
+    conversionValue: conversionValue ?? this.conversionValue,
+    itemId: identical(itemId, _unset) ? this.itemId : itemId as String?,
+    narration: identical(narration, _unset)
+        ? this.narration
+        : narration as String?,
+  );
 
   @override
-  List<Object?> get props =>
-      [id, baseUnit, toUnit, conversionValue, itemId, narration];
+  List<Object?> get props => [
+    id,
+    baseUnit,
+    toUnit,
+    conversionValue,
+    itemId,
+    narration,
+  ];
 }

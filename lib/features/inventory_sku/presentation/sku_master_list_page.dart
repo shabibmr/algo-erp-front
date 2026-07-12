@@ -1,7 +1,4 @@
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
-import 'package:algo_erp_front/core/bloc/crud_contract.dart';
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/features/inventory_sku/domain/sku_master.dart';
@@ -16,9 +13,10 @@ class SkuMasterListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CrudBloc<SkuMaster, int, void>>(
-      create: (_) => createSkuMasterCrudBloc(getIt<DioClient>())
-        ..add(const CrudLoadRequested()),
+    // `.value`, not `create:` — the bloc is owned by the CrudBlocScope
+    // in AppShell so the form route shares it. See skuMasterCrudBloc.
+    return BlocProvider<CrudBloc<SkuMaster, int, void>>.value(
+      value: skuMasterCrudBloc(context),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,4 @@
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
-import 'package:algo_erp_front/core/bloc/crud_contract.dart';
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
@@ -16,9 +13,10 @@ class InventoryItemListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<CrudBloc<InventoryItem, int, void>>(
-      create: (_) => createInventoryItemCrudBloc(getIt<DioClient>())
-        ..add(const CrudLoadRequested()),
+    // `.value`, not `create:` — the bloc is owned by the CrudBlocScope
+    // in AppShell so the form route shares it. See inventoryItemCrudBloc.
+    return BlocProvider<CrudBloc<InventoryItem, int, void>>.value(
+      value: inventoryItemCrudBloc(context),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

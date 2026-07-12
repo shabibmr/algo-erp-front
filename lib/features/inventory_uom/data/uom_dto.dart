@@ -14,13 +14,13 @@ class UomDto extends Equatable {
   });
 
   factory UomDto.fromJson(Map<String, dynamic> json) => UomDto(
-        id: json['id'] as int,
-        uomName: json['uom_Name'] as String,
-        uomCode: json['uom_code'] as String?,
-        decimalPlaces: json['decimal_places'] as int? ?? 0,
-        uomSymbol: json['uom_symbol'] as String?,
-        isComposite: json['is_Composite'] as bool? ?? false,
-      );
+    id: json['id'] as int,
+    uomName: json['uom_Name'] as String,
+    uomCode: json['uom_code'] as String?,
+    decimalPlaces: json['decimal_places'] as int? ?? 0,
+    uomSymbol: json['uom_symbol'] as String?,
+    isComposite: json['is_Composite'] as bool? ?? false,
+  );
 
   final int id;
   final String uomName;
@@ -31,14 +31,20 @@ class UomDto extends Equatable {
 
   /// `id`/timestamps are server-generated and never sent on write.
   Map<String, dynamic> toJson() => {
-        'uom_Name': uomName,
-        'uom_code': uomCode,
-        'decimal_places': decimalPlaces,
-        'uom_symbol': uomSymbol,
-        'is_Composite': isComposite,
-      };
+    'uom_Name': uomName,
+    'uom_code': uomCode,
+    'decimal_places': decimalPlaces,
+    'uom_symbol': uomSymbol,
+    'is_Composite': isComposite,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, uomName, uomCode, decimalPlaces, uomSymbol, isComposite];
+  List<Object?> get props => [
+    id,
+    uomName,
+    uomCode,
+    decimalPlaces,
+    uomSymbol,
+    isComposite,
+  ];
 }

@@ -47,27 +47,26 @@ class FinancialYear extends Equatable {
     int? companyId,
     String? status,
     bool? isDefault,
-  }) =>
-      FinancialYear(
-        id: id ?? this.id,
-        fyCode: fyCode ?? this.fyCode,
-        displayName: displayName ?? this.displayName,
-        startDate: startDate ?? this.startDate,
-        endDate: endDate ?? this.endDate,
-        companyId: companyId ?? this.companyId,
-        status: status ?? this.status,
-        isDefault: isDefault ?? this.isDefault,
-      );
+  }) => FinancialYear(
+    id: id ?? this.id,
+    fyCode: fyCode ?? this.fyCode,
+    displayName: displayName ?? this.displayName,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate ?? this.endDate,
+    companyId: companyId ?? this.companyId,
+    status: status ?? this.status,
+    isDefault: isDefault ?? this.isDefault,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        fyCode,
-        displayName,
-        startDate,
-        endDate,
-        companyId,
-        status,
-        isDefault,
-      ];
+    id,
+    fyCode,
+    displayName,
+    startDate,
+    endDate,
+    companyId,
+    status,
+    isDefault,
+  ];
 }

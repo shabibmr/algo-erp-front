@@ -7,17 +7,17 @@ class DepartmentMapper implements Mapper<DepartmentDto, Department> {
 
   @override
   Department toEntity(DepartmentDto dto) => Department(
-        id: dto.id,
-        code: dto.deptCode,
-        name: dto.deptName,
-        isActive: dto.isActive,
-      );
+    id: dto.id,
+    code: dto.deptCode,
+    name: dto.deptName,
+    isActive: dto.isActive,
+  );
 
   @override
   DepartmentDto toDto(Department entity) => DepartmentDto(
-        id: entity.id,
-        deptCode: entity.code,
-        deptName: entity.name,
-        isActive: entity.isActive,
-      );
+    id: entity.id,
+    deptCode: entity.code,
+    deptName: entity.name,
+    isActive: entity.isActive,
+  );
 }

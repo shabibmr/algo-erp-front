@@ -12,14 +12,13 @@ class DesignationDto extends Equatable {
     required this.isActive,
   });
 
-  factory DesignationDto.fromJson(Map<String, dynamic> json) =>
-      DesignationDto(
-        id: json['id'] as int,
-        designationCode: json['designation_code'] as String,
-        designationName: json['designation_name'] as String,
-        departmentId: json['department_id'] as int,
-        isActive: json['is_active'] as bool? ?? true,
-      );
+  factory DesignationDto.fromJson(Map<String, dynamic> json) => DesignationDto(
+    id: json['id'] as int,
+    designationCode: json['designation_code'] as String,
+    designationName: json['designation_name'] as String,
+    departmentId: json['department_id'] as int,
+    isActive: json['is_active'] as bool? ?? true,
+  );
 
   final int id;
   final String designationCode;
@@ -28,13 +27,18 @@ class DesignationDto extends Equatable {
   final bool isActive;
 
   Map<String, dynamic> toJson() => {
-        'designation_code': designationCode,
-        'designation_name': designationName,
-        'department_id': departmentId,
-        'is_active': isActive,
-      };
+    'designation_code': designationCode,
+    'designation_name': designationName,
+    'department_id': departmentId,
+    'is_active': isActive,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, designationCode, designationName, departmentId, isActive];
+  List<Object?> get props => [
+    id,
+    designationCode,
+    designationName,
+    departmentId,
+    isActive,
+  ];
 }

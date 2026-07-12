@@ -6,16 +6,13 @@ class BrandMapper implements Mapper<BrandDto, Brand> {
   const BrandMapper();
 
   @override
-  Brand toEntity(BrandDto dto) => Brand(
-        id: dto.id,
-        name: dto.brandName,
-        description: dto.brandDescription,
-      );
+  Brand toEntity(BrandDto dto) =>
+      Brand(id: dto.id, name: dto.brandName, description: dto.brandDescription);
 
   @override
   BrandDto toDto(Brand entity) => BrandDto(
-        id: entity.id,
-        brandName: entity.name,
-        brandDescription: entity.description,
-      );
+    id: entity.id,
+    brandName: entity.name,
+    brandDescription: entity.description,
+  );
 }

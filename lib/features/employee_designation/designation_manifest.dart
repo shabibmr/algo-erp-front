@@ -73,8 +73,9 @@ final designationManifest = EntityManifest<Designation>(
       getValue: (d) => d.departmentId,
       setValue: (d, v) => d.copyWith(departmentId: (v! as Department).id),
       fkSearch: (query) async {
-        final result =
-            await _departmentRepository.list(PageQuery(search: query));
+        final result = await _departmentRepository.list(
+          PageQuery(search: query),
+        );
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) => (item as Department).name,

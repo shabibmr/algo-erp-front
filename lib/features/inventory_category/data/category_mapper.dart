@@ -7,17 +7,17 @@ class CategoryMapper implements Mapper<CategoryDto, Category> {
 
   @override
   Category toEntity(CategoryDto dto) => Category(
-        id: dto.id,
-        name: dto.categoryName,
-        code: dto.categoryCode,
-        description: dto.description,
-      );
+    id: dto.id,
+    name: dto.categoryName,
+    code: dto.categoryCode,
+    description: dto.description,
+  );
 
   @override
   CategoryDto toDto(Category entity) => CategoryDto(
-        id: entity.id,
-        categoryName: entity.name,
-        categoryCode: entity.code,
-        description: entity.description,
-      );
+    id: entity.id,
+    categoryName: entity.name,
+    categoryCode: entity.code,
+    description: entity.description,
+  );
 }

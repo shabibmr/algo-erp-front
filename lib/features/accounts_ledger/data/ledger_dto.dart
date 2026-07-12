@@ -106,21 +106,21 @@ class LedgerDto extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        ledgerName,
-        ledgerCode,
-        ledgerType,
-        accountGroupId,
-        contactId,
-        currencyCode,
-        isSystemDefined,
-        isActive,
-        openingBalance,
-        openingBalanceDate,
-        bankDetails,
-        creditSettings,
-        taxSettings,
-      ];
+    id,
+    ledgerName,
+    ledgerCode,
+    ledgerType,
+    accountGroupId,
+    contactId,
+    currencyCode,
+    isSystemDefined,
+    isActive,
+    openingBalance,
+    openingBalanceDate,
+    bankDetails,
+    creditSettings,
+    taxSettings,
+  ];
 }
 
 class LedgerBankDetailsDto extends Equatable {
@@ -145,15 +145,19 @@ class LedgerBankDetailsDto extends Equatable {
   final String? bankBranchName;
 
   Map<String, dynamic> toJson() => {
-        'bank_account_number': bankAccountNumber,
-        'iban': iban,
-        'swift_code': swiftCode,
-        'bank_branch_name': bankBranchName,
-      };
+    'bank_account_number': bankAccountNumber,
+    'iban': iban,
+    'swift_code': swiftCode,
+    'bank_branch_name': bankBranchName,
+  };
 
   @override
-  List<Object?> get props =>
-      [bankAccountNumber, iban, swiftCode, bankBranchName];
+  List<Object?> get props => [
+    bankAccountNumber,
+    iban,
+    swiftCode,
+    bankBranchName,
+  ];
 }
 
 class LedgerCreditSettingsDto extends Equatable {
@@ -180,25 +184,25 @@ class LedgerCreditSettingsDto extends Equatable {
   final String? cautionDeposit;
 
   Map<String, dynamic> toJson() => {
-        'credit_limit':
-            creditLimit == null ? null : double.tryParse(creditLimit!),
-        'credit_period_days': creditPeriodDays,
-        'payment_terms': paymentTerms,
-        'caution_deposit':
-            cautionDeposit == null ? null : double.tryParse(cautionDeposit!),
-      };
+    'credit_limit': creditLimit == null ? null : double.tryParse(creditLimit!),
+    'credit_period_days': creditPeriodDays,
+    'payment_terms': paymentTerms,
+    'caution_deposit': cautionDeposit == null
+        ? null
+        : double.tryParse(cautionDeposit!),
+  };
 
   @override
-  List<Object?> get props =>
-      [creditLimit, creditPeriodDays, paymentTerms, cautionDeposit];
+  List<Object?> get props => [
+    creditLimit,
+    creditPeriodDays,
+    paymentTerms,
+    cautionDeposit,
+  ];
 }
 
 class LedgerTaxSettingsDto extends Equatable {
-  const LedgerTaxSettingsDto({
-    this.trn,
-    this.taxCategoryId,
-    this.typeOfSupply,
-  });
+  const LedgerTaxSettingsDto({this.trn, this.taxCategoryId, this.typeOfSupply});
 
   factory LedgerTaxSettingsDto.fromJson(Map<String, dynamic> json) =>
       LedgerTaxSettingsDto(
@@ -212,10 +216,10 @@ class LedgerTaxSettingsDto extends Equatable {
   final String? typeOfSupply;
 
   Map<String, dynamic> toJson() => {
-        'trn': trn,
-        'tax_category_id': taxCategoryId,
-        'type_of_supply': typeOfSupply,
-      };
+    'trn': trn,
+    'tax_category_id': taxCategoryId,
+    'type_of_supply': typeOfSupply,
+  };
 
   @override
   List<Object?> get props => [trn, taxCategoryId, typeOfSupply];

@@ -24,21 +24,21 @@ class AddressBookDto extends Equatable {
   });
 
   factory AddressBookDto.fromJson(Map<String, dynamic> json) => AddressBookDto(
-        id: json['id'] as int,
-        contactType: json['contact_type'] as String,
-        addressId: json['Address_Id'] as String,
-        name: json['Name'] as String,
-        designation: json['Designation'] as String?,
-        companyName: json['Company_Name'] as String?,
-        email: json['Email'] as String?,
-        phoneNumber: json['Phone_Number'] as String?,
-        mobileNumber: json['Mobile_Number'] as String?,
-        building: json['Building'] as String?,
-        street: json['Street'] as String?,
-        city: json['City'] as String?,
-        country: json['Country'] as String?,
-        isActive: json['isActive'] as bool? ?? true,
-      );
+    id: json['id'] as int,
+    contactType: json['contact_type'] as String,
+    addressId: json['Address_Id'] as String,
+    name: json['Name'] as String,
+    designation: json['Designation'] as String?,
+    companyName: json['Company_Name'] as String?,
+    email: json['Email'] as String?,
+    phoneNumber: json['Phone_Number'] as String?,
+    mobileNumber: json['Mobile_Number'] as String?,
+    building: json['Building'] as String?,
+    street: json['Street'] as String?,
+    city: json['City'] as String?,
+    country: json['Country'] as String?,
+    isActive: json['isActive'] as bool? ?? true,
+  );
 
   final int id;
   final String contactType;
@@ -59,35 +59,35 @@ class AddressBookDto extends Equatable {
   /// is the soft-delete flag, owned by `DELETE`. `addressBookSchema` accepts
   /// only the keys below.
   Map<String, dynamic> toJson() => {
-        'contact_type': contactType,
-        'Address_Id': addressId,
-        'Name': name,
-        'Designation': designation,
-        'Company_Name': companyName,
-        'Email': email,
-        'Phone_Number': phoneNumber,
-        'Mobile_Number': mobileNumber,
-        'Building': building,
-        'Street': street,
-        'City': city,
-        'Country': country,
-      };
+    'contact_type': contactType,
+    'Address_Id': addressId,
+    'Name': name,
+    'Designation': designation,
+    'Company_Name': companyName,
+    'Email': email,
+    'Phone_Number': phoneNumber,
+    'Mobile_Number': mobileNumber,
+    'Building': building,
+    'Street': street,
+    'City': city,
+    'Country': country,
+  };
 
   @override
   List<Object?> get props => [
-        id,
-        contactType,
-        addressId,
-        name,
-        designation,
-        companyName,
-        email,
-        phoneNumber,
-        mobileNumber,
-        building,
-        street,
-        city,
-        country,
-        isActive,
-      ];
+    id,
+    contactType,
+    addressId,
+    name,
+    designation,
+    companyName,
+    email,
+    phoneNumber,
+    mobileNumber,
+    building,
+    street,
+    city,
+    country,
+    isActive,
+  ];
 }

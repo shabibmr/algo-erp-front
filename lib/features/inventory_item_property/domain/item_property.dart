@@ -27,15 +27,14 @@ class ItemProperty extends Equatable {
     String? propertyId,
     String? itemId,
     Object? defaultValue = _unset,
-  }) =>
-      ItemProperty(
-        id: id ?? this.id,
-        propertyId: propertyId ?? this.propertyId,
-        itemId: itemId ?? this.itemId,
-        defaultValue: identical(defaultValue, _unset)
-            ? this.defaultValue
-            : defaultValue as String?,
-      );
+  }) => ItemProperty(
+    id: id ?? this.id,
+    propertyId: propertyId ?? this.propertyId,
+    itemId: itemId ?? this.itemId,
+    defaultValue: identical(defaultValue, _unset)
+        ? this.defaultValue
+        : defaultValue as String?,
+  );
 
   @override
   List<Object?> get props => [id, propertyId, itemId, defaultValue];

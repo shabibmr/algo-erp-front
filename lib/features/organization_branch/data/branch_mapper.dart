@@ -7,21 +7,21 @@ class BranchMapper implements Mapper<BranchDto, Branch> {
 
   @override
   Branch toEntity(BranchDto dto) => Branch(
-        id: dto.id,
-        code: dto.branchCode,
-        name: dto.branchName,
-        companyId: dto.companyId,
-        address: dto.address,
-        isActive: dto.isActive,
-      );
+    id: dto.id,
+    code: dto.branchCode,
+    name: dto.branchName,
+    companyId: dto.companyId,
+    address: dto.address,
+    isActive: dto.isActive,
+  );
 
   @override
   BranchDto toDto(Branch entity) => BranchDto(
-        id: entity.id,
-        branchCode: entity.code,
-        branchName: entity.name,
-        companyId: entity.companyId,
-        address: entity.address,
-        isActive: entity.isActive,
-      );
+    id: entity.id,
+    branchCode: entity.code,
+    branchName: entity.name,
+    companyId: entity.companyId,
+    address: entity.address,
+    isActive: entity.isActive,
+  );
 }

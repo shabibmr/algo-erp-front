@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -27,12 +28,20 @@ class DesignationFormPage extends StatelessWidget {
       create: (_) => createDesignationRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            designationCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(designationManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<Designation, int>(
             manifest: designationManifest,
             mode: mode,
             idOf: (d) => d.id,
-            onSaved: (_) => context.go(designationManifest.resourcePath),
-            onDeleted: () => context.go(designationManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -42,8 +51,8 @@ class DesignationFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${designationManifest.label}'
                       : designationManifest.supportsUpdate
-                          ? 'Edit ${designationManifest.label}'
-                          : 'View ${designationManifest.label}',
+                      ? 'Edit ${designationManifest.label}'
+                      : 'View ${designationManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

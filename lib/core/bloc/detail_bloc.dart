@@ -68,9 +68,9 @@ final class DetailDeleteRequested extends DetailEvent {
 /// reused for every detail screen with zero per-entity code.
 class DetailBloc<E, ID> extends Bloc<DetailEvent, DetailState<E>> {
   DetailBloc({required Repository<E, ID> repository, required ID id})
-      : _repo = repository,
-        _id = id,
-        super(const DetailInitial()) {
+    : _repo = repository,
+      _id = id,
+      super(const DetailInitial()) {
     on<DetailLoadRequested>(_onLoad);
     on<DetailRefreshRequested>(_onLoad);
     on<DetailDeleteRequested>(_onDelete);

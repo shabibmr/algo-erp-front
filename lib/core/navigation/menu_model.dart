@@ -91,6 +91,13 @@ abstract final class AppMenu {
           route: '/organization/fy',
           requiredModule: 'FinancialYear',
         ),
+        MenuItemModel(
+          label: 'Voucher series',
+          icon: Icons.pin_outlined,
+          selectedIcon: Icons.pin,
+          route: '/organization/voucher-series',
+          requiredModule: 'VoucherSeries',
+        ),
       ],
     ),
     MenuSectionModel(
@@ -257,6 +264,13 @@ abstract final class AppMenu {
           selectedIcon: Icons.receipt_long,
           route: '/transactions',
           requiredModule: 'Transactions',
+        ),
+        MenuItemModel(
+          label: 'Sales invoice',
+          icon: Icons.point_of_sale_outlined,
+          selectedIcon: Icons.point_of_sale,
+          route: '/transactions/sales-invoices',
+          requiredModule: 'SalesInvoice',
         ),
       ],
     ),

@@ -10,13 +10,12 @@ class RouteMasterDto extends Equatable {
     this.description,
   });
 
-  factory RouteMasterDto.fromJson(Map<String, dynamic> json) =>
-      RouteMasterDto(
-        id: json['id'] as int,
-        routeId: json['route_id'] as String,
-        routeName: json['route_name'] as String?,
-        description: json['Description'] as String?,
-      );
+  factory RouteMasterDto.fromJson(Map<String, dynamic> json) => RouteMasterDto(
+    id: json['id'] as int,
+    routeId: json['route_id'] as String,
+    routeName: json['route_name'] as String?,
+    description: json['Description'] as String?,
+  );
 
   final int id;
   final String routeId;
@@ -24,10 +23,10 @@ class RouteMasterDto extends Equatable {
   final String? description;
 
   Map<String, dynamic> toJson() => {
-        'route_id': routeId,
-        'route_name': routeName,
-        'Description': description,
-      };
+    'route_id': routeId,
+    'route_name': routeName,
+    'Description': description,
+  };
 
   @override
   List<Object?> get props => [id, routeId, routeName, description];

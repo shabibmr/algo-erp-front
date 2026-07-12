@@ -1,6 +1,6 @@
 # algoERP Frontend — Living Status
 
-> **Last updated:** 2026-07-12 (Ledger bank/credit/tax tabs)  
+> **Last updated:** 2026-07-12 (SI filters, print, post&book, series banner)  
 > **Code ground truth:** `lib/features/**`, `lib/core/**`  
 > **Required surface area:** [`feature-inventory.md`](./feature-inventory.md)  
 > **Deferred entities:** [`manifest-exceptions.md`](./manifest-exceptions.md)  
@@ -96,7 +96,7 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
   [x] Ledger bank/credit/tax tabs                ── Sprint A phase 2
   [ ] Dept parent                                ── optional
   [x] InventoryItem + SKU + Batch + group FK     ── Sprint B
-  [ ] Line Engine + DocumentSurface + Sales SI   ── Sprint C
+  [x] Line Engine + DocumentSurface + SI gold    ── Sprint C
   [ ] Other vouchers · reports · palette         ── D–G
   [P] Offline sync
 ```
@@ -109,11 +109,11 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 |-------|----------|-------|
 | Platform (shell, network, auth, widgets) | ~85–90% | Solid; fail-open RBAC; no command palette |
 | EMR runtime (list/form/FK) | ~75% | selfFk shipped; still missing binary, registry, ClientQuery |
-| Organization masters | **5 / ~14** | Branch, Currency, Role, Contact, FY done |
+| Organization masters | **6 / ~14** | + VoucherSeries (require_approval) |
 | Inventory masters | **13 / ~20** | Flat + Item/Group/SKU/Batch; image still deferred |
 | Employee masters | **2 / ~14** | Dept + Designation only |
 | Accounts masters | **2 / ~8** | AccountGroup (selfFk parent) + Ledger core |
-| Vouchers / documents | **0 / ~17** | No DocumentSurface |
+| Vouchers / documents | **1 / ~17** | SI list+post; DocumentSurface + Line Engine |
 | Reports / dashboard data | ~5% | Desk shell + empty invitations |
 | Offline / sync | `P` | Scaffold only under `lib/core/database/**` |
 | **ERP end-to-end usability** | **Early mid** | Party + item masters; still no documents |
@@ -153,7 +153,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | ClientQuery (client search/sort) | | `[ ]` | BE-002–004 workaround |
 | Idempotency-Key interceptor | | `[ ]` | See CR-004 / BE-005 |
 | Command palette | shell header stub | `[ ]` | Tooltip “coming soon” |
-| DocumentSurface + Line Engine | | `[ ]` | Voucher path |
+| DocumentSurface + Line Engine | `core/domain/line_engine`, `core/surfaces` | `[x]` | SI gold; expand lifecycle later |
 | Report framework | | `[ ]` | |
 | Offline DB / outbox / sync | `core/database`, `core/sync` | `P` | Parked |
 
@@ -170,7 +170,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | Branch | `/organization/branches` | `[x]` | `organization_branch` |
 | Currency | `/organization/currencies` | `[x]` | `organization_currency` |
 | CurrencyRate | `/organization/rates` | `[!]` | Lookup endpoint, not paginated list |
-| VoucherSeries | `/organization/voucher-series` | `[!]` | Multi-FK; needs Company/FY |
+| VoucherSeries | `/organization/voucher-series` | `[x]` | `organization_voucher_series` · require_approval; company id int |
 | UserRole | `/organization/roles` | `[x]` | `organization_user_role` |
 | UserAccessPermission | `/roles/:id/permissions` | `[ ]` | Upsert UI not built |
 | UserCredentials | `/organization/users` | `[!]` | Password + multi-FK |
@@ -245,11 +245,11 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 
 ### 2.5 Transactions (vouchers)
 
-All types share **header + main + lines + lifecycle**. Frontend needs DocumentSurface first.
+All types share **header + main + lines + lifecycle**. DocumentSurface + Line Engine exist; clone via blueprint recipe.
 
 | voucher_type | Status | Notes |
 |--------------|--------|-------|
-| SalesInvoice | `[ ]` | Gold path candidate (GL + stock) |
+| SalesInvoice | `[x]` | List filters, draft/post/edit, detail, lifecycle, print, post&book |
 | PurchaseInvoice | `[ ]` | |
 | Payment | `[ ]` | Settlement / allocation (CR-007) |
 | Receipt | `[ ]` | |
@@ -344,13 +344,17 @@ Goal: unlock **real trading workflow** (party + item + sales invoice) before mas
 
 ### Sprint C — Document stack (critical path)
 
-| # | Work | Why |
-|---|------|-----|
-| C1 | Decimal **Line Engine** (pure Dart + tests) | Money correctness |
-| C2 | **VoucherBlueprint** model | One schema for many types |
-| C3 | **DocumentSurface** (header, lines, save/post, lifecycle buttons) | Shared voucher UI |
-| C4 | **Sales Invoice gold** end-to-end online | Proves the product |
-| C5 | Recipe doc `voucher-blueprint-recipe.md` | Scale to other types |
+| # | Work | Status |
+|---|------|--------|
+| C1 | Decimal **Line Engine** (pure Dart + tests) | `[x]` |
+| C2 | **VoucherBlueprint** model | `[x]` (SI seed) |
+| C3 | **DocumentSurface** (header, lines, totals, post) | `[x]` MVP |
+| C4 | **Sales Invoice gold** list + post online | `[x]` |
+| C5 | Recipe docs | `[x]` `docs/templates/*` |
+| — | SI detail / cancel / approve UI | `[x]` |
+| — | SI Quotation/SO conversion, salesperson/project, batch picker | `[x]` |
+| — | SI server HTML PDF (auth via Dio) | `[x]` route `/…/pdf` |
+| — | Backend book-on-approve (SI Draft/Approved→Posted) | `[x]` `bookSalesInvoiceIfUnposted` |
 
 ### Sprint D — Register high-value voucher family
 
@@ -368,7 +372,7 @@ Order after Sales Invoice:
 | # | Work |
 |---|------|
 | E1 | CompanyProfile (binary or logo-out-of-band) |
-| E2 | VoucherSeries (multi-FK once company/FY stable) |
+| E2 | ~~VoucherSeries~~ shipped (company id still plain int) |
 | E3 | UserCredentials + role **permissions** matrix UI |
 | E4 | Real permission read when BE-001 lands |
 

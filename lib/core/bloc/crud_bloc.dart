@@ -35,10 +35,10 @@ class CrudBloc<E, ID, F> extends Bloc<CrudEvent<E, F>, CrudState<E>> {
     int pageSize = 20,
     Duration searchDebounce = kSearchDebounce,
     FilterBuilder<F>? filterBuilder,
-  })  : _repo = repository,
-        _idOf = idOf,
-        _filterBuilder = filterBuilder,
-        super(const CrudInitial()) {
+  }) : _repo = repository,
+       _idOf = idOf,
+       _filterBuilder = filterBuilder,
+       super(const CrudInitial()) {
     _query = PageQuery(limit: pageSize);
     on<CrudLoadRequested<E, F>>(_onLoad);
     on<CrudRefreshRequested<E, F>>(_onRefresh);
@@ -189,21 +189,15 @@ class CrudBloc<E, ID, F> extends Bloc<CrudEvent<E, F>, CrudState<E>> {
           .where((e) => _idOf(e) != _idOf(event.item))
           .toList(growable: false);
       emit(
-        current.copyWith(
-          items: remaining,
-          meta: current.meta.withOneFewer(),
-        ),
+        current.copyWith(items: remaining, meta: current.meta.withOneFewer()),
       );
     }
     final result = await _repo.delete(_idOf(event.item));
-    result.fold(
-      (failure) {
-        _failures.add(failure);
-        // Roll back to server truth.
-        if (state is CrudLoaded<E>) add(const CrudRefreshRequested());
-      },
-      (_) {},
-    );
+    result.fold((failure) {
+      _failures.add(failure);
+      // Roll back to server truth.
+      if (state is CrudLoaded<E>) add(const CrudRefreshRequested());
+    }, (_) {});
   }
 
   @override

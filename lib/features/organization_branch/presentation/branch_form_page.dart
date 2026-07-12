@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
@@ -23,12 +24,20 @@ class BranchFormPage extends StatelessWidget {
       create: (_) => createBranchRepository(getIt<DioClient>()),
       child: Builder(
         builder: (context) {
+          // The surface has already persisted through the repository by the
+          // time these fire, so the shared list bloc is told to refetch —
+          // never CrudItemCreated/Updated/Deleted, which would write again.
+          void refreshListAndReturn() {
+            branchCrudBloc(context).add(const CrudRefreshRequested());
+            context.go(branchManifest.resourcePath);
+          }
+
           final surface = MasterFormSurface<Branch, int>(
             manifest: branchManifest,
             mode: mode,
             idOf: (branch) => branch.id,
-            onSaved: (_) => context.go(branchManifest.resourcePath),
-            onDeleted: () => context.go(branchManifest.resourcePath),
+            onSaved: (_) => refreshListAndReturn(),
+            onDeleted: refreshListAndReturn,
           );
           return AdaptiveLayout(
             child: Column(
@@ -38,8 +47,8 @@ class BranchFormPage extends StatelessWidget {
                   mode == FormMode.create
                       ? 'New ${branchManifest.label}'
                       : branchManifest.supportsUpdate
-                          ? 'Edit ${branchManifest.label}'
-                          : 'View ${branchManifest.label}',
+                      ? 'Edit ${branchManifest.label}'
+                      : 'View ${branchManifest.label}',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),

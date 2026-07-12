@@ -6,16 +6,13 @@ class UserRoleMapper implements Mapper<UserRoleDto, UserRole> {
   const UserRoleMapper();
 
   @override
-  UserRole toEntity(UserRoleDto dto) => UserRole(
-        id: dto.id,
-        name: dto.roleName,
-        description: dto.description,
-      );
+  UserRole toEntity(UserRoleDto dto) =>
+      UserRole(id: dto.id, name: dto.roleName, description: dto.description);
 
   @override
   UserRoleDto toDto(UserRole entity) => UserRoleDto(
-        id: entity.id,
-        roleName: entity.name,
-        description: entity.description,
-      );
+    id: entity.id,
+    roleName: entity.name,
+    description: entity.description,
+  );
 }
