@@ -24,11 +24,7 @@ void main() {
   });
 
   test('BrandMapper.toEntity produces a clean-named Brand', () {
-    const dto = BrandDto(
-      id: 1,
-      brandName: 'Acme',
-      brandDescription: 'Widgets',
-    );
+    const dto = BrandDto(id: 1, brandName: 'Acme', brandDescription: 'Widgets');
     final brand = mapper.toEntity(dto);
 
     expect(brand, const Brand(id: 1, name: 'Acme', description: 'Widgets'));

@@ -17,8 +17,7 @@ mixin SyncColumns on Table {
 
   /// One of [SyncStatus].name — kept as text (not textEnum) so the enum can
   /// gain members without a schema migration.
-  TextColumn get syncStatus =>
-      text().withDefault(const Constant('synced'))();
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
 
   /// The server's own `updated_at` (or equivalent), null for rows never
   /// synced or for entities without one (see CR-002).

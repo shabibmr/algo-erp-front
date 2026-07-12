@@ -31,14 +31,7 @@ enum VoucherLineShape {
 }
 
 /// Lifecycle actions the UI may expose (gated by status + RBAC).
-enum VoucherLifecycleAction {
-  saveDraft,
-  post,
-  approve,
-  reject,
-  cancel,
-  edit,
-}
+enum VoucherLifecycleAction { saveDraft, post, approve, reject, cancel, edit }
 
 /// Declares one voucher type for DocumentSurface and feature packages.
 ///
@@ -59,9 +52,7 @@ class VoucherBlueprint {
     this.affectsStock = false,
     this.needsGodown = false,
     this.needsBatch = false,
-    this.lifecycle = const {
-      VoucherLifecycleAction.post,
-    },
+    this.lifecycle = const {VoucherLifecycleAction.post},
     this.defaultPrefix,
   });
 
@@ -99,7 +90,7 @@ class VoucherBlueprint {
       detailPathPattern.replaceAll(':id', id.toString());
 }
 
-/// Seed blueprints — expand in Sprint D.
+/// Seed blueprints — SI gold + Sprint D trading family.
 abstract final class VoucherBlueprints {
   static const salesInvoice = VoucherBlueprint(
     id: 'sales-invoice',
@@ -121,5 +112,243 @@ abstract final class VoucherBlueprints {
       VoucherLifecycleAction.edit,
     },
     defaultPrefix: 'SI',
+  );
+
+  static const quotation = VoucherBlueprint(
+    id: 'quotation',
+    label: 'Quotation',
+    rbacModule: 'Quotation',
+    party: VoucherPartyKind.customer,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/quotation',
+    listPath: '/transactions/quotations',
+    detailPathPattern: '/transactions/quotations/:id',
+    affectsGl: false,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'QT',
+  );
+
+  static const salesOrder = VoucherBlueprint(
+    id: 'sales-order',
+    label: 'Sales order',
+    rbacModule: 'SalesOrder',
+    party: VoucherPartyKind.customer,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/sales-order',
+    listPath: '/transactions/sales-orders',
+    detailPathPattern: '/transactions/sales-orders/:id',
+    affectsGl: false,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'SO',
+  );
+
+  static const deliveryNote = VoucherBlueprint(
+    id: 'delivery-note',
+    label: 'Delivery note',
+    rbacModule: 'DeliveryNote',
+    party: VoucherPartyKind.customer,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/delivery-note',
+    listPath: '/transactions/delivery-notes',
+    detailPathPattern: '/transactions/delivery-notes/:id',
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'DN',
+  );
+
+  static const purchaseOrder = VoucherBlueprint(
+    id: 'purchase-order',
+    label: 'Purchase order',
+    rbacModule: 'PurchaseOrder',
+    party: VoucherPartyKind.supplier,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/purchase-order',
+    listPath: '/transactions/purchase-orders',
+    detailPathPattern: '/transactions/purchase-orders/:id',
+    affectsGl: false,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'PO',
+  );
+
+  static const receiptNote = VoucherBlueprint(
+    id: 'receipt-note',
+    label: 'Receipt note',
+    rbacModule: 'ReceiptNote',
+    party: VoucherPartyKind.supplier,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/receipt-note',
+    listPath: '/transactions/receipt-notes',
+    detailPathPattern: '/transactions/receipt-notes/:id',
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'RN',
+  );
+
+  static const purchaseInvoice = VoucherBlueprint(
+    id: 'purchase-invoice',
+    label: 'Purchase invoice',
+    rbacModule: 'PurchaseInvoice',
+    party: VoucherPartyKind.supplier,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/purchase-invoice',
+    listPath: '/transactions/purchase-invoices',
+    detailPathPattern: '/transactions/purchase-invoices/:id',
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {
+      VoucherLifecycleAction.post,
+      VoucherLifecycleAction.cancel,
+      VoucherLifecycleAction.approve,
+      VoucherLifecycleAction.reject,
+    },
+    defaultPrefix: 'PI',
+  );
+
+  static const payment = VoucherBlueprint(
+    id: 'payment',
+    label: 'Payment',
+    rbacModule: 'PaymentVoucher',
+    party: VoucherPartyKind.cashBank,
+    lineShape: VoucherLineShape.ledgerAmount,
+    postPath: '/transactions/payment',
+    listPath: '/transactions/payments',
+    detailPathPattern: '/transactions/payments/:id',
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'PV',
+  );
+
+  static const receipt = VoucherBlueprint(
+    id: 'receipt',
+    label: 'Receipt',
+    rbacModule: 'ReceiptVoucher',
+    party: VoucherPartyKind.cashBank,
+    lineShape: VoucherLineShape.ledgerAmount,
+    postPath: '/transactions/receipt',
+    listPath: '/transactions/receipts',
+    detailPathPattern: '/transactions/receipts/:id',
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'RV',
+  );
+
+  static const creditNote = VoucherBlueprint(
+    id: 'credit-note',
+    label: 'Credit note',
+    rbacModule: 'CreditNote',
+    party: VoucherPartyKind.customer,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/credit-note',
+    listPath: '/transactions/credit-notes',
+    detailPathPattern: '/transactions/credit-notes/:id',
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'CN',
+  );
+
+  static const debitNote = VoucherBlueprint(
+    id: 'debit-note',
+    label: 'Debit note',
+    rbacModule: 'DebitNote',
+    party: VoucherPartyKind.supplier,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/debit-note',
+    listPath: '/transactions/debit-notes',
+    detailPathPattern: '/transactions/debit-notes/:id',
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'DBN',
+  );
+
+  static const journal = VoucherBlueprint(
+    id: 'journal',
+    label: 'Journal',
+    rbacModule: 'JournalVoucher',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.debitCredit,
+    postPath: '/transactions/journal',
+    listPath: '/transactions/journals',
+    detailPathPattern: '/transactions/journals/:id',
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'JV',
+  );
+
+  static const contra = VoucherBlueprint(
+    id: 'contra',
+    label: 'Contra',
+    rbacModule: 'ContraVoucher',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.contraAmount,
+    postPath: '/transactions/contra',
+    listPath: '/transactions/contra',
+    detailPathPattern: '/transactions/contra/:id',
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'CV',
+  );
+
+  static const godownTransfer = VoucherBlueprint(
+    id: 'godown-transfer',
+    label: 'Godown transfer',
+    rbacModule: 'GodownTransfer',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/godown-transfer',
+    listPath: '/transactions/godown-transfers',
+    detailPathPattern: '/transactions/godown-transfers/:id',
+    affectsGl: false,
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'GT',
+  );
+
+  static const materialIn = VoucherBlueprint(
+    id: 'material-in',
+    label: 'Material in',
+    rbacModule: 'MaterialIn',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/material-in',
+    listPath: '/transactions/material-in',
+    detailPathPattern: '/transactions/material-in/:id',
+    affectsGl: false,
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'MI',
+  );
+
+  static const requirement = VoucherBlueprint(
+    id: 'requirement',
+    label: 'Requirement',
+    rbacModule: 'Requirement',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/requirement',
+    listPath: '/transactions/requirements',
+    detailPathPattern: '/transactions/requirements/:id',
+    affectsGl: false,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'RQ',
+  );
+
+  static const stockRequest = VoucherBlueprint(
+    id: 'stock-request',
+    label: 'Stock request',
+    rbacModule: 'StockRequest',
+    party: VoucherPartyKind.none,
+    lineShape: VoucherLineShape.itemQty,
+    postPath: '/transactions/stock-request',
+    listPath: '/transactions/stock-requests',
+    detailPathPattern: '/transactions/stock-requests/:id',
+    affectsGl: false,
+    affectsStock: true,
+    needsGodown: true,
+    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    defaultPrefix: 'SR',
   );
 }

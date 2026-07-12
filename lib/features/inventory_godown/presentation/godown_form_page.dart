@@ -38,32 +38,18 @@ class GodownFormPage extends StatelessWidget {
             idOf: (g) => g.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(godownManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${godownManifest.label}'
-                      : godownManifest.supportsUpdate
-                      ? 'Edit ${godownManifest.label}'
-                      : 'View ${godownManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Godown, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Godown, int>>(
                     create: (ctx) => DetailBloc<Godown, int>(
                       repository: ctx.read<Repository<Godown, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

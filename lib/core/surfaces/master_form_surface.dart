@@ -14,6 +14,8 @@ import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -49,6 +51,7 @@ class MasterFormSurface<E, ID> extends StatefulWidget {
     super.key,
     this.onSaved,
     this.onDeleted,
+    this.onCancel,
   });
 
   final EntityManifest<E> manifest;
@@ -56,6 +59,10 @@ class MasterFormSurface<E, ID> extends StatefulWidget {
   final ID Function(E entity) idOf;
   final ValueChanged<E>? onSaved;
   final VoidCallback? onDeleted;
+
+  /// Leaves the form without saving. Feature pages wire this to "back to the
+  /// list"; leave it null and Cancel is disabled.
+  final VoidCallback? onCancel;
 
   @override
   State<MasterFormSurface<E, ID>> createState() =>
@@ -115,10 +122,12 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     final items = await field.fkSearch!(query);
     if (field.type != FieldType.selfFk || _draft == null) return items;
     final selfId = widget.idOf(_draft as E);
-    return items.where((item) {
-      // Self-ref pickers return the same entity type as the form draft.
-      return widget.idOf(item as E) != selfId;
-    }).toList(growable: false);
+    return items
+        .where((item) {
+          // Self-ref pickers return the same entity type as the form draft.
+          return widget.idOf(item as E) != selfId;
+        })
+        .toList(growable: false);
   }
 
   Future<void> _submit(Repository<E, ID> repo) async {
@@ -138,38 +147,36 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
         ? await repo.create(draft)
         : await repo.update(widget.idOf(draft), draft);
     if (!mounted) return;
-    result.fold(
-      (failure) {
-        setState(() {
-          _submitting = false;
-          _fieldErrors = fieldErrorsFrom(failure);
-          _generalError =
-              failure is ValidationFailure ? null : _messageOf(failure);
-        });
-        // FormField only re-runs its validator on Form.validate() — a
-        // rebuild alone (even with a changed validator closure) doesn't
-        // repaint the new server errorText, so force one after the errors
-        // above have landed in the widget tree.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _formKey.currentState?.validate();
-        });
-      },
-      (saved) => widget.onSaved?.call(saved),
-    );
+    result.fold((failure) {
+      setState(() {
+        _submitting = false;
+        _fieldErrors = fieldErrorsFrom(failure);
+        _generalError = failure is ValidationFailure
+            ? null
+            : _messageOf(failure);
+      });
+      // FormField only re-runs its validator on Form.validate() — a
+      // rebuild alone (even with a changed validator closure) doesn't
+      // repaint the new server errorText, so force one after the errors
+      // above have landed in the widget tree.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _formKey.currentState?.validate();
+      });
+    }, (saved) => widget.onSaved?.call(saved));
   }
 
   String _messageOf(Failure failure) => switch (failure) {
-        NetworkFailure(:final message) => message,
-        TimeoutFailure(:final message) => message,
-        UnauthorizedFailure(:final message) => message,
-        ForbiddenFailure(:final message) => message,
-        ValidationFailure(:final message) => message,
-        NotFoundFailure(:final message) => message,
-        ConflictFailure(:final message) => message,
-        ServerFailure(:final message) => message,
-        CacheFailure(:final message) => message,
-        UnknownFailure(:final message) => message,
-      };
+    NetworkFailure(:final message) => message,
+    TimeoutFailure(:final message) => message,
+    UnauthorizedFailure(:final message) => message,
+    ForbiddenFailure(:final message) => message,
+    ValidationFailure(:final message) => message,
+    NotFoundFailure(:final message) => message,
+    ConflictFailure(:final message) => message,
+    ServerFailure(:final message) => message,
+    CacheFailure(:final message) => message,
+    UnknownFailure(:final message) => message,
+  };
 
   Future<void> _delete(BuildContext context) async {
     if (!widget.manifest.supportsDelete) return;
@@ -187,6 +194,146 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     context.read<DetailBloc<E, ID>>().add(const DetailDeleteRequested());
   }
 
+  /// The page title. Read-only edit is a *view*, and should say so.
+  String get _title => switch (widget.mode) {
+    FormMode.create => 'New ${widget.manifest.label.toLowerCase()}',
+    FormMode.edit when !widget.manifest.supportsUpdate =>
+      'View ${widget.manifest.label.toLowerCase()}',
+    FormMode.edit => 'Edit ${widget.manifest.label.toLowerCase()}',
+  };
+
+  /// The save button keeps the name of what it does, through the whole flow.
+  String get _saveLabel {
+    if (_submitting) return 'Saving…';
+    return widget.mode == FormMode.create ? 'Create' : 'Save';
+  }
+
+  /// Groups the manifest's fields into index cards, preserving manifest order
+  /// both within a card and across cards. Fields with no section share a
+  /// single unnamed card, which is what every manifest gets until it starts
+  /// naming sections.
+  Map<String?, List<FormFieldSpec<E>>> get _sections {
+    final sections = <String?, List<FormFieldSpec<E>>>{};
+    for (final field in widget.manifest.formFields) {
+      sections.putIfAbsent(field.section, () => []).add(field);
+    }
+    return sections;
+  }
+
+  Widget _banner(
+    BuildContext context, {
+    required String message,
+    required Color color,
+    required IconData icon,
+  }) {
+    final tokens = context.tokens;
+    return Container(
+      margin: EdgeInsets.only(bottom: tokens.spacing.md),
+      padding: EdgeInsets.all(tokens.spacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(tokens.radii.lg),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          SizedBox(width: tokens.spacing.sm),
+          Expanded(
+            child: Text(message, style: TextStyle(color: color)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Lays a section's fields out in one or two columns.
+  ///
+  /// - Mobile: one column.
+  /// - Tablet/desktop: two columns by default so the form uses the full
+  ///   work area (not a narrow 720px strip). Explicit `half: true` on both
+  ///   still pairs; a bool alone at the end of a row stays full width when
+  ///   it is the only remaining field.
+  List<Widget> _fieldsOf(
+    BuildContext context,
+    List<FormFieldSpec<E>> fields, {
+    required bool enabled,
+  }) {
+    final tokens = context.tokens;
+    final pairUp = !context.isMobile;
+    final rows = <Widget>[];
+
+    for (var i = 0; i < fields.length; i++) {
+      final field = fields[i];
+      final next = i + 1 < fields.length ? fields[i + 1] : null;
+      final pairs = pairUp && next != null && _shouldPair(field, next);
+
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(top: rows.isEmpty ? 0 : tokens.spacing.md),
+          child: pairs
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _field(context, field, enabled: enabled)),
+                    SizedBox(width: tokens.spacing.md),
+                    Expanded(
+                      child: _field(context, next, enabled: enabled),
+                    ),
+                  ],
+                )
+              : _field(context, field, enabled: enabled),
+        ),
+      );
+      if (pairs) i++;
+    }
+    return rows;
+  }
+
+  /// Whether [a] and [b] share a row on wide layouts.
+  ///
+  /// Prefer explicit `half: true` pairs; otherwise auto-pair consecutive
+  /// compact fields so full-width forms don't leave empty horizontal space.
+  bool _shouldPair(FormFieldSpec<E> a, FormFieldSpec<E> b) {
+    if (a.half && b.half) return true;
+    // One field opted into half and the other didn't — don't force a pair.
+    if (a.half || b.half) return false;
+    return _isCompactField(a) && _isCompactField(b);
+  }
+
+  bool _isCompactField(FormFieldSpec<E> field) {
+    // Switches with long labels read better full width when alone; still
+    // pair when both sides are switches or compact inputs.
+    return switch (field.type) {
+      FieldType.text ||
+      FieldType.int ||
+      FieldType.decimal ||
+      FieldType.dateTime ||
+      FieldType.fk ||
+      FieldType.selfFk ||
+      FieldType.bool => true,
+    };
+  }
+
+  Widget _field(
+    BuildContext context,
+    FormFieldSpec<E> field, {
+    required bool enabled,
+  }) {
+    return FieldRenderer.build<E>(
+      field: field,
+      value: _isFkType(field.type)
+          ? _fkDisplayCache[field.key]
+          : field.getValue(_draft as E),
+      onChanged: (value) => _setField(field, value),
+      enabled: enabled,
+      errorText: _fieldErrors[field.errorKey],
+      fkLoaderOverride: _isFkType(field.type)
+          ? (q) => _fkLoader(field, q)
+          : null,
+    );
+  }
+
   Widget _buildForm(BuildContext context, Repository<E, ID> repo) {
     final tokens = context.tokens;
     final manifest = widget.manifest;
@@ -195,77 +342,212 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
         : PermissionAction.update;
     final isReadOnlyEdit =
         widget.mode == FormMode.edit && !manifest.supportsUpdate;
-    final canDelete =
-        widget.mode == FormMode.edit && manifest.supportsDelete;
+    final canDelete = widget.mode == FormMode.edit && manifest.supportsDelete;
+    final sections = _sections;
+
+    Widget formBody;
+
+    if (manifest.formLayout == FormLayout.tabs && sections.length > 1) {
+      formBody = DefaultTabController(
+        length: sections.length,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isReadOnlyEdit)
+              _banner(
+                context,
+                message: '${manifest.label} records are read-only.',
+                color: tokens.brand.inkMuted,
+                icon: Icons.lock_outline,
+              ),
+            if (_generalError != null)
+              _banner(
+                context,
+                message: _generalError!,
+                color: tokens.semanticColors.danger,
+                icon: Icons.error_outline,
+              ),
+            TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                for (final sectionName in sections.keys)
+                  Tab(text: sectionName ?? 'General'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  for (final entry in sections.entries)
+                    SingleChildScrollView(
+                      padding: EdgeInsets.only(top: tokens.spacing.md),
+                      child: WorkSheet(
+                        fill: false,
+                        title: entry.key,
+                        padding: EdgeInsets.all(tokens.spacing.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          mainAxisSize: MainAxisSize.min,
+                          children: _fieldsOf(
+                            context,
+                            entry.value,
+                            enabled: !_submitting && !isReadOnlyEdit,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (manifest.formLayout == FormLayout.columns &&
+        sections.length > 1 &&
+        !context.isMobile) {
+      final col1 = <Widget>[];
+      final col2 = <Widget>[];
+      for (final (index, entry) in sections.entries.indexed) {
+        final sectionWidget = Padding(
+          padding: EdgeInsets.only(
+            bottom: tokens.spacing.md,
+          ),
+          child: WorkSheet(
+            fill: false,
+            title: entry.key,
+            padding: EdgeInsets.all(tokens.spacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: _fieldsOf(
+                context,
+                entry.value,
+                enabled: !_submitting && !isReadOnlyEdit,
+              ),
+            ),
+          ),
+        );
+        if (index.isEven) {
+          col1.add(sectionWidget);
+        } else {
+          col2.add(sectionWidget);
+        }
+      }
+      formBody = SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isReadOnlyEdit)
+              _banner(
+                context,
+                message: '${manifest.label} records are read-only.',
+                color: tokens.brand.inkMuted,
+                icon: Icons.lock_outline,
+              ),
+            if (_generalError != null)
+              _banner(
+                context,
+                message: _generalError!,
+                color: tokens.semanticColors.danger,
+                icon: Icons.error_outline,
+              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: col1,
+                  ),
+                ),
+                SizedBox(width: tokens.spacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: col2,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } else {
+      formBody = SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isReadOnlyEdit)
+              _banner(
+                context,
+                message: '${manifest.label} records are read-only.',
+                color: tokens.brand.inkMuted,
+                icon: Icons.lock_outline,
+              ),
+            if (_generalError != null)
+              _banner(
+                context,
+                message: _generalError!,
+                color: tokens.semanticColors.danger,
+                icon: Icons.error_outline,
+              ),
+            for (final (index, entry) in sections.entries.indexed) ...[
+              if (index > 0) SizedBox(height: tokens.spacing.md),
+              WorkSheet(
+                fill: false,
+                title: entry.key,
+                padding: EdgeInsets.all(tokens.spacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: _fieldsOf(
+                    context,
+                    entry.value,
+                    enabled: !_submitting && !isReadOnlyEdit,
+                  ),
+                ),
+              ),
+            ],
+            SizedBox(height: tokens.spacing.lg),
+          ],
+        ),
+      );
+    }
+
     return Form(
       key: _formKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (isReadOnlyEdit) ...[
-            Container(
-              padding: EdgeInsets.all(tokens.spacing.sm),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(tokens.radii.sm),
-              ),
-              child: const Text('This entity cannot be edited.'),
-            ),
-            SizedBox(height: tokens.spacing.md),
-          ],
-          if (_generalError != null) ...[
-            Container(
-              padding: EdgeInsets.all(tokens.spacing.sm),
-              decoration: BoxDecoration(
-                color: tokens.semanticColors.danger.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(tokens.radii.sm),
-              ),
-              child: Text(
-                _generalError!,
-                style: TextStyle(color: tokens.semanticColors.danger),
-              ),
-            ),
-            SizedBox(height: tokens.spacing.md),
-          ],
-          for (final field in manifest.formFields) ...[
-            FieldRenderer.build<E>(
-              field: field,
-              value: _isFkType(field.type)
-                  ? _fkDisplayCache[field.key]
-                  : field.getValue(_draft as E),
-              onChanged: (value) => _setField(field, value),
-              enabled: !_submitting && !isReadOnlyEdit,
-              errorText: _fieldErrors[field.errorKey],
-              fkLoaderOverride:
-                  _isFkType(field.type) ? (q) => _fkLoader(field, q) : null,
-            ),
-            SizedBox(height: tokens.spacing.sm),
-          ],
-          SizedBox(height: tokens.spacing.md),
-          Row(
+          Expanded(child: formBody),
+          _Footer(
             children: [
-              if (!isReadOnlyEdit)
+              if (canDelete)
+                PermissionGate(
+                  module: manifest.rbacModule,
+                  action: PermissionAction.delete,
+                  child: TextButton.icon(
+                    onPressed: _submitting ? null : () => _delete(context),
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text('Delete'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: tokens.semanticColors.danger,
+                    ),
+                  ),
+                ),
+              const Spacer(),
+              OutlinedButton(
+                onPressed: _submitting ? null : widget.onCancel,
+                child: const Text('Cancel'),
+              ),
+              if (!isReadOnlyEdit) ...[
+                SizedBox(width: tokens.spacing.sm),
                 PermissionGate(
                   module: manifest.rbacModule,
                   action: action,
                   child: FilledButton(
                     onPressed: _submitting ? null : () => _submit(repo),
-                    child: Text(_submitting
-                        ? 'Saving...'
-                        : (widget.mode == FormMode.create
-                            ? 'Create'
-                            : 'Save')),
-                  ),
-                ),
-              if (canDelete) ...[
-                // Spacer only when Save is also shown (create/update path).
-                if (!isReadOnlyEdit) SizedBox(width: tokens.spacing.sm),
-                PermissionGate(
-                  module: manifest.rbacModule,
-                  action: PermissionAction.delete,
-                  child: OutlinedButton(
-                    onPressed: _submitting ? null : () => _delete(context),
-                    child: const Text('Delete'),
+                    child: Text(_saveLabel),
                   ),
                 ),
               ],
@@ -278,8 +560,22 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final repo = RepositoryProvider.of<Repository<E, ID>>(context);
 
+    // The header sits outside the load state: which record you opened is known
+    // before it arrives, so the page shouldn't be a nameless spinner.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PageHeader(eyebrow: widget.manifest.eyebrowText, title: _title),
+        SizedBox(height: tokens.spacing.lg),
+        Expanded(child: _body(context, repo)),
+      ],
+    );
+  }
+
+  Widget _body(BuildContext context, Repository<E, ID> repo) {
     if (widget.mode == FormMode.create) {
       return _buildForm(context, repo);
     }
@@ -293,13 +589,33 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
           if (state is DetailLoaded<E>) _seedFromLoaded(state.entity);
           return AsyncStateView<E>(
             state: state.toViewState(),
-            onRetry: () => context
-                .read<DetailBloc<E, ID>>()
-                .add(const DetailLoadRequested()),
+            onRetry: () => context.read<DetailBloc<E, ID>>().add(
+              const DetailLoadRequested(),
+            ),
             builder: (context, _) => _buildForm(context, repo),
           );
         },
       ),
+    );
+  }
+}
+
+/// The form's action bar, pinned below the scrolling cards so Save is reachable
+/// without scrolling to the bottom of a long form.
+class _Footer extends StatelessWidget {
+  const _Footer({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      padding: EdgeInsets.only(top: tokens.spacing.md),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: tokens.brand.mist)),
+      ),
+      child: Row(children: children),
     );
   }
 }

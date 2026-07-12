@@ -5,11 +5,8 @@ const _unset = Object();
 /// The Branch master entity — soft-deleted (`BranchRepository` sets
 /// `softDeleteField: 'is_active'`).
 ///
-/// [companyId] is a required FK into CompanyProfile, but is modeled as a plain
-/// int rather than `FieldType.fk`: CompanyProfile is deferred (binary `Logo`
-/// column, no DELETE route — see `docs/manifest-exceptions.md`), so there is no
-/// registered entity for an FK picker to search against. Revisit when
-/// CompanyProfile lands.
+/// [companyId] is a required FK into CompanyProfile, rendered as
+/// `FieldType.fk` on the form (see `branch_manifest.dart`).
 class Branch extends Equatable {
   const Branch({
     required this.id,

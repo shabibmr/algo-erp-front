@@ -27,10 +27,10 @@ class RemoteRepository<E, ID> implements Repository<E, ID> {
     required E Function(JsonMap json) decode,
     required JsonMap Function(E entity) encode,
     required ID Function(E entity) idOf,
-  })  : _dataSource = dataSource,
-        _decode = decode,
-        _encode = encode,
-        _idOf = idOf;
+  }) : _dataSource = dataSource,
+       _decode = decode,
+       _encode = encode,
+       _idOf = idOf;
 
   final RemoteDataSource _dataSource;
   final E Function(JsonMap json) _decode;

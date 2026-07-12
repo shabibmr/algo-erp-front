@@ -24,27 +24,24 @@ void main() {
     expect(dto.narration, 'Standard conversion');
   });
 
-  test(
-    'UomConversionMapper.toEntity keeps conValue as a String (non-numeric '
-    'DB column)',
-    () {
-      const dto = UomConversionDto(
+  test('UomConversionMapper.toEntity keeps conValue as a String (non-numeric '
+      'DB column)', () {
+    const dto = UomConversionDto(
+      id: 1,
+      baseUnit: 'Kilogram',
+      toUnit: 'Gram',
+      conValue: '1000',
+    );
+    expect(
+      mapper.toEntity(dto),
+      const UomConversion(
         id: 1,
         baseUnit: 'Kilogram',
         toUnit: 'Gram',
-        conValue: '1000',
-      );
-      expect(
-        mapper.toEntity(dto),
-        const UomConversion(
-          id: 1,
-          baseUnit: 'Kilogram',
-          toUnit: 'Gram',
-          conversionValue: '1000',
-        ),
-      );
-    },
-  );
+        conversionValue: '1000',
+      ),
+    );
+  });
 
   test('UomConversionMapper.toDto round-trips back to the wire shape', () {
     const conversion = UomConversion(

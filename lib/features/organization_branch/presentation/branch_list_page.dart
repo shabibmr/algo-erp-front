@@ -18,24 +18,12 @@ class BranchListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Branch, int, void>>.value(
       value: branchCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              branchManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Branch>(
-                manifest: branchManifest,
-                idOf: (branch) => branch.id,
-                onCreate: () => context.push('/organization/branches/new'),
-                onTap: (branch) =>
-                    context.push('/organization/branches/${branch.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Branch>(
+          manifest: branchManifest,
+          idOf: (branch) => branch.id,
+          onCreate: () => context.push('/organization/branches/new'),
+          onTap: (branch) =>
+              context.push('/organization/branches/${branch.id}'),
         ),
       ),
     );

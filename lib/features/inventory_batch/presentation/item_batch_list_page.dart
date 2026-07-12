@@ -18,23 +18,11 @@ class ItemBatchListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<ItemBatch, int, void>>.value(
       value: itemBatchCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              itemBatchManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<ItemBatch>(
-                manifest: itemBatchManifest,
-                idOf: (b) => b.id,
-                onCreate: () => context.push('/inventory/batch/new'),
-                onTap: (b) => context.push('/inventory/batch/${b.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<ItemBatch>(
+          manifest: itemBatchManifest,
+          idOf: (b) => b.id,
+          onCreate: () => context.push('/inventory/batch/new'),
+          onTap: (b) => context.push('/inventory/batch/${b.id}'),
         ),
       ),
     );

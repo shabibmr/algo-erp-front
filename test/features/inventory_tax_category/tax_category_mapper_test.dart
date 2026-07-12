@@ -44,8 +44,11 @@ void main() {
   });
 
   test('TaxCategoryMapper.toDto round-trips back to the wire shape', () {
-    final taxCategory =
-        TaxCategory(id: 1, name: 'VAT', rate: Decimal.parse('5.00'));
+    final taxCategory = TaxCategory(
+      id: 1,
+      name: 'VAT',
+      rate: Decimal.parse('5.00'),
+    );
     final dto = mapper.toDto(taxCategory);
 
     expect(dto.toJson(), {

@@ -26,8 +26,7 @@ abstract final class LineEngine {
   static Decimal lineSubtotal({
     required Decimal quantity,
     required Decimal price,
-  }) =>
-      quantity * price;
+  }) => quantity * price;
 
   /// Discount amount: round(`subtotal × discountPercent / 100`, 2).
   static Decimal lineDiscount({
@@ -49,10 +48,7 @@ abstract final class LineEngine {
 
   /// Full per-line breakdown.
   static LineComputation computeLine(LineInput input) {
-    final subtotal = lineSubtotal(
-      quantity: input.quantity,
-      price: input.price,
-    );
+    final subtotal = lineSubtotal(quantity: input.quantity, price: input.price);
     final discount = lineDiscount(
       subtotal: subtotal,
       discountPercent: input.discountPercent,
@@ -103,8 +99,8 @@ class LineInput extends Equatable {
     required this.price,
     Decimal? discountPercent,
     Decimal? taxRate,
-  })  : discountPercent = discountPercent ?? Decimal.zero,
-        taxRate = taxRate ?? Decimal.zero;
+  }) : discountPercent = discountPercent ?? Decimal.zero,
+       taxRate = taxRate ?? Decimal.zero;
 
   final Decimal quantity;
   final Decimal price;
@@ -132,8 +128,13 @@ class LineComputation extends Equatable {
   final Decimal lineTotal;
 
   @override
-  List<Object?> get props =>
-      [subtotal, discountAmount, netAmount, taxAmount, lineTotal];
+  List<Object?> get props => [
+    subtotal,
+    discountAmount,
+    netAmount,
+    taxAmount,
+    lineTotal,
+  ];
 }
 
 /// Aggregated document totals.

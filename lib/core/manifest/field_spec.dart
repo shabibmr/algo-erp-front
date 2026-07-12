@@ -35,12 +35,21 @@ enum FieldType {
   selfFk,
 }
 
+/// Which edge a ledger column's cells align to.
+enum ColumnAlign { start, end }
+
 /// Describes one field of an entity for manifest-driven rendering.
 ///
 /// [key] is the entity-side (mapped, camelCase) field name; [cellValue] reads
 /// the display string for that field off an entity instance of type [E].
 /// Kept as a value-reading closure (rather than a `dynamic` getter + separate
 /// formatter) so `MasterListSurface` never needs entity-specific knowledge.
+///
+/// **Presentation is derived, not declared.** [align] and [mono] default to
+/// whatever [type] implies — numbers align right in tabular mono figures, so
+/// they stack on the decimal down a column; everything else reads left in the
+/// body face. A manifest only names these when it wants to override the
+/// derivation, which is why adding them broke no existing manifest.
 @immutable
 class FieldSpec<E> {
   const FieldSpec({
@@ -49,12 +58,41 @@ class FieldSpec<E> {
     required this.type,
     required this.cellValue,
     this.required = false,
-  });
+    this.flex = 1,
+    this.minWidth = 96,
+    ColumnAlign? align,
+    bool? mono,
+    this.primary = false,
+  }) : align =
+           align ??
+           (type == FieldType.int || type == FieldType.decimal
+               ? ColumnAlign.end
+               : ColumnAlign.start),
+       mono = mono ?? (type == FieldType.int || type == FieldType.decimal);
 
   final String key;
   final String label;
   final FieldType type;
   final bool required;
+
+  /// This column's share of the ledger's width, relative to its siblings.
+  final int flex;
+
+  /// Below this, the ledger stops flexing and scrolls horizontally instead.
+  final double minWidth;
+
+  /// Which edge cells align to. Numbers right, everything else left, unless
+  /// the manifest overrides it.
+  final ColumnAlign align;
+
+  /// Whether cells render in tabular mono figures. Numbers do, unless the
+  /// manifest overrides it.
+  final bool mono;
+
+  /// Marks the identity column — the value a clerk scans for. Rendered in ink
+  /// at `w600`. `LedgerTable` promotes the first column by default, so most
+  /// manifests never set this.
+  final bool primary;
 
   /// Renders this field's value for `entity` as display text.
   final String Function(E entity) cellValue;

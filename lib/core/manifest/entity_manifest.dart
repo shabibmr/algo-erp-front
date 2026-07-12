@@ -2,6 +2,17 @@ import 'package:algo_erp_front/core/manifest/field_spec.dart';
 import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:flutter/foundation.dart';
 
+enum FormLayout {
+  /// Vertical list of section containers (cards) one under another.
+  vertical,
+
+  /// Two columns of section containers (cards) on wider screens.
+  columns,
+
+  /// Sections rendered inside tabs.
+  tabs,
+}
+
 /// The typed declaration a `MasterListSurface<E>` renders: what the entity is
 /// called, which permission module gates it, where its data lives, and which
 /// fields appear as list columns.
@@ -27,10 +38,14 @@ class EntityManifest<E> {
     this.hardDelete = false,
     this.supportsUpdate = true,
     this.supportsDelete = true,
+    this.eyebrow,
+    this.emptyMessage,
+    this.emptyCtaLabel,
+    this.formLayout = FormLayout.vertical,
   }) : assert(
-          formFields.isEmpty || emptyEntity != null,
-          'A manifest with formFields must supply emptyEntity for create mode.',
-        );
+         formFields.isEmpty || emptyEntity != null,
+         'A manifest with formFields must supply emptyEntity for create mode.',
+       );
 
   /// Stable identifier for this manifest (e.g. `'brand'`).
   final String id;
@@ -88,4 +103,25 @@ class EntityManifest<E> {
   /// `false`, `MasterFormSurface` hides the Delete action in edit mode
   /// and refuses delete at the action boundary as well.
   final bool supportsDelete;
+
+  /// The line above the page title, placing the entity in the app — e.g.
+  /// `'Inventory · Masters'`. Falls back to [rbacModule] when unset.
+  final String? eyebrow;
+
+  /// What the empty sheet says. An empty screen is an invitation to act, so
+  /// this should name what the entity is *for* rather than restate that it's
+  /// empty: "Add the first brand your invoices will use." Falls back to a
+  /// plain "No {label} yet."
+  final String? emptyMessage;
+
+  /// The empty sheet's call to action. Defaults to the create button's label.
+  final String? emptyCtaLabel;
+
+  /// Layout style of the form fields.
+  final FormLayout formLayout;
+
+  /// The eyebrow actually rendered.
+  String get eyebrowText => eyebrow ?? rbacModule;
 }
+
+

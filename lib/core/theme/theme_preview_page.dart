@@ -83,10 +83,7 @@ class _ThemePreviewPageState extends State<ThemePreviewPage> {
                 _ColorSwatch('Draft', tokens.voucherStatusColors.draft),
                 _ColorSwatch('Approved', tokens.voucherStatusColors.approved),
                 _ColorSwatch('Posted', tokens.voucherStatusColors.posted),
-                _ColorSwatch(
-                  'Cancelled',
-                  tokens.voucherStatusColors.cancelled,
-                ),
+                _ColorSwatch('Cancelled', tokens.voucherStatusColors.cancelled),
                 _ColorSwatch('Rejected', tokens.voucherStatusColors.rejected),
                 _ColorSwatch(
                   'Pending sync',
@@ -104,18 +101,9 @@ class _ThemePreviewPageState extends State<ThemePreviewPage> {
               'Headline medium',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            Text(
-              'Title large',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Text(
-              'Body large',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            Text(
-              'Label small',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            Text('Title large', style: Theme.of(context).textTheme.titleLarge),
+            Text('Body large', style: Theme.of(context).textTheme.bodyLarge),
+            Text('Label small', style: Theme.of(context).textTheme.labelSmall),
             SizedBox(height: tokens.spacing.lg),
             const _SectionLabel('Buttons'),
             Wrap(
@@ -134,13 +122,15 @@ class _ThemePreviewPageState extends State<ThemePreviewPage> {
               children: [
                 Chip(
                   label: const Text('Draft'),
-                  backgroundColor: tokens.voucherStatusColors.draft
-                      .withValues(alpha: 0.15),
+                  backgroundColor: tokens.voucherStatusColors.draft.withValues(
+                    alpha: 0.15,
+                  ),
                 ),
                 Chip(
                   label: const Text('Posted'),
-                  backgroundColor: tokens.voucherStatusColors.posted
-                      .withValues(alpha: 0.15),
+                  backgroundColor: tokens.voucherStatusColors.posted.withValues(
+                    alpha: 0.15,
+                  ),
                 ),
                 Chip(
                   label: const Text('Pending sync'),

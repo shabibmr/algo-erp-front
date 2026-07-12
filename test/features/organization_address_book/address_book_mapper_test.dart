@@ -92,8 +92,7 @@ void main() {
     );
   });
 
-  test(
-      'AddressBookMapper.toDto round-trips back to the wire shape '
+  test('AddressBookMapper.toDto round-trips back to the wire shape '
       '(omitting isActive)', () {
     const contact = AddressBook(
       id: 1,

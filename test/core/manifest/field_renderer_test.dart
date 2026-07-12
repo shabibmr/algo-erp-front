@@ -36,11 +36,11 @@ FormFieldSpec<_E> _field(
 
 void main() {
   Widget build(Widget child) => MaterialApp(
-        theme: AppTheme.light,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(body: child),
-      );
+    theme: AppTheme.light,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: child),
+  );
 
   testWidgets('FieldType.text renders AppTextField', (tester) async {
     await tester.pumpWidget(
@@ -159,9 +159,7 @@ void main() {
     expect(formField.validator!(null), 'server error');
   });
 
-  testWidgets('required field with no value fails validation', (
-    tester,
-  ) async {
+  testWidgets('required field with no value fails validation', (tester) async {
     final field = FormFieldSpec<_E>(
       key: 'f',
       label: 'Field',

@@ -14,16 +14,16 @@ class ErrorState extends StatelessWidget {
   final VoidCallback? onRetry;
 
   IconData get _icon => switch (failure) {
-        NetworkFailure() => Icons.wifi_off_outlined,
-        TimeoutFailure() => Icons.hourglass_disabled_outlined,
-        UnauthorizedFailure() || ForbiddenFailure() => Icons.lock_outline,
-        ValidationFailure() => Icons.report_gmailerrorred_outlined,
-        NotFoundFailure() => Icons.search_off_outlined,
-        ConflictFailure() => Icons.sync_problem_outlined,
-        ServerFailure() => Icons.dns_outlined,
-        CacheFailure() => Icons.storage_outlined,
-        UnknownFailure() => Icons.error_outline,
-      };
+    NetworkFailure() => Icons.wifi_off_outlined,
+    TimeoutFailure() => Icons.hourglass_disabled_outlined,
+    UnauthorizedFailure() || ForbiddenFailure() => Icons.lock_outline,
+    ValidationFailure() => Icons.report_gmailerrorred_outlined,
+    NotFoundFailure() => Icons.search_off_outlined,
+    ConflictFailure() => Icons.sync_problem_outlined,
+    ServerFailure() => Icons.dns_outlined,
+    CacheFailure() => Icons.storage_outlined,
+    UnknownFailure() => Icons.error_outline,
+  };
 
   @override
   Widget build(BuildContext context) {

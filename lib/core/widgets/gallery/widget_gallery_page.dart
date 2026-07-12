@@ -14,7 +14,10 @@ import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_switch_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
 import 'package:algo_erp_front/core/widgets/filters/filter_bar.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
+import 'package:algo_erp_front/core/widgets/states/ledger_skeleton.dart';
 import 'package:algo_erp_front/core/widgets/view_state.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -61,8 +64,9 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme =
-        _brightness == Brightness.light ? AppTheme.light : AppTheme.dark;
+    final theme = _brightness == Brightness.light
+        ? AppTheme.light
+        : AppTheme.dark;
     return Theme(
       data: theme,
       child: Directionality(
@@ -185,9 +189,9 @@ class _GalleryBodyState extends State<_GalleryBody> {
                   message: 'Unsaved edits will be lost.',
                 );
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Confirmed: $ok')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Confirmed: $ok')));
                 }
               },
               child: const Text('Show confirm dialog'),
@@ -202,9 +206,9 @@ class _GalleryBodyState extends State<_GalleryBody> {
                   destructive: true,
                 );
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Confirmed: $ok')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Confirmed: $ok')));
                 }
               },
               child: const Text('Show destructive confirm dialog'),
@@ -262,44 +266,78 @@ class _GalleryBodyState extends State<_GalleryBody> {
         ),
         SizedBox(height: tokens.spacing.lg),
 
-        const _Section('Filter bar'),
-        FilterBar(
-          searchHint: 'Search brands...',
-          onSearchChanged: (_) {},
-          filters: const [
-            FilterChipData(key: 'active', label: 'Active', selected: true),
-            FilterChipData(key: 'inactive', label: 'Inactive'),
+        const _Section('Page header'),
+        PageHeader(
+          eyebrow: 'Inventory',
+          title: 'Brands',
+          subtitle: '128 records',
+          actions: [
+            FilledButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.add),
+              label: const Text('New brand'),
+            ),
           ],
-          onFilterToggled: (_) {},
-          trailing: [FilledButton(onPressed: () {}, child: const Text('New'))],
         ),
         SizedBox(height: tokens.spacing.lg),
 
-        const _Section(
-          'Adaptive entity list (resize window to see cards ↔ table)',
-        ),
-        AdaptiveEntityList<_DemoBrand>(
-          items: _demoBrands,
-          keyOf: (b) => b.id,
-          columns: [
-            EntityColumn(label: 'Name', cellBuilder: (_, b) => Text(b.name)),
-            EntityColumn(
-              label: 'Status',
-              cellBuilder: (_, b) => StatusChip(
-                status: b.active ? EntityStatus.posted : EntityStatus.cancelled,
-                label: b.active ? 'Active' : 'Inactive',
+        const _Section('Work sheet + filter bar (the sheet toolbar)'),
+        WorkSheet(
+          fill: false,
+          toolbar: FilterBar(
+            searchHint: 'Search brands',
+            onSearchChanged: (_) {},
+            filters: const [
+              FilterChipData(key: 'active', label: 'Active', selected: true),
+              FilterChipData(key: 'inactive', label: 'Inactive'),
+            ],
+            onFilterToggled: (_) {},
+            trailing: [
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.download_outlined),
+                tooltip: 'Export to CSV',
               ),
-            ),
-          ],
-          cardBuilder: (_, b) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(b.name),
-            trailing: StatusChip(
-              status: b.active ? EntityStatus.posted : EntityStatus.cancelled,
-              label: b.active ? 'Active' : 'Inactive',
+            ],
+          ),
+          // In a real list screen the sheet fills the page and the ledger takes
+          // its height from that. Here the sheet is content-sized, so the
+          // ledger needs a height of its own to scroll within.
+          child: SizedBox(
+            height: 240,
+            child: AdaptiveEntityList<_DemoBrand>(
+              items: _demoBrands,
+              keyOf: (b) => b.id,
+              onTap: (_) {},
+              columns: [
+                EntityColumn(
+                  label: 'Code',
+                  mono: true,
+                  primary: true,
+                  cellBuilder: (_, b) => Text('BRD-00${b.id}'),
+                ),
+                EntityColumn(
+                  label: 'Name',
+                  flex: 3,
+                  cellBuilder: (_, b) => Text(b.name),
+                ),
+                EntityColumn(
+                  label: 'Status',
+                  cellBuilder: (_, b) => StatusChip(
+                    status: b.active
+                        ? EntityStatus.posted
+                        : EntityStatus.cancelled,
+                    label: b.active ? 'Active' : 'Inactive',
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+        SizedBox(height: tokens.spacing.lg),
+
+        const _Section("Ledger skeleton (the list's first paint)"),
+        const WorkSheet(fill: false, child: LedgerSkeleton(rows: 6)),
         SizedBox(height: tokens.spacing.lg),
 
         const _Section('Line item grid'),

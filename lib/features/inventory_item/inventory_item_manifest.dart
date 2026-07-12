@@ -51,6 +51,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
   label: 'Item',
   rbacModule: 'Inventory',
   resourcePath: '/inventory/item',
+  formLayout: FormLayout.tabs,
   listColumns: [
     FieldSpec<InventoryItem>(
       key: 'code',
@@ -95,6 +96,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       required: true,
       getValue: (i) => i.code,
       setValue: (i, v) => i.copyWith(code: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'name',
@@ -104,6 +106,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       required: true,
       getValue: (i) => i.name,
       setValue: (i, v) => i.copyWith(name: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'alias',
@@ -112,6 +115,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.text,
       getValue: (i) => i.alias,
       setValue: (i, v) => i.copyWith(alias: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'partNumber',
@@ -120,6 +124,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.text,
       getValue: (i) => i.partNumber,
       setValue: (i, v) => i.copyWith(partNumber: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'description',
@@ -128,6 +133,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.text,
       getValue: (i) => i.description,
       setValue: (i, v) => i.copyWith(description: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'nameArabic',
@@ -136,6 +142,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.text,
       getValue: (i) => i.nameArabic,
       setValue: (i, v) => i.copyWith(nameArabic: v as String?),
+      section: 'General',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'inventoryGroupId',
@@ -170,6 +177,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final result = await _inventoryGroupRepository.getById(id as int);
         return result.fold((_) => null, (g) => g);
       },
+      section: 'Categorization',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'uomId',
@@ -191,6 +199,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final result = await _uomRepository.getById(id as int);
         return result.fold((_) => null, (u) => u);
       },
+      section: 'Categorization',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'brandId',
@@ -209,6 +218,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final result = await _brandRepository.getById(id as int);
         return result.fold((_) => null, (b) => b);
       },
+      section: 'Categorization',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'categoryId',
@@ -227,6 +237,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final result = await _categoryRepository.getById(id as int);
         return result.fold((_) => null, (c) => c);
       },
+      section: 'Categorization',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'taxCategoryId',
@@ -250,6 +261,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
         final result = await _taxCategoryRepository.getById(id as int);
         return result.fold((_) => null, (t) => t);
       },
+      section: 'Categorization',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'price',
@@ -259,6 +271,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       required: true,
       getValue: (i) => i.price,
       setValue: (i, v) => i.copyWith(price: (v as Decimal?) ?? Decimal.zero),
+      section: 'Pricing & Cost',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'basePrice',
@@ -268,6 +281,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       getValue: (i) => i.basePrice,
       setValue: (i, v) =>
           i.copyWith(basePrice: (v as Decimal?) ?? Decimal.zero),
+      section: 'Pricing & Cost',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'standardCost',
@@ -277,6 +291,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       getValue: (i) => i.standardCost,
       setValue: (i, v) =>
           i.copyWith(standardCost: (v as Decimal?) ?? Decimal.zero),
+      section: 'Pricing & Cost',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'vatRate',
@@ -285,6 +300,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.decimal,
       getValue: (i) => i.vatRate,
       setValue: (i, v) => i.copyWith(vatRate: (v as Decimal?) ?? Decimal.zero),
+      section: 'Pricing & Cost',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'openingStock',
@@ -294,6 +310,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       getValue: (i) => i.openingStock,
       setValue: (i, v) =>
           i.copyWith(openingStock: (v as Decimal?) ?? Decimal.zero),
+      section: 'Stock Settings',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'reorderLevel',
@@ -303,6 +320,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       getValue: (i) => i.reorderLevel,
       setValue: (i, v) =>
           i.copyWith(reorderLevel: (v as Decimal?) ?? Decimal.zero),
+      section: 'Stock Settings',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'salesGlLedgerId',
@@ -315,6 +333,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
       fkResolveById: _resolveLedger,
+      section: 'GL Accounts',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'defaultPurchaseLedgerId',
@@ -328,6 +347,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
       fkResolveById: _resolveLedger,
+      section: 'GL Accounts',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'defaultSalesReturnLedgerId',
@@ -341,6 +361,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
       fkResolveById: _resolveLedger,
+      section: 'GL Accounts',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'defaultPurchaseReturnLedgerId',
@@ -354,6 +375,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       fkSearch: _searchLedgers,
       fkDisplayOf: _ledgerLabel,
       fkResolveById: _resolveLedger,
+      section: 'GL Accounts',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isPurchaseItem',
@@ -362,6 +384,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isPurchaseItem,
       setValue: (i, v) => i.copyWith(isPurchaseItem: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isSalesItem',
@@ -370,6 +393,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isSalesItem,
       setValue: (i, v) => i.copyWith(isSalesItem: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isStockItem',
@@ -378,6 +402,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isStockItem,
       setValue: (i, v) => i.copyWith(isStockItem: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isSerialized',
@@ -386,6 +411,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isSerialized,
       setValue: (i, v) => i.copyWith(isSerialized: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isBatchTracked',
@@ -394,6 +420,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isBatchTracked,
       setValue: (i, v) => i.copyWith(isBatchTracked: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isService',
@@ -402,6 +429,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isService,
       setValue: (i, v) => i.copyWith(isService: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isPerishable',
@@ -410,6 +438,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isPerishable,
       setValue: (i, v) => i.copyWith(isPerishable: v as bool?),
+      section: 'Status & Toggles',
     ),
     FormFieldSpec<InventoryItem>(
       key: 'isActive',
@@ -418,6 +447,7 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       type: FieldType.bool,
       getValue: (i) => i.isActive,
       setValue: (i, v) => i.copyWith(isActive: v as bool?),
+      section: 'Status & Toggles',
     ),
   ],
   emptyEntity: () => InventoryItem(

@@ -38,32 +38,18 @@ class ItemBatchFormPage extends StatelessWidget {
             idOf: (b) => b.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(itemBatchManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${itemBatchManifest.label}'
-                      : itemBatchManifest.supportsUpdate
-                      ? 'Edit ${itemBatchManifest.label}'
-                      : 'View ${itemBatchManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<ItemBatch, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<ItemBatch, int>>(
                     create: (ctx) => DetailBloc<ItemBatch, int>(
                       repository: ctx.read<Repository<ItemBatch, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

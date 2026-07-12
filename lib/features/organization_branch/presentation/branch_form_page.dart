@@ -38,32 +38,18 @@ class BranchFormPage extends StatelessWidget {
             idOf: (branch) => branch.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(branchManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${branchManifest.label}'
-                      : branchManifest.supportsUpdate
-                      ? 'Edit ${branchManifest.label}'
-                      : 'View ${branchManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Branch, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Branch, int>>(
                     create: (ctx) => DetailBloc<Branch, int>(
                       repository: ctx.read<Repository<Branch, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

@@ -44,12 +44,7 @@ void main() {
 
     expect(
       designation,
-      const Designation(
-        id: 1,
-        code: 'MGR',
-        name: 'Manager',
-        departmentId: 4,
-      ),
+      const Designation(id: 1, code: 'MGR', name: 'Manager', departmentId: 4),
     );
   });
 

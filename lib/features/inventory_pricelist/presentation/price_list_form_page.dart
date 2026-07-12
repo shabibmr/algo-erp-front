@@ -38,32 +38,18 @@ class PriceListFormPage extends StatelessWidget {
             idOf: (p) => p.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(priceListManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${priceListManifest.label}'
-                      : priceListManifest.supportsUpdate
-                      ? 'Edit ${priceListManifest.label}'
-                      : 'View ${priceListManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<PriceList, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<PriceList, int>>(
                     create: (ctx) => DetailBloc<PriceList, int>(
                       repository: ctx.read<Repository<PriceList, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

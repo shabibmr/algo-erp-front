@@ -41,32 +41,18 @@ class BrandFormPage extends StatelessWidget {
             idOf: (brand) => brand.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(brandManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${brandManifest.label}'
-                      : brandManifest.supportsUpdate
-                      ? 'Edit ${brandManifest.label}'
-                      : 'View ${brandManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Brand, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Brand, int>>(
                     create: (ctx) => DetailBloc<Brand, int>(
                       repository: ctx.read<Repository<Brand, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

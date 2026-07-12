@@ -53,6 +53,16 @@ abstract final class AppTheme {
     final plex = GoogleFonts.ibmPlexSansTextTheme();
     final fraunces = GoogleFonts.frauncesTextTheme();
 
+    // Figures: IBM Plex Mono, tabular + lining, so digits align on the decimal
+    // down a ledger column. Built once per theme and handed to AppTokens —
+    // never call GoogleFonts per cell.
+    final figures = GoogleFonts.ibmPlexMono(
+      textStyle: AppTokens.defaultFigures,
+      fontSize: 13.5,
+      height: 1.35,
+      color: brand.ink,
+    );
+
     final textTheme = plex
         .copyWith(
           displayLarge: fraunces.displayLarge?.copyWith(
@@ -108,10 +118,7 @@ abstract final class AppTheme {
             letterSpacing: 0.02 * 12,
           ),
         )
-        .apply(
-          bodyColor: brand.ink,
-          displayColor: brand.ink,
-        );
+        .apply(bodyColor: brand.ink, displayColor: brand.ink);
 
     return ThemeData(
       useMaterial3: true,
@@ -123,7 +130,7 @@ abstract final class AppTheme {
       visualDensity: VisualDensity.compact,
       textTheme: textTheme,
       primaryTextTheme: textTheme,
-      extensions: [tokens],
+      extensions: [tokens.copyWith(figures: figures)],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
@@ -240,11 +247,7 @@ abstract final class AppTheme {
         ),
         side: BorderSide.none,
       ),
-      dividerTheme: DividerThemeData(
-        color: brand.mist,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: brand.mist, thickness: 1, space: 1),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: brand.ink,
         contentTextStyle: textTheme.bodyMedium?.copyWith(

@@ -38,32 +38,18 @@ class RouteMasterFormPage extends StatelessWidget {
             idOf: (r) => r.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(routeMasterManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${routeMasterManifest.label}'
-                      : routeMasterManifest.supportsUpdate
-                      ? 'Edit ${routeMasterManifest.label}'
-                      : 'View ${routeMasterManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<RouteMaster, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<RouteMaster, int>>(
                     create: (ctx) => DetailBloc<RouteMaster, int>(
                       repository: ctx.read<Repository<RouteMaster, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

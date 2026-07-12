@@ -31,8 +31,7 @@ sealed class Failure with _$Failure {
   ) = ValidationFailure;
   const factory Failure.notFound(String message) = NotFoundFailure;
   const factory Failure.conflict(String message) = ConflictFailure;
-  const factory Failure.server(String message, {String? code}) =
-      ServerFailure;
+  const factory Failure.server(String message, {String? code}) = ServerFailure;
   const factory Failure.cache(String message) = CacheFailure;
   const factory Failure.unknown(String message) = UnknownFailure;
 }

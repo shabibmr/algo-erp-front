@@ -56,11 +56,11 @@ class AsyncStateView<T> extends StatelessWidget {
     return switch (state) {
       ViewLoading<T>() => LoadingState(message: loadingMessage),
       ViewEmpty<T>() => EmptyState(
-          message: emptyMessage,
-          icon: emptyIcon ?? Icons.inbox_outlined,
-          actionLabel: emptyActionLabel,
-          onAction: onEmptyAction,
-        ),
+        message: emptyMessage,
+        icon: emptyIcon ?? Icons.inbox_outlined,
+        actionLabel: emptyActionLabel,
+        onAction: onEmptyAction,
+      ),
       final ViewData<T> s => builder(context, s.data),
       final ViewError<T> s => ErrorState(failure: s.failure, onRetry: onRetry),
     };

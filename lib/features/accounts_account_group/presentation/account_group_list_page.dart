@@ -18,23 +18,11 @@ class AccountGroupListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<AccountGroup, int, void>>.value(
       value: accountGroupCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              accountGroupManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<AccountGroup>(
-                manifest: accountGroupManifest,
-                idOf: (g) => g.id,
-                onCreate: () => context.push('/accounts/groups/new'),
-                onTap: (g) => context.push('/accounts/groups/${g.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<AccountGroup>(
+          manifest: accountGroupManifest,
+          idOf: (g) => g.id,
+          onCreate: () => context.push('/accounts/groups/new'),
+          onTap: (g) => context.push('/accounts/groups/${g.id}'),
         ),
       ),
     );

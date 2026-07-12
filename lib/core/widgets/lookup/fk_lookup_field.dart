@@ -39,9 +39,14 @@ class FkLookupField<T> extends StatefulWidget {
     this.validator,
     this.enabled = true,
     this.debounce = kFkLookupDebounce,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker. The picker dialog still titles itself with [label].
+  final Widget? labelWidget;
   final T? value;
   final String Function(T item) displayOf;
 
@@ -82,7 +87,8 @@ class _FkLookupFieldState<T> extends State<FkLookupField<T>> {
           onTap: widget.enabled ? _openPicker : null,
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: widget.label,
+              label: widget.labelWidget,
+              labelText: widget.labelWidget == null ? widget.label : null,
               helperText: widget.helperText,
               errorText: state.errorText,
               suffixIcon: const Icon(Icons.search),

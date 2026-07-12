@@ -13,8 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
-    implements AuthBloc {}
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 void main() {
   late MockAuthBloc authBloc;
@@ -36,9 +35,9 @@ void main() {
       initialState: const AuthAuthenticated(user),
     );
     when(() => authBloc.state).thenReturn(const AuthAuthenticated(user));
-    when(() => authBloc.stream).thenAnswer(
-      (_) => Stream<AuthState>.value(const AuthAuthenticated(user)),
-    );
+    when(
+      () => authBloc.stream,
+    ).thenAnswer((_) => Stream<AuthState>.value(const AuthAuthenticated(user)));
   });
 
   Widget wrap(Widget home) {
@@ -62,9 +61,9 @@ void main() {
       initialState: const AuthUnauthenticated(),
     );
     when(() => authBloc.state).thenReturn(const AuthUnauthenticated());
-    when(() => authBloc.stream).thenAnswer(
-      (_) => Stream<AuthState>.value(const AuthUnauthenticated()),
-    );
+    when(
+      () => authBloc.stream,
+    ).thenAnswer((_) => Stream<AuthState>.value(const AuthUnauthenticated()));
 
     await tester.pumpWidget(wrap(const LoginPage()));
     await tester.pumpAndSettle();

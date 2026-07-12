@@ -1,8 +1,8 @@
 # algoERP — UI Design Plan
 
 > **Codename:** *Ledger & Linen*  
-> **Status:** Decisions locked · **Slice A shipped** · **Slice B shipped** (binder shell + context strip + Today’s Desk)  
-> **Date:** 2026-07-11  
+> **Status:** Decisions locked · **Slice A shipped** · **Slice B shipped** (binder shell + context strip + Today’s Desk) · **Slice C shipped** (§5.2 Ledger sheet + §5.3 Index card stack — the master surfaces)  
+> **Date:** 2026-07-11 · surfaces shipped 2026-07-12  
 > **Companion to:** `docs/BUILD_TASKS_V2.md` (visual layer for Waves A2–A9)  
 > **Stack constraint:** free / first-party only — Material 3 + owned tokens + free fonts. No paid kits.
 
@@ -169,29 +169,64 @@ Free fonts only (add `google_fonts` — OSS — or bundle `.ttf` under `assets/f
 - Selected item: Lagoon soft pill + Lagoon icon — no loud fill block.  
 - Top **context chip strip** (company / branch / FY) always visible when authenticated — *personal workplace*, not abstract app.
 
-### 5.2 Master list surface — *Ledger sheet*
+### 5.2 Master list surface — *Ledger sheet* — **SHIPPED**
+
+`MasterListSurface` → `PageHeader` + `WorkSheet(toolbar: FilterBar)` +
+`LedgerTable` / `LedgerSkeleton`.
 
 ```
-  Brands                              [ Search…        ]  [ + New Brand ]
-  ────────────────────────────────────────────────────────
-  Name              Code        Active
-  ────────────────────────────────────────────────────────
-  Acme Paints       ACME        ●
-  Gulf Hardware     GHW         ●
+  INVENTORY · MASTERS                             ← eyebrow
+  Brands   128 records              [ + New brand ]   ← page action, far right
+  ┌─ paper sheet, fills to the bottom of the viewport ───────────┐
+  │  [ Search brands…  ]   [Active] [Archived]        ⤓ Export   │  ← sheet toolbar
+  │ ═════════════════════════════════════════════════════════════ │
+  │  CODE      NAME                      STATUS      ITEMS       │
+  │ ───────────────────────────────────────────────────────────── │
+  │  BRD-001   Al Noor Trading           Active        128       │
+  │ ·············································· faint rule ···  │
+  │  …                                                           │
+  │  BRD-005   Marina Coatings           Active        316       │
+  │ ───────────────────────────── every 5th rule: full strength ─ │
+  │ ▍BRD-006   Sharjah Cement            Active         22       │  ← hover gutter
+  └──────────────────────────────────────────────────────────────┘
 ```
 
-- Header row: label style, Mist hairline under  
-- Rows: Paper; hover → Lagoon soft 4–6% wash; selected → stronger soft  
-- First identity column slightly heavier weight  
-- Mobile: **index cards** (name primary, 2 secondary lines, trailing status)  
-- Empty: invitation, not apology — *“No brands yet. Add the first brand your invoices will use.”*
+**Deviation from the sketch above, deliberate.** The original put the search
+field and the New button shoulder-to-shoulder on the title line. In practice
+that reads as a row of unrelated controls: creating a record is a *page* action,
+while searching filters the *sheet*. They now live on different bands — the CTA
+at the far right of `PageHeader`, the search inside the sheet's own toolbar.
 
-### 5.3 Master form / detail — *Index card stack*
+- The sheet **is** the page: it fills the canvas, and columns flex to 100% of its
+  width. Eight rows show a full sheet, not eight rows floating on linen.
+- **Ruled in fives** (the signature): faint rule between rows, full-strength rule
+  every fifth — the way a paper ledger pad rules so the eye can count down a
+  column. Deliberately *not* zebra striping, which fights the clean-sheet
+  metaphor. Tokens: `AppTokens.ledger`.
+- Rows: Paper; hover/focus → Lagoon soft wash + a 2px lagoon edge in the left
+  gutter (always reserved, so text never shifts).
+- Identity column heavier weight; numbers right-aligned in tabular mono figures
+  (IBM Plex Mono via `AppTokens.figures`) — both **derived from `FieldType`**, so
+  manifests get it for free.
+- Mobile: **index cards** (identity value as heading, rest as label/value lines).
+- First paint: `LedgerSkeleton`, not a spinner — the sheet keeps its shape.
+- Empty: invitation, not apology — set `emptyMessage` on the manifest, e.g.
+  *"No brands yet. Add the first brand your invoices will use."*
 
-- Sections as soft Paper cards with titleMd, not numbered 01/02  
-- Required fields marked with subtle Brass asterisk (not red until error)  
-- Sticky footer actions on mobile: Cancel · Save  
-- Desk Lamp rim active
+### 5.3 Master form / detail — *Index card stack* — **SHIPPED**
+
+`MasterFormSurface` → `PageHeader` + scrolling `WorkSheet` cards (capped at
+720px) + a pinned footer.
+
+- Sections as soft Paper cards with titleMd, not numbered 01/02. Group fields by
+  setting `section` on `FormFieldSpec`; fields with no section land on one
+  unnamed card. `half: true` pairs two fields onto one row above mobile.
+- Required fields marked with a subtle Brass asterisk (not red until error) —
+  `FieldLabel`, wired through `FieldRenderer`.
+- Pinned footer: Delete (demoted, danger text button) ··· Cancel · Save.
+- Capped at a readable width, and it **scrolls** — previously it did neither, so
+  a long form (Items) silently overflowed and its fields stretched to 1600px.
+- Desk Lamp rim: **not yet built.**
 
 ### 5.4 Document surface (vouchers) — *Real form on the desk*
 

@@ -39,10 +39,7 @@ class DioClient {
       RetryInterceptor(
         dio: client,
         retries: 2,
-        retryDelays: const [
-          Duration(milliseconds: 500),
-          Duration(seconds: 1),
-        ],
+        retryDelays: const [Duration(milliseconds: 500), Duration(seconds: 1)],
       ),
       if (!AppConfig.instance.isProd)
         PrettyDioLogger(requestHeader: true, requestBody: true),

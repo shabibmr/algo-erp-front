@@ -69,10 +69,10 @@ class BinderSidebar extends StatelessWidget {
             child: Text(
               section.title!.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: brand.inkMuted,
-                    letterSpacing: 0.06 * 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: brand.inkMuted,
+                letterSpacing: 0.06 * 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         );
@@ -123,11 +123,8 @@ class _BrandHeader extends StatelessWidget {
               height: 36,
               fit: BoxFit.contain,
               filterQuality: FilterQuality.high,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.hexagon_outlined,
-                color: brand.lagoon,
-                size: 32,
-              ),
+              errorBuilder: (_, __, ___) =>
+                  Icon(Icons.hexagon_outlined, color: brand.lagoon, size: 32),
             ),
           ),
           if (extended) ...[
@@ -138,9 +135,9 @@ class _BrandHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: brand.ink,
-                    ),
+                  fontWeight: FontWeight.w600,
+                  color: brand.ink,
+                ),
               ),
             ),
           ],
@@ -193,11 +190,11 @@ class _NavTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: selected ? brand.lagoon : brand.ink,
-                              fontWeight: selected
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                            ),
+                          color: selected ? brand.lagoon : brand.ink,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],

@@ -18,23 +18,11 @@ class SkuMasterListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<SkuMaster, int, void>>.value(
       value: skuMasterCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              skuMasterManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<SkuMaster>(
-                manifest: skuMasterManifest,
-                idOf: (s) => s.id,
-                onCreate: () => context.push('/inventory/sku/new'),
-                onTap: (s) => context.push('/inventory/sku/${s.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<SkuMaster>(
+          manifest: skuMasterManifest,
+          idOf: (s) => s.id,
+          onCreate: () => context.push('/inventory/sku/new'),
+          onTap: (s) => context.push('/inventory/sku/${s.id}'),
         ),
       ),
     );

@@ -8,20 +8,19 @@ import 'package:algo_erp_front/core/widgets/view_state.dart';
 /// state and these stop compiling until handled.
 extension CrudStateViewX<E> on CrudState<E> {
   ViewState<List<E>> toViewState() => switch (this) {
-        CrudInitial<E>() || CrudLoading<E>() => ViewLoading<List<E>>(),
-        final CrudLoaded<E> s =>
-          s.items.isEmpty ? ViewEmpty<List<E>>() : ViewData(s.items),
-        final CrudError<E> s => ViewError<List<E>>(s.failure),
-      };
+    CrudInitial<E>() || CrudLoading<E>() => ViewLoading<List<E>>(),
+    final CrudLoaded<E> s =>
+      s.items.isEmpty ? ViewEmpty<List<E>>() : ViewData(s.items),
+    final CrudError<E> s => ViewError<List<E>>(s.failure),
+  };
 }
 
 extension DetailStateViewX<E> on DetailState<E> {
   ViewState<E> toViewState() => switch (this) {
-        DetailInitial<E>() ||
-        DetailLoading<E>() ||
-        DetailDeleted<E>() =>
-          ViewLoading<E>(),
-        final DetailLoaded<E> s => ViewData(s.entity),
-        final DetailError<E> s => ViewError<E>(s.failure),
-      };
+    DetailInitial<E>() ||
+    DetailLoading<E>() ||
+    DetailDeleted<E>() => ViewLoading<E>(),
+    final DetailLoaded<E> s => ViewData(s.entity),
+    final DetailError<E> s => ViewError<E>(s.failure),
+  };
 }

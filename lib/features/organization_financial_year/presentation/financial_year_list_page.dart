@@ -18,23 +18,11 @@ class FinancialYearListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<FinancialYear, int, void>>.value(
       value: financialYearCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              financialYearManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<FinancialYear>(
-                manifest: financialYearManifest,
-                idOf: (fy) => fy.id,
-                onCreate: () => context.push('/organization/fy/new'),
-                onTap: (fy) => context.push('/organization/fy/${fy.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<FinancialYear>(
+          manifest: financialYearManifest,
+          idOf: (fy) => fy.id,
+          onCreate: () => context.push('/organization/fy/new'),
+          onTap: (fy) => context.push('/organization/fy/${fy.id}'),
         ),
       ),
     );

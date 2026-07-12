@@ -19,16 +19,34 @@ rule, these are named here rather than forced through the recipe or used to just
 | LedgerItemMapping | `/inventory/ledger-item-mapping` | No `PUT` route; PK is Prisma `@map("_id")`-mapped with no real int FK enforced in the schema. |
 | PriceListEntry | `/inventory/pricelist-entry` | Backend has no list endpoint at all (only get-by-id/create/update/delete) — `MasterListSurface` needs a working `.list()`. |
 
+## Employee module (Sprint F)
+
+| Entity | Backend path | Reason deferred / partial |
+|---|---|---|
+| ~~EmployeeDetails~~ | `/employee/employees` | **Shipped** as `employee_employee` with tabbed Core/Bank/Salary (nested `bankDetails` / `salaryDetails`, same pattern as Ledger). Legacy document columns on the main row are not on the form — use documents API. |
+| EmployeeDocument | `/employees/:id/documents`, `PUT /documents/:docId`, `GET /documents/expiries` | Nested under employee; no flat list of all documents (only expiries + per-employee on GET employee). Needs a mini-surface or employee-form Documents tab, not pure 7-file EMR. |
+| ~~LeaveAllocation~~ | `POST /leave/allocations`, `GET /employees/:id/leave-allocations` | **Shipped** as `employee_leave_allocation`. Custom surface (not flat EMR list): pick employee + year, list balances, create allocate form. **BE-009** fixed `employee_id` on create schema. Still no global list / update / delete. |
+| ~~LeavePolicy~~ | `/leave/policies` | **Shipped** create-only (`supportsUpdate`/`supportsDelete: false`); get-by-id scans list. |
+| ~~LeaveRequest~~ | `/leave-requests` + nested create | **Shipped** custom repository (nested create + status PUT). Not a full DocumentSurface workflow. |
+| ~~ShiftMaster~~ | `/shifts` | **Shipped** create-only; get-by-id scans list. |
+| EmployeeShiftAssignment | `POST /employees/:id/shift` | Nested under employee; no global list. |
+| AttendanceDetails | `POST /employees/:id/attendance`, roster GET | Nested / roster-shaped; not a flat master list. |
+| PayslipMain | `/payslips` | List-by-period requires `startDate`/`endDate` query params; create uses legacy string `Employee_Id`. Needs dedicated list UX. |
+| SalaryRevisionHistory | salary-revisions | Append-only audit; also auto-created on employee salary save. List is per-employee only. |
+
 ## Organization module (found while registering Wave A5's Organization batch)
 
 | Entity | Backend path | Reason deferred |
 |---|---|---|
-| CurrencyRate | `/organization/rates` | `GET /rates` is a currency+date lookup (`getExchangeRate(currencyId, date)`), not a paginated list — doesn't return the `{items, meta}` shape `MasterListSurface` needs regardless of CRUD completeness. No `PUT`/`DELETE` either. Doesn't fit the recipe even with `supportsUpdate`/`supportsDelete`. |
-| ConfigSetting | `/organization/config-settings` | Keyed by a string `gm_key`, not an int `id`; no create route — doesn't fit the `Repository<E, ID>` generic's implicit int-id shape without a design decision. |
+| ~~CurrencyRate~~ | `/organization/rates` | **Shipped** as `organization_currency_rate`. Backend added `GET /rates/history` + `GET /rates/:id`; lookup `GET /rates?currencyId&date` remains. Append-only (`supportsUpdate`/`supportsDelete: false`). Custom repository for path split. |
+| ~~ConfigSetting~~ | `/organization/config` | **Shipped** as `organization_config`. List is a full array; update `PUT /config/:key` with `{value}`; list/edit by int row id, wire key for PUT. No create/delete. |
 | ~~VoucherSeries~~ | `/organization/voucher-series` | **Shipped** as `organization_voucher_series`. `company_id` remains plain int (CompanyProfile deferred); branch + FY are optional FKs. `require_approval` toggles optional SI approval workflow. |
-| UserCredentials | `/organization/users` | Carries a `password` field — needs deliberate handling (never round-tripped back from the server, distinct widget), not a generic text field; also multi-FK (`contact_id`/`role_id`/`branch_id`). |
-| ProjectMaster | `/organization/projects` | Self-referential `parent_project_master_id` — same `FieldType.selfFk` gap as InventoryGroup above. |
-| CompanyProfile | `/organization/company-profile` | `Logo` is a `Bytes` field (binary) — same gap as ItemImage above; also no `DELETE` route (single-tenant profile). |
+| ~~UserCredentials~~ | `/organization/users` | **Shipped** as `organization_user` — password write-only; multi-FK contact/role/branch; custom create/update bodies. |
+| ~~ProjectMaster~~ | `/organization/projects` | **Shipped** as `organization_project` with `FieldType.selfFk` parent + contact/ledger/godown FKs; coordinator employee still plain int (HR not shipped). |
+| ~~CompanyProfile~~ | `/organization/companies` + `/company/:id` | **Shipped** as `organization_company` — list+edit, logo out-of-band, `supportsDelete: false`, no EMR create (provision is separate POST). |
+| ExtraValuesTable | `/organization/extras/:type/:objectId` | Polymorphic KV keyed by `(TYPE, OBJECT_ID)` — not a flat master list; keep deferred until a host entity needs custom attributes. |
+| ~~AuditLog~~ | `/organization/audit-logs` | **Shipped** as `organization_audit` — read-only list. |
+| ~~ErrorReporting~~ | `/organization/error-reports` | **Shipped** as `organization_error_report` — list + create; no get/update/delete. |
 
 Branch and Currency were initially blocked by a different gap in the same family (missing
 `GET /:id`, not missing `PUT`/`DELETE`) — but unlike the entries above, that gap was small enough
@@ -55,13 +73,11 @@ edit mode read-only (banner, fields disabled, no Save; `_submit` refuses update)
 - **FinancialYear** (`/organization/fy`) — `supportsDelete: false` (also needed `GET /:id`,
   added like Branch/Currency). List/create/update, no delete. Full 7-file package + routes + menu.
 
-The other two stay deferred for reasons the flag doesn't reach:
+Still deferred for reasons the flag doesn't reach:
 - **ItemImage** — the missing `PUT` is now fixable via `supportsUpdate: false`, but the
   `ImageBase64` field still has no `FieldType` to render it with; a form that can create
   records but never set their actual payload isn't worth shipping. Revisit when
   `FieldType.binary` exists.
-- **CurrencyRate** — its `GET` isn't a paginated list endpoint at all (see the table above),
-  so this was never actually a `supportsUpdate` problem.
 
 One list-endpoint gap (PriceListEntry) was also seen once — not yet cross-cutting, but watch for
 a second occurrence before deciding whether it needs its own manifest flag.

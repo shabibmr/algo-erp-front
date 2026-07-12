@@ -1,6 +1,6 @@
 # algoERP Frontend — Living Status
 
-> **Last updated:** 2026-07-12 (SI filters, print, post&book, series banner)  
+> **Last updated:** 2026-07-13 (Sprint F: leave allocation + BE-009 employee_id)  
 > **Code ground truth:** `lib/features/**`, `lib/core/**`  
 > **Required surface area:** [`feature-inventory.md`](./feature-inventory.md)  
 > **Deferred entities:** [`manifest-exceptions.md`](./manifest-exceptions.md)  
@@ -97,7 +97,13 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
   [ ] Dept parent                                ── optional
   [x] InventoryItem + SKU + Batch + group FK     ── Sprint B
   [x] Line Engine + DocumentSurface + SI gold    ── Sprint C
-  [ ] Other vouchers · reports · palette         ── D–G
+  [x] Item-qty trading family (Q/SO/DN/PO/RN/PI/CN/DN) ── Sprint D
+  [x] Payment + Receipt (ledgerAmount engine)            ── Sprint D
+  [x] Journal + Contra (debitCredit engine)              ── Sprint D
+  [x] Stock vouchers GT/MI/RQ/SR                         ── Sprint D done
+  [x] Org access (company, users, role matrix)           ── Sprint E
+  [~] HR depth (employee + leave + shift; attendance/payslip later) ── F
+  [ ] Reports · palette                                  ── G
   [P] Offline sync
 ```
 
@@ -107,18 +113,18 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 
 | Layer | Progress | Notes |
 |-------|----------|-------|
-| Platform (shell, network, auth, widgets) | ~85–90% | Solid; fail-open RBAC; no command palette |
+| Platform (shell, network, auth, widgets) | ~90% | Matrix RBAC; no command palette |
 | EMR runtime (list/form/FK) | ~75% | selfFk shipped; still missing binary, registry, ClientQuery |
-| Organization masters | **6 / ~14** | + VoucherSeries (require_approval) |
+| Organization masters | **13 / ~14** | Full masters; extras polymorphic still deferred |
 | Inventory masters | **13 / ~20** | Flat + Item/Group/SKU/Batch; image still deferred |
-| Employee masters | **2 / ~14** | Dept + Designation only |
+| Employee masters | **7 / ~14** | + LeaveAllocation (per-employee list/create; BE-009) |
 | Accounts masters | **2 / ~8** | AccountGroup (selfFk parent) + Ledger core |
-| Vouchers / documents | **1 / ~17** | SI list+post; DocumentSurface + Line Engine |
+| Vouchers / documents | **17 / ~17** | Full Sprint D voucher matrix (SI gold + 16 kinds) |
 | Reports / dashboard data | ~5% | Desk shell + empty invitations |
 | Offline / sync | `P` | Scaffold only under `lib/core/database/**` |
 | **ERP end-to-end usability** | **Early mid** | Party + item masters; still no documents |
 
-**Shipped master packages (22):** Brand, UOM, Category, TaxCategory, Godown, RouteMaster, UOMConversion, PriceList, ItemProperty, Department, Designation, Branch, Currency, UserRole, AddressBook, FinancialYear, AccountGroup, Ledger, InventoryItem, SKU, Batch, **InventoryGroup**.  
+**Shipped master packages (30+):** Brand, UOM, Category, TaxCategory, Godown, RouteMaster, UOMConversion, PriceList, ItemProperty, Department, Designation, Employee, LeavePolicy, LeaveAllocation, LeaveRequest, Shift, Branch, Currency, CurrencyRate, UserRole, AddressBook, FinancialYear, AccountGroup, Ledger, InventoryItem, SKU, Batch, InventoryGroup, Company, Users, Project, Config, AuditLog, ErrorReport, VoucherSeries.  
 Plus **Auth** (full) and **Today’s Desk** (shell).
 
 ---
@@ -140,7 +146,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | FormMixin | `core/bloc/form_mixin.dart` | `[x]` | Submit lifecycle still thin |
 | `buildRepository` | `core/di/repo_binding.dart` | `[x]` | |
 | Auth stack | `features/auth` | `[x]` | Login, me, change-password, guards |
-| PermissionService | `core/auth` | `[~]` | Fail-open until BE-001 |
+| PermissionService | `core/auth` | `[x]` | MatrixPermissionService (BE-001); role matrix admin UI |
 | Widget library + gallery | `core/widgets` | `[x]` | Catalog + `/widget-gallery` |
 | MasterListSurface | `core/surfaces` | `[x]` | |
 | MasterFormSurface | `core/surfaces` | `[x]` | Doubles as read-only view |
@@ -165,22 +171,22 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 
 | Entity | API area | Status | Package / note |
 |--------|----------|--------|----------------|
-| CompanyProfile | `/organization/companies` | `[!]` | Binary logo; no DELETE — see exceptions |
+| CompanyProfile | `/organization/companies` | `[x]` | List+edit; logo out-of-band; no delete/create |
 | FinancialYear | `/organization/fy` | `[x]` | `organization_financial_year` · `supportsDelete: false` |
 | Branch | `/organization/branches` | `[x]` | `organization_branch` |
 | Currency | `/organization/currencies` | `[x]` | `organization_currency` |
-| CurrencyRate | `/organization/rates` | `[!]` | Lookup endpoint, not paginated list |
+| CurrencyRate | `/organization/rates` | `[x]` | `organization_currency_rate` · list/history + create; append-only |
 | VoucherSeries | `/organization/voucher-series` | `[x]` | `organization_voucher_series` · require_approval; company id int |
 | UserRole | `/organization/roles` | `[x]` | `organization_user_role` |
-| UserAccessPermission | `/roles/:id/permissions` | `[ ]` | Upsert UI not built |
-| UserCredentials | `/organization/users` | `[!]` | Password + multi-FK |
+| UserAccessPermission | `/roles/:id/permissions` | `[x]` | Matrix UI + GET/PUT admin |
+| UserCredentials | `/organization/users` | `[x]` | Password write-only; contact/role/branch FKs |
 | AddressBook | `/organization/contacts` | `[x]` | `organization_address_book` |
-| ConfigSetting | `/organization/config` | `[!]` | String key, not int id |
-| ProjectMaster | `/organization/projects` | `[!]` | Self-FK |
-| AuditLog | `/organization/audit-logs` | `[ ]` | Read-only list later |
-| ErrorReporting | `/error-reports` | `[ ]` | |
-| ExtraValuesTable | `/organization/extras/...` | `[ ]` | Polymorphic KV |
-| Org hub route | `/organization` | `[~]` | Placeholder page |
+| ConfigSetting | `/organization/config` | `[x]` | `organization_config` · list+edit value; no create/delete |
+| ProjectMaster | `/organization/projects` | `[x]` | `organization_project` · selfFk parent + contact/ledger/godown FKs |
+| AuditLog | `/organization/audit-logs` | `[x]` | `organization_audit` · read-only list |
+| ErrorReporting | `/organization/error-reports` | `[x]` | `organization_error_report` · list+create |
+| ExtraValuesTable | `/organization/extras/...` | `[!]` | Polymorphic KV — stays deferred |
+| Org hub route | `/organization` | `[x]` | Binder has hub only; masters are hub tiles (`AppMenu.organizationMasters`) |
 
 ### 2.2 Accounts
 
@@ -229,19 +235,19 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 |--------|----------|--------|----------------|
 | Department | `/employee/departments` | `[x]` | `employee_department` |
 | Designation | `/employee/designations` | `[x]` | `employee_designation` · FK dept |
-| EmployeeDetails | `/employee/employees` | `[ ]` | Multi-tab heavy master |
-| EmployeeDocument | documents routes | `[ ]` | |
-| EmployeeBankDetails | | `[ ]` | 1:1 extension |
-| EmployeeSalaryDetails | | `[ ]` | |
-| SalaryRevisionHistory | | `[ ]` | Append-only |
-| LeavePolicy | `/leave/policies` | `[ ]` | |
-| LeaveAllocation | allocations | `[ ]` | |
-| LeaveRequest | leave-requests | `[ ]` | Approval workflow |
-| AttendanceDetails | attendance | `[ ]` | |
-| ShiftMaster | `/shifts` | `[ ]` | |
-| EmployeeShiftAssignment | | `[ ]` | |
-| PayslipMain | payslips | `[ ]` | Voucher-like |
-| Employee hub | `/employee` | `[~]` | Placeholder |
+| EmployeeDetails | `/employee/employees` | `[x]` | `employee_employee` · Core/Bank/Salary tabs |
+| EmployeeDocument | documents routes | `[ ]` | Nested create; expiries list later |
+| EmployeeBankDetails | nested on employee | `[x]` | Tab on employee form (not separate menu) |
+| EmployeeSalaryDetails | nested on employee | `[x]` | Tab on employee form |
+| SalaryRevisionHistory | | `[ ]` | Append-only; auto on salary save server-side |
+| LeavePolicy | `/leave/policies` | `[x]` | `employee_leave_policy` · create-only API |
+| LeaveAllocation | allocations | `[x]` | `employee_leave_allocation` · per-employee+year list; create (BE-009) |
+| LeaveRequest | leave-requests | `[x]` | `employee_leave_request` · approve/reject/cancel |
+| AttendanceDetails | attendance | `[ ]` | Nested log + roster per employee |
+| ShiftMaster | `/shifts` | `[x]` | `employee_shift` · create-only API |
+| EmployeeShiftAssignment | | `[ ]` | Nested assign under employee |
+| PayslipMain | payslips | `[ ]` | Voucher-like; period list needs query params |
+| Employee hub | `/employee` | `[~]` | Placeholder; masters on binder |
 
 ### 2.5 Transactions (vouchers)
 
@@ -250,23 +256,23 @@ All types share **header + main + lines + lifecycle**. DocumentSurface + Line En
 | voucher_type | Status | Notes |
 |--------------|--------|-------|
 | SalesInvoice | `[x]` | List filters, draft/post/edit, detail, lifecycle, print, post&book |
-| PurchaseInvoice | `[ ]` | |
-| Payment | `[ ]` | Settlement / allocation (CR-007) |
-| Receipt | `[ ]` | |
-| Contra | `[ ]` | Debit/credit lines |
-| Journal | `[ ]` | Debit/credit lines |
-| CreditNote | `[ ]` | |
-| DebitNote | `[ ]` | |
-| Quotation | `[ ]` | |
-| SalesOrder | `[ ]` | |
-| PurchaseOrder | `[ ]` | |
-| DeliveryNote | `[ ]` | Stock out |
-| ReceiptNote | `[ ]` | Stock in |
-| GodownTransfer | `[ ]` | Stock only |
-| MaterialIn | `[ ]` | |
-| Requirement | `[ ]` | |
-| StockRequest | `[ ]` | + fulfill |
-| Lifecycle (edit/approve/reject/cancel) | `[ ]` | Generic by `:type/:id` |
+| PurchaseInvoice | `[x]` | Shared item-qty engine · list/create/detail/cancel |
+| Payment | `[x]` | ledgerAmount engine · cash/bank + lines · list/create/detail/cancel |
+| Receipt | `[x]` | same engine · list/create/detail/cancel |
+| Contra | `[x]` | debitCredit engine · amount + DR/CR · list/create/detail/cancel |
+| Journal | `[x]` | debitCredit engine · debit/credit cols · list/create/detail/cancel |
+| CreditNote | `[x]` | item-qty · party `ledger_id` · list/create/detail/cancel |
+| DebitNote | `[x]` | item-qty · party `ledger_id` · list/create/detail/cancel |
+| Quotation | `[x]` | item-qty · list/create/detail/cancel |
+| SalesOrder | `[x]` | item-qty · list/create/detail/cancel |
+| PurchaseOrder | `[x]` | item-qty · list/create/detail/cancel |
+| DeliveryNote | `[x]` | item-qty · optional SO conversion · stock out |
+| ReceiptNote | `[x]` | item-qty · optional PO conversion · stock in |
+| GodownTransfer | `[x]` | stock engine · from/to godown · list/create/detail/cancel |
+| MaterialIn | `[x]` | stock engine · cr/dr qty lines |
+| Requirement | `[x]` | stock engine · item qty (no godown) |
+| StockRequest | `[x]` | stock engine · request qty; fulfill UI later |
+| Lifecycle (edit/approve/reject/cancel) | `[~]` | Cancel wired on item-qty kinds; full generic toolbar later |
 | TermsAndConditions | `[ ]` | Ancillary master |
 | TransportationDetails | `[ ]` | Ancillary master |
 | Transactions hub | `/transactions` | `[~]` | Placeholder |
@@ -309,7 +315,7 @@ From `backend-suggestions.md` / feature contract (still active):
 
 | ID | Gap | Frontend impact |
 |----|-----|-----------------|
-| BE-001 | No permission matrix read | Fail-open `PermissionService` |
+| BE-001 | Permission matrix read | **Done** — `GET /auth/permissions` + role admin GET/PUT |
 | BE-002–004 | No search/filter/sort | ClientQuery deferred; params forwarded no-op |
 | BE-005 | No idempotency keys | Client should send keys; don’t auto-retry mutates |
 | BE-008 | No lightweight lookup DTOs | FK uses full list + projection |
@@ -360,26 +366,48 @@ Goal: unlock **real trading workflow** (party + item + sales invoice) before mas
 
 Order after Sales Invoice:
 
-1. Quotation → SalesOrder → DeliveryNote (pre-sales chain)  
-2. PurchaseOrder → ReceiptNote → PurchaseInvoice  
-3. Payment / Receipt (+ settlement allocation honesty)  
-4. CreditNote / DebitNote  
-5. Journal / Contra  
-6. GodownTransfer / MaterialIn / StockRequest  
+1. ~~Quotation → SalesOrder → DeliveryNote (pre-sales chain)~~ **`[x]`**  
+2. ~~PurchaseOrder → ReceiptNote → PurchaseInvoice~~ **`[x]`**  
+3. ~~Payment / Receipt~~ **`[x]`** `ledgerAmount` engine (no billwise allocation UI yet — honest list/post only)  
+4. ~~CreditNote / DebitNote~~ **`[x]`** item-qty + `ledger_id` party field  
+5. ~~Journal / Contra~~ **`[x]`** `debitCredit` engine (client balance check)  
+6. ~~GodownTransfer / MaterialIn / Requirement / StockRequest~~ **`[x]`** stock engine  
+
+**Sprint D complete** for registered voucher types (SI remains gold-depth).  
+
+**Shared stacks:**  
+- Item-qty: `lib/core/vouchers/item_qty/*` + `transactions_item_qty` (8 kinds)  
+- Ledger-amount: `lib/core/vouchers/ledger_amount/*` + `transactions_ledger_amount` (Payment, Receipt)  
+- Debit-credit: `lib/core/vouchers/debit_credit/*` + `transactions_debit_credit` (Journal, Contra)  
+- Stock: `lib/core/vouchers/stock/*` + `transactions_stock` (GT, MI, RQ, SR)
 
 ### Sprint E — Organization hard cases & access
 
-| # | Work |
-|---|------|
-| E1 | CompanyProfile (binary or logo-out-of-band) |
-| E2 | ~~VoucherSeries~~ shipped (company id still plain int) |
-| E3 | UserCredentials + role **permissions** matrix UI |
-| E4 | Real permission read when BE-001 lands |
+| # | Work | Status |
+|---|------|--------|
+| E1 | CompanyProfile (logo out-of-band; list+edit) | `[x]` `organization_company` |
+| E2 | ~~VoucherSeries~~ shipped (company id still plain int) | `[x]` |
+| E3 | UserCredentials + role **permissions** matrix UI | `[x]` users + `/roles/:id/permissions` |
+| E4 | Real permission read when BE-001 lands | `[x]` already `MatrixPermissionService` |
+
+**Backend adds (Sprint E):** company update snake→Pascal map; `GET /organization/roles/:roleId/permissions`.
+
+**Organization completion (post-E):** ProjectMaster; CurrencyRate list (`GET /rates/history` + `GET /rates/:id`); ConfigSetting edit-by-key; AuditLog list; ErrorReporting list+create. ExtraValues still deferred.
 
 ### Sprint F — HR depth (can parallel after A)
 
-EmployeeDetails → documents expiries → leave → attendance → shifts → payslip.  
-Lower priority than trading path unless payroll is the first go-live vertical.
+| # | Work | Status |
+|---|------|--------|
+| F1 | **EmployeeDetails** (Core + Bank + Salary tabs; dept/designation/contact FKs) | `[x]` `employee_employee` |
+| F2 | **LeavePolicy** list/create (no PUT/DELETE/GET-by-id — list scan for view) | `[x]` |
+| F3 | **LeaveRequest** list/create + approve/reject/cancel detail | `[x]` |
+| F4 | **ShiftMaster** list/create | `[x]` |
+| F5 | Document expiries / nested documents UI | `[ ]` |
+| F6 | Attendance log + roster | `[ ]` |
+| F7 | Shift assignment + payslip | `[ ]` |
+| F8 | Leave allocation (per-employee list + create; BE-009) | `[x]` |
+
+EmployeeDetails → leave policy/request → shifts shipped. Documents, attendance, payslip remain.
 
 ### Sprint G — Desk, reports, polish
 
@@ -519,10 +547,10 @@ When you ship or defer work:
 
 | Domain | Done | Deferred/blocked | Not started | Partial hubs |
 |--------|------|------------------|-------------|--------------|
-| Organization | 5 | 6 | ~4 | 1 |
+| Organization | 13 | 1 (extras) | 0 | 1 |
 | Accounts | 2 | 0 | ~6 (extensions + billwise/cheque) | 1 |
 | Inventory | 9 | ~11 | ~2 stock views | 1 |
-| Employee | 2 | 0 | ~12 | 1 |
+| Employee | 7 | 0 | ~5 | 1 |
 | Vouchers | 0 | 0 | ~17 + lifecycle | 1 |
 
 ---

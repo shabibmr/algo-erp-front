@@ -19,23 +19,11 @@ class DesignationListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Designation, int, void>>.value(
       value: designationCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              designationManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Designation>(
-                manifest: designationManifest,
-                idOf: (d) => d.id,
-                onCreate: () => context.push('/employee/designation/new'),
-                onTap: (d) => context.push('/employee/designation/${d.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Designation>(
+          manifest: designationManifest,
+          idOf: (d) => d.id,
+          onCreate: () => context.push('/employee/designation/new'),
+          onTap: (d) => context.push('/employee/designation/${d.id}'),
         ),
       ),
     );

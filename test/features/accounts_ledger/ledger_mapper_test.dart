@@ -110,10 +110,7 @@ void main() {
       currencyCode: 'AED',
       openingBalance: Decimal.parse('10.00'),
       openingBalanceDate: DateTime(2025, 4, 1),
-      bank: const LedgerBankDetails(
-        accountNumber: 'ACC-9',
-        iban: 'AE11',
-      ),
+      bank: const LedgerBankDetails(accountNumber: 'ACC-9', iban: 'AE11'),
       credit: LedgerCreditSettings(
         creditLimit: Decimal.parse('1000'),
         creditPeriodDays: 15,

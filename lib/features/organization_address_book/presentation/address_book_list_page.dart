@@ -18,24 +18,12 @@ class AddressBookListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<AddressBook, int, void>>.value(
       value: addressBookCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              addressBookManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<AddressBook>(
-                manifest: addressBookManifest,
-                idOf: (contact) => contact.id,
-                onCreate: () => context.push('/organization/contacts/new'),
-                onTap: (contact) =>
-                    context.push('/organization/contacts/${contact.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<AddressBook>(
+          manifest: addressBookManifest,
+          idOf: (contact) => contact.id,
+          onCreate: () => context.push('/organization/contacts/new'),
+          onTap: (contact) =>
+              context.push('/organization/contacts/${contact.id}'),
         ),
       ),
     );

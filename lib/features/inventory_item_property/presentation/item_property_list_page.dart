@@ -18,24 +18,12 @@ class ItemPropertyListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<ItemProperty, int, void>>.value(
       value: itemPropertyCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              itemPropertyManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<ItemProperty>(
-                manifest: itemPropertyManifest,
-                idOf: (property) => property.id,
-                onCreate: () => context.push('/inventory/property/new'),
-                onTap: (property) =>
-                    context.push('/inventory/property/${property.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<ItemProperty>(
+          manifest: itemPropertyManifest,
+          idOf: (property) => property.id,
+          onCreate: () => context.push('/inventory/property/new'),
+          onTap: (property) =>
+              context.push('/inventory/property/${property.id}'),
         ),
       ),
     );

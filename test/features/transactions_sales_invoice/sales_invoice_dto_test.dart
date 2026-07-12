@@ -180,29 +180,23 @@ void main() {
   });
 
   test('sourceFromJson maps quotation/SO lines', () {
-    final src = SalesInvoiceDto.sourceFromJson(
-      {
-        'id': 12,
-        'Billing_Name': 'Acme',
-        'voucher_ledger_id': 3,
-        'godown_id': 1,
-        'voucher_headers': {
-          'voucher_prefix': 'SO',
-          'voucher_no': '0001',
+    final src = SalesInvoiceDto.sourceFromJson({
+      'id': 12,
+      'Billing_Name': 'Acme',
+      'voucher_ledger_id': 3,
+      'godown_id': 1,
+      'voucher_headers': {'voucher_prefix': 'SO', 'voucher_no': '0001'},
+      'details': [
+        {
+          'item_id': 9,
+          'voucher_sku_id': 2,
+          'Quantity': 3,
+          'Price': 20,
+          'Discount_Percent': 0,
+          'Tax_Rate': 5,
         },
-        'details': [
-          {
-            'item_id': 9,
-            'voucher_sku_id': 2,
-            'Quantity': 3,
-            'Price': 20,
-            'Discount_Percent': 0,
-            'Tax_Rate': 5,
-          },
-        ],
-      },
-      type: 'SalesOrder',
-    );
+      ],
+    }, type: 'SalesOrder');
     expect(src.id, 12);
     expect(src.type, 'SalesOrder');
     expect(src.displayNo, 'SO0001');
@@ -218,10 +212,7 @@ void main() {
       'VoucherStatus': 'Draft',
       'salesperson_employee_id': 8,
       'voucher_project_id': 4,
-      'voucher_headers': {
-        'voucher_prefix': 'SI',
-        'voucher_no': '1',
-      },
+      'voucher_headers': {'voucher_prefix': 'SI', 'voucher_no': '1'},
       'details': const [],
     });
     expect(detail.salespersonEmployeeId, 8);

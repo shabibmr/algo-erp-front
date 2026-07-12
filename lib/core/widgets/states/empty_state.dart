@@ -34,11 +34,7 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: Theme.of(context).colorScheme.outline,
-            ),
+            Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
             SizedBox(height: tokens.spacing.md),
             Text(
               message ?? context.l10n.empty,
@@ -47,10 +43,7 @@ class EmptyState extends StatelessWidget {
             ),
             if (onAction != null && actionLabel != null) ...[
               SizedBox(height: tokens.spacing.md),
-              FilledButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),

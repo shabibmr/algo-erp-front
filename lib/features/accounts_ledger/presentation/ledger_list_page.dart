@@ -18,23 +18,11 @@ class LedgerListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Ledger, int, void>>.value(
       value: ledgerCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              ledgerManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Ledger>(
-                manifest: ledgerManifest,
-                idOf: (l) => l.id,
-                onCreate: () => context.push('/accounts/ledgers/new'),
-                onTap: (l) => context.push('/accounts/ledgers/${l.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Ledger>(
+          manifest: ledgerManifest,
+          idOf: (l) => l.id,
+          onCreate: () => context.push('/accounts/ledgers/new'),
+          onTap: (l) => context.push('/accounts/ledgers/${l.id}'),
         ),
       ),
     );

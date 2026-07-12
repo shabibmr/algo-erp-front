@@ -26,9 +26,14 @@ class AppNumberField extends StatelessWidget {
     this.enabled = true,
     this.allowNegative = false,
     this.controller,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker.
+  final Widget? labelWidget;
   final int? initialValue;
   final String? helperText;
   final String? hintText;
@@ -48,8 +53,7 @@ class AppNumberField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      initialValue:
-          controller == null ? initialValue?.toString() : null,
+      initialValue: controller == null ? initialValue?.toString() : null,
       enabled: enabled,
       keyboardType: TextInputType.numberWithOptions(signed: allowNegative),
       inputFormatters: [
@@ -58,13 +62,12 @@ class AppNumberField extends StatelessWidget {
         else
           FilteringTextInputFormatter.digitsOnly,
       ],
-      validator:
-          validator == null ? null : (text) => validator!(_parse(text)),
-      onChanged:
-          onChanged == null ? null : (text) => onChanged!(_parse(text)),
+      validator: validator == null ? null : (text) => validator!(_parse(text)),
+      onChanged: onChanged == null ? null : (text) => onChanged!(_parse(text)),
       onSaved: onSaved == null ? null : (text) => onSaved!(_parse(text)),
       decoration: InputDecoration(
-        labelText: label,
+        label: labelWidget,
+        labelText: labelWidget == null ? label : null,
         hintText: hintText,
         helperText: helperText,
       ),

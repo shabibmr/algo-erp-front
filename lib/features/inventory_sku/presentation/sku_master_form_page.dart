@@ -38,32 +38,18 @@ class SkuMasterFormPage extends StatelessWidget {
             idOf: (s) => s.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(skuMasterManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${skuMasterManifest.label}'
-                      : skuMasterManifest.supportsUpdate
-                      ? 'Edit ${skuMasterManifest.label}'
-                      : 'View ${skuMasterManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<SkuMaster, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<SkuMaster, int>>(
                     create: (ctx) => DetailBloc<SkuMaster, int>(
                       repository: ctx.read<Repository<SkuMaster, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

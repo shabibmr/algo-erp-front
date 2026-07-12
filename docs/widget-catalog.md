@@ -28,6 +28,13 @@ AsyncStateView<List<Brand>>(
 Centered spinner + localized "Loading..." label. Used internally by
 `AsyncStateView`'s loading branch; usable standalone too.
 
+### `LedgerSkeleton` — `states/ledger_skeleton.dart`
+First-paint placeholder for a ledger sheet: ruled rows with the ink not yet dry,
+pulsing slowly (no shimmer sweep). Holds the sheet's shape while a list loads,
+where a centered spinner would leave the sheet an empty box and then jump when
+rows arrive. `MasterListSurface` uses this instead of `AsyncStateView`'s loading
+branch for exactly that reason. **Key props:** `rows`, `columns`.
+
 ### `EmptyState` — `states/empty_state.dart`
 Icon + localized "Nothing here yet" message + optional CTA button.
 **Key props:** `message`, `icon`, `actionLabel`, `onAction`.
@@ -93,13 +100,44 @@ AppDecimalField(
 )
 ```
 
+## Layout
+
+### `PageHeader` — `layout/page_header.dart`
+The band above a page's work surface: an eyebrow (where you are), a Fraunces
+title, a subtitle on the title's baseline (the record count), and the page's
+actions at the **far right**.
+
+The create action belongs here, not beside the search field. Creating a record
+is a page action; searching filters the sheet. Keeping them on separate bands
+is what stops a list screen from reading as a row of unrelated controls. Below
+tablet the actions drop to their own row.
+
+**Key props:** `title`, `eyebrow`, `subtitle`, `actions`.
+
+### `WorkSheet` — `layout/work_sheet.dart`
+A sheet of paper on the linen desk. With `fill: true` (the default) it stretches
+to the bottom of whatever bounded height it's given — so a list of eight rows
+still reads as a full page rather than eight rows floating on the canvas. With
+`fill: false` it hugs its content, which is how the form's index cards are
+built. Pass a `toolbar` (the ledger case) or a `title` (the index-card case) to
+get a header band above a full-strength rule.
+
+It is a `Material`, so ink from rows and buttons inside it paints on the paper
+rather than the canvas underneath.
+
+**Key props:** `child`, `toolbar` *or* `title`, `fill`, `padding`.
+
 ## Filters
 
 ### `FilterBar` — `filters/filter_bar.dart`
-Horizontal search field + `FilterChipData` chips + optional trailing
-actions. Pure UI — no debounce, no state; wire `onSearchChanged` to a
+The toolbar of a `WorkSheet`: a search field that grows with the sheet (capped
+at 420px), `FilterChipData` chips, and `trailing` utility actions pushed to the
+sheet's right edge. Pure UI — no debounce, no state; wire `onSearchChanged` to a
 `CrudSearchChanged` event (debounced in the bloc via
 `debounceRestartable`) and `onFilterToggled` to a `CrudFilterChanged` event.
+
+These controls act on the sheet's *contents*. Page-level actions go on
+`PageHeader`. Don't put a "New X" button in `trailing`.
 
 **Key props:** `searchHint`, `onSearchChanged`, `filters`,
 `onFilterToggled`, `trailing`.
@@ -128,14 +166,41 @@ FkLookupField<Brand>(
 ## Data display
 
 ### `AdaptiveEntityList<T>` — `data_display/adaptive_entity_list.dart`
-Renders `items` as a `DataTable` on tablet/desktop
-(`context.isTablet || context.isDesktop`) and as a column of `Card`s on
-mobile. Column defs (`EntityColumn<T>`) drive the table; `cardBuilder`
-drives the mobile rendering. Same widget, same data, two adaptive shapes.
+Renders `items` as a `LedgerTable` from tablet up and as index cards on mobile.
+**Both renderings are driven by the same `columns`**, so a screen declares its
+data once; `cardBuilder` is only for overriding the default card (the primary
+column as the card's heading, the rest as quiet label/value lines).
 
 **Key props:** `items`, `columns` (list of `EntityColumn<T>` — `label`,
-`cellBuilder`, `numeric`), `cardBuilder`, `onTap`, `keyOf` (stable key
-extractor, e.g. `(e) => e.id`).
+`cellBuilder`, `flex`, `minWidth`, `align`, `mono`, `primary`), `onTap`,
+`keyOf` (stable key extractor, e.g. `(e) => e.id`), `footer` (the load-more
+indicator), `cardBuilder` (optional override).
+
+### `LedgerTable<T>` — `data_display/ledger_table.dart`
+The ledger sheet's rows, and the app's signature surface. Columns flex to fill
+the full width they're given — every column gets its `minWidth` first, and the
+surplus is shared out by `flex` — so the table *is* the sheet rather than a
+narrow island inside it. It falls back to horizontal scrolling only when the
+minimum widths genuinely don't fit.
+
+Rows are separated by a faint rule, and **every fifth rule is drawn at full
+strength** — the way a paper ledger pad rules in fives so the eye can count down
+a column without losing its place. Hovering or focusing a row lights a lagoon
+edge in its left gutter. The rhythm and both rule colors come from
+`AppTokens.ledger` (`LedgerTokens`); nothing else should hardcode a row divider.
+
+The header row is a sibling of the scrolling list, not an item in it, so it
+stays put while rows scroll under it. Given an unbounded height (a gallery, a
+page that scrolls as a whole) the table hugs its rows instead of throwing.
+
+**Key props:** `items`, `columns` (`LedgerColumn<T>`), `onTap`, `keyOf`,
+`footer`.
+
+Manifest-driven screens never build these by hand: `MasterListSurface` derives
+each column from the entity's `FieldSpec`, and **`align`/`mono` are derived from
+`FieldType`** — `int` and `decimal` render right-aligned in tabular mono figures
+(`AppTokens.figures`, IBM Plex Mono) so digits stack on the decimal. Override on
+the `FieldSpec` only when the derivation is wrong.
 
 ### `LineItemGrid<R>` — `data_display/line_item_grid.dart`
 Editable rows-of-fields grid for voucher line items, with add/remove-row

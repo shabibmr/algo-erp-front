@@ -31,30 +31,15 @@ class VoucherSeriesFormPage extends StatelessWidget {
             onDeleted: () => context.go(voucherSeriesManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${voucherSeriesManifest.label}'
-                      : voucherSeriesManifest.supportsUpdate
-                      ? 'Edit ${voucherSeriesManifest.label}'
-                      : 'View ${voucherSeriesManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<VoucherSeries, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<VoucherSeries, int>>(
                     create: (ctx) => DetailBloc<VoucherSeries, int>(
                       repository: ctx.read<Repository<VoucherSeries, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

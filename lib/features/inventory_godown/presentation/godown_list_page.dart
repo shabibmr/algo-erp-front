@@ -18,23 +18,11 @@ class GodownListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Godown, int, void>>.value(
       value: godownCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              godownManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Godown>(
-                manifest: godownManifest,
-                idOf: (g) => g.id,
-                onCreate: () => context.push('/inventory/godown/new'),
-                onTap: (g) => context.push('/inventory/godown/${g.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Godown>(
+          manifest: godownManifest,
+          idOf: (g) => g.id,
+          onCreate: () => context.push('/inventory/godown/new'),
+          onTap: (g) => context.push('/inventory/godown/${g.id}'),
         ),
       ),
     );

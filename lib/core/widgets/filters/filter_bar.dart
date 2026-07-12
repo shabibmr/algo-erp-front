@@ -20,13 +20,18 @@ class FilterChipData {
   final bool selected;
 }
 
-/// A horizontal search + filter-chip row for list screens. Carries no data
+/// A search + filter-chip row for the toolbar of a work sheet. Carries no data
 /// logic of its own — it only reports a debounced-by-caller search string
 /// and filter-chip toggles, matching `PageQuery.search`/`filters`.
 ///
+/// The search field grows with the sheet (up to [_searchMaxWidth]) instead of
+/// sitting at a fixed width, and [trailing] is pushed to the far right. These
+/// controls act on the sheet's contents; page-level actions belong on
+/// `PageHeader`, not here.
+///
 /// ```dart
 /// FilterBar(
-///   searchHint: 'Search brands...',
+///   searchHint: 'Search brands',
 ///   onSearchChanged: (q) => context.read<BrandCrudBloc>()
 ///       .add(CrudSearchChanged(q)),
 ///   filters: const [FilterChipData(key: 'active', label: 'Active')],
@@ -50,38 +55,79 @@ class FilterBar extends StatelessWidget {
   final List<FilterChipData> filters;
   final ValueChanged<String>? onFilterToggled;
 
-  /// Extra actions rendered at the end of the row (e.g. a "New" button).
+  /// Utility actions for this sheet (e.g. export), rendered at the far right.
   final List<Widget>? trailing;
+
+  /// Past this the field is just a long empty box — a search term is short.
+  static const double _searchMaxWidth = 420;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Wrap(
-      spacing: tokens.spacing.sm,
-      runSpacing: tokens.spacing.sm,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        SizedBox(
-          width: 280,
-          child: TextField(
-            controller: searchController,
-            onChanged: onSearchChanged,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              hintText: searchHint,
-              prefixIcon: const Icon(Icons.search),
-              isDense: true,
-            ),
-          ),
-        ),
-        for (final filter in filters)
-          FilterChip(
+
+    final search = TextField(
+      controller: searchController,
+      onChanged: onSearchChanged,
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        hintText: searchHint,
+        prefixIcon: const Icon(Icons.search),
+        isDense: true,
+      ),
+    );
+
+    final chips = [
+      for (final filter in filters)
+        Padding(
+          padding: EdgeInsetsDirectional.only(start: tokens.spacing.sm),
+          child: FilterChip(
             label: Text(filter.label),
             selected: filter.selected,
             onSelected: onFilterToggled == null
                 ? null
                 : (_) => onFilterToggled!(filter.key),
           ),
+        ),
+    ];
+
+    // On mobile the field takes the full width and everything else drops below
+    // it — three controls on one line at that width is a scrum.
+    if (context.isMobile) {
+      final hasBelow = chips.isNotEmpty || (trailing?.isNotEmpty ?? false);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          search,
+          if (hasBelow) ...[
+            SizedBox(height: tokens.spacing.sm),
+            Row(
+              children: [
+                ...chips,
+                const Spacer(),
+                if (trailing != null) ...trailing!,
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        // Expanded (not Flexible + Spacer): the field caps itself at
+        // _searchMaxWidth and the slack stays inside this slot, which is what
+        // pushes the trailing actions to the sheet's right edge.
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _searchMaxWidth),
+              child: search,
+            ),
+          ),
+        ),
+        ...chips,
         if (trailing != null) ...trailing!,
       ],
     );

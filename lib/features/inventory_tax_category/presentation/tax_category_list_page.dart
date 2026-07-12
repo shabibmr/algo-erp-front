@@ -18,23 +18,11 @@ class TaxCategoryListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<TaxCategory, int, void>>.value(
       value: taxCategoryCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              taxCategoryManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<TaxCategory>(
-                manifest: taxCategoryManifest,
-                idOf: (t) => t.id,
-                onCreate: () => context.push('/inventory/tax-category/new'),
-                onTap: (t) => context.push('/inventory/tax-category/${t.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<TaxCategory>(
+          manifest: taxCategoryManifest,
+          idOf: (t) => t.id,
+          onCreate: () => context.push('/inventory/tax-category/new'),
+          onTap: (t) => context.push('/inventory/tax-category/${t.id}'),
         ),
       ),
     );

@@ -18,24 +18,12 @@ class CurrencyListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Currency, int, void>>.value(
       value: currencyCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              currencyManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Currency>(
-                manifest: currencyManifest,
-                idOf: (currency) => currency.id,
-                onCreate: () => context.push('/organization/currencies/new'),
-                onTap: (currency) =>
-                    context.push('/organization/currencies/${currency.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Currency>(
+          manifest: currencyManifest,
+          idOf: (currency) => currency.id,
+          onCreate: () => context.push('/organization/currencies/new'),
+          onTap: (currency) =>
+              context.push('/organization/currencies/${currency.id}'),
         ),
       ),
     );

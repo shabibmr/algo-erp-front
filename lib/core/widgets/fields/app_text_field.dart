@@ -33,9 +33,14 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.autovalidateMode,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker.
+  final Widget? labelWidget;
   final TextEditingController? controller;
   final String? initialValue;
   final String? hintText;
@@ -67,7 +72,8 @@ class AppTextField extends StatelessWidget {
       onSaved: onSaved,
       autovalidateMode: autovalidateMode,
       decoration: InputDecoration(
-        labelText: label,
+        label: labelWidget,
+        labelText: labelWidget == null ? label : null,
         hintText: hintText,
         helperText: helperText,
         prefixIcon: prefixIcon,

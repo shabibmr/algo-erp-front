@@ -69,9 +69,7 @@ void main() {
     expect(result, isFalse);
   });
 
-  testWidgets('resolves false when dismissed without a choice', (
-    tester,
-  ) async {
+  testWidgets('resolves false when dismissed without a choice', (tester) async {
     bool? result;
     await tester.pumpWidget(
       _wrap((context) async {

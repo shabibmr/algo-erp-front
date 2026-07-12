@@ -27,10 +27,7 @@ void main() {
   });
 
   test('AccountGroupDto.fromJson tolerates optional code', () {
-    final dto = AccountGroupDto.fromJson(const {
-      'id': 2,
-      'Group_Name': 'Misc',
-    });
+    final dto = AccountGroupDto.fromJson(const {'id': 2, 'Group_Name': 'Misc'});
     expect(dto.groupCode, isNull);
     expect(dto.parentGroupId, isNull);
     expect(dto.isSystemDefined, isFalse);
@@ -63,11 +60,7 @@ void main() {
   });
 
   test('AccountGroupMapper.toDto.toJson sends parent_group_id', () {
-    const group = AccountGroup(
-      id: 1,
-      name: 'Misc',
-      parentGroupId: 3,
-    );
+    const group = AccountGroup(id: 1, name: 'Misc', parentGroupId: 3);
     expect(mapper.toDto(group).toJson(), {
       'Group_Name': 'Misc',
       'parent_group_id': 3,

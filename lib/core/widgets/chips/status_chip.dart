@@ -38,9 +38,9 @@ class StatusChip extends StatelessWidget {
     return Chip(
       label: Text(label),
       labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
+        color: color,
+        fontWeight: FontWeight.w600,
+      ),
       backgroundColor: color.withValues(alpha: 0.12),
       side: BorderSide(color: color.withValues(alpha: 0.4)),
       shape: RoundedRectangleBorder(

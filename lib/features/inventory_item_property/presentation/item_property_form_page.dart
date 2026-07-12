@@ -38,32 +38,18 @@ class ItemPropertyFormPage extends StatelessWidget {
             idOf: (property) => property.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(itemPropertyManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${itemPropertyManifest.label}'
-                      : itemPropertyManifest.supportsUpdate
-                      ? 'Edit ${itemPropertyManifest.label}'
-                      : 'View ${itemPropertyManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<ItemProperty, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<ItemProperty, int>>(
                     create: (ctx) => DetailBloc<ItemProperty, int>(
                       repository: ctx.read<Repository<ItemProperty, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

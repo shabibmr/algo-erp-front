@@ -18,23 +18,11 @@ class InventoryItemListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<InventoryItem, int, void>>.value(
       value: inventoryItemCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              inventoryItemManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<InventoryItem>(
-                manifest: inventoryItemManifest,
-                idOf: (i) => i.id,
-                onCreate: () => context.push('/inventory/item/new'),
-                onTap: (i) => context.push('/inventory/item/${i.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<InventoryItem>(
+          manifest: inventoryItemManifest,
+          idOf: (i) => i.id,
+          onCreate: () => context.push('/inventory/item/new'),
+          onTap: (i) => context.push('/inventory/item/${i.id}'),
         ),
       ),
     );

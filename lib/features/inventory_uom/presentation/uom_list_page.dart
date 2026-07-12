@@ -18,23 +18,11 @@ class UomListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Uom, int, void>>.value(
       value: uomCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              uomManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Uom>(
-                manifest: uomManifest,
-                idOf: (uom) => uom.id,
-                onCreate: () => context.push('/inventory/uom/new'),
-                onTap: (uom) => context.push('/inventory/uom/${uom.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Uom>(
+          manifest: uomManifest,
+          idOf: (uom) => uom.id,
+          onCreate: () => context.push('/inventory/uom/new'),
+          onTap: (uom) => context.push('/inventory/uom/${uom.id}'),
         ),
       ),
     );

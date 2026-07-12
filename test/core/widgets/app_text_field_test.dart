@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _wrap(Widget child) {
-  return MaterialApp(theme: AppTheme.light, home: Scaffold(body: child));
+  return MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(body: child),
+  );
 }
 
 void main() {
   testWidgets('shows the label and reports changes', (tester) async {
     String? changed;
     await tester.pumpWidget(
-      _wrap(
-        AppTextField(label: 'Brand name', onChanged: (v) => changed = v),
-      ),
+      _wrap(AppTextField(label: 'Brand name', onChanged: (v) => changed = v)),
     );
 
     expect(find.text('Brand name'), findsOneWidget);
@@ -22,9 +23,7 @@ void main() {
     expect(changed, 'Acme');
   });
 
-  testWidgets('runs the validator and surfaces its error text', (
-    tester,
-  ) async {
+  testWidgets('runs the validator and surfaces its error text', (tester) async {
     final formKey = GlobalKey<FormState>();
     await tester.pumpWidget(
       _wrap(
@@ -32,8 +31,7 @@ void main() {
           key: formKey,
           child: AppTextField(
             label: 'Brand name',
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Required' : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
           ),
         ),
       ),

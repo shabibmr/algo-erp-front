@@ -18,23 +18,11 @@ class UserRoleListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<UserRole, int, void>>.value(
       value: userRoleCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              userRoleManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<UserRole>(
-                manifest: userRoleManifest,
-                idOf: (role) => role.id,
-                onCreate: () => context.push('/organization/roles/new'),
-                onTap: (role) => context.push('/organization/roles/${role.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<UserRole>(
+          manifest: userRoleManifest,
+          idOf: (role) => role.id,
+          onCreate: () => context.push('/organization/roles/new'),
+          onTap: (role) => context.push('/organization/roles/${role.id}'),
         ),
       ),
     );

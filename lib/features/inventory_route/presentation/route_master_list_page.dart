@@ -18,23 +18,11 @@ class RouteMasterListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<RouteMaster, int, void>>.value(
       value: routeMasterCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              routeMasterManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<RouteMaster>(
-                manifest: routeMasterManifest,
-                idOf: (r) => r.id,
-                onCreate: () => context.push('/inventory/route/new'),
-                onTap: (r) => context.push('/inventory/route/${r.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<RouteMaster>(
+          manifest: routeMasterManifest,
+          idOf: (r) => r.id,
+          onCreate: () => context.push('/inventory/route/new'),
+          onTap: (r) => context.push('/inventory/route/${r.id}'),
         ),
       ),
     );

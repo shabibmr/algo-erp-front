@@ -38,33 +38,33 @@ class UserRoleFormPage extends StatelessWidget {
             idOf: (role) => role.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(userRoleManifest.resourcePath),
           );
-          return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${userRoleManifest.label}'
-                      : userRoleManifest.supportsUpdate
-                      ? 'Edit ${userRoleManifest.label}'
-                      : 'View ${userRoleManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<UserRole, int>>(
-                    create: (ctx) => DetailBloc<UserRole, int>(
-                      repository: ctx.read<Repository<UserRole, int>>(),
-                      id: entityId!,
-                    )..add(const DetailLoadRequested()),
-                    child: surface,
-                  )
-                else
-                  surface,
-              ],
-            ),
-          );
+          final body = mode == FormMode.edit
+              ? BlocProvider<DetailBloc<UserRole, int>>(
+                  create: (ctx) => DetailBloc<UserRole, int>(
+                    repository: ctx.read<Repository<UserRole, int>>(),
+                    id: entityId!,
+                  )..add(const DetailLoadRequested()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: surface),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(
+                            '/organization/roles/${entityId!}/permissions',
+                          ),
+                          icon: const Icon(Icons.security),
+                          label: const Text('Edit permission matrix'),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : surface;
+          return AdaptiveLayout(child: body);
         },
       ),
     );

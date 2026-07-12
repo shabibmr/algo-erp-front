@@ -38,32 +38,18 @@ class UomConversionFormPage extends StatelessWidget {
             idOf: (u) => u.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(uomConversionManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${uomConversionManifest.label}'
-                      : uomConversionManifest.supportsUpdate
-                      ? 'Edit ${uomConversionManifest.label}'
-                      : 'View ${uomConversionManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<UomConversion, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<UomConversion, int>>(
                     create: (ctx) => DetailBloc<UomConversion, int>(
                       repository: ctx.read<Repository<UomConversion, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

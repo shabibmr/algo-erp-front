@@ -27,9 +27,7 @@ Failure mapDioException(DioException e) {
     DioExceptionType.connectionError => Failure.network(
       e.message ?? 'Network error',
     ),
-    DioExceptionType.badCertificate => const Failure.network(
-      'Bad certificate',
-    ),
+    DioExceptionType.badCertificate => const Failure.network('Bad certificate'),
     DioExceptionType.cancel => const Failure.unknown('Request cancelled'),
     DioExceptionType.badResponse => _mapBadResponse(e),
     DioExceptionType.unknown => Failure.network(
@@ -61,18 +59,20 @@ Failure _mapBadResponse(DioException e) {
 
 List<ValidationFieldError> _mapValidationDetails(List<dynamic>? details) {
   if (details == null) return const [];
-  return details.map((d) {
-    if (d is! Map<String, dynamic>) {
-      return const ValidationFieldError(
-        field: '',
-        message: 'Invalid value',
-      );
-    }
-    final path = d['path'];
-    final field = path is List ? path.join('.') : (path?.toString() ?? '');
-    return ValidationFieldError(
-      field: field,
-      message: d['message'] as String? ?? 'Invalid value',
-    );
-  }).toList(growable: false);
+  return details
+      .map((d) {
+        if (d is! Map<String, dynamic>) {
+          return const ValidationFieldError(
+            field: '',
+            message: 'Invalid value',
+          );
+        }
+        final path = d['path'];
+        final field = path is List ? path.join('.') : (path?.toString() ?? '');
+        return ValidationFieldError(
+          field: field,
+          message: d['message'] as String? ?? 'Invalid value',
+        );
+      })
+      .toList(growable: false);
 }

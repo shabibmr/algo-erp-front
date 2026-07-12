@@ -42,32 +42,18 @@ class DesignationFormPage extends StatelessWidget {
             idOf: (d) => d.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(designationManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${designationManifest.label}'
-                      : designationManifest.supportsUpdate
-                      ? 'Edit ${designationManifest.label}'
-                      : 'View ${designationManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Designation, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Designation, int>>(
                     create: (ctx) => DetailBloc<Designation, int>(
                       repository: ctx.read<Repository<Designation, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

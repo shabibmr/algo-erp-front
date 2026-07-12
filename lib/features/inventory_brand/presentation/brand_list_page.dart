@@ -21,23 +21,11 @@ class BrandListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Brand, int, void>>.value(
       value: brandCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              brandManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Brand>(
-                manifest: brandManifest,
-                idOf: (brand) => brand.id,
-                onCreate: () => context.push('/inventory/brand/new'),
-                onTap: (brand) => context.push('/inventory/brand/${brand.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Brand>(
+          manifest: brandManifest,
+          idOf: (brand) => brand.id,
+          onCreate: () => context.push('/inventory/brand/new'),
+          onTap: (brand) => context.push('/inventory/brand/${brand.id}'),
         ),
       ),
     );

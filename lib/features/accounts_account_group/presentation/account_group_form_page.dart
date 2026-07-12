@@ -38,32 +38,18 @@ class AccountGroupFormPage extends StatelessWidget {
             idOf: (g) => g.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(accountGroupManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${accountGroupManifest.label}'
-                      : accountGroupManifest.supportsUpdate
-                      ? 'Edit ${accountGroupManifest.label}'
-                      : 'View ${accountGroupManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<AccountGroup, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<AccountGroup, int>>(
                     create: (ctx) => DetailBloc<AccountGroup, int>(
                       repository: ctx.read<Repository<AccountGroup, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

@@ -6,11 +6,14 @@ import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/organization_branch/branch_di.dart';
 import 'package:algo_erp_front/features/organization_branch/domain/branch.dart';
+import 'package:algo_erp_front/features/organization_company/company_profile_di.dart';
+import 'package:algo_erp_front/features/organization_company/domain/company_profile.dart';
 import 'package:algo_erp_front/features/organization_financial_year/domain/financial_year.dart';
 import 'package:algo_erp_front/features/organization_financial_year/financial_year_di.dart';
 import 'package:algo_erp_front/features/organization_voucher_series/domain/voucher_series.dart';
 import 'package:algo_erp_front/features/organization_voucher_series/voucher_series_di.dart';
 
+final _companyRepository = createCompanyProfileRepository(getIt<DioClient>());
 final _branchRepository = createBranchRepository(getIt<DioClient>());
 final _financialYearRepository = createFinancialYearRepository(
   getIt<DioClient>(),
@@ -22,6 +25,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
   label: 'Voucher series',
   rbacModule: 'VoucherSeries',
   resourcePath: voucherSeriesResourcePath,
+  formLayout: FormLayout.columns,
   listColumns: [
     FieldSpec<VoucherSeries>(
       key: 'voucherType',
@@ -68,6 +72,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       hintText: 'SalesInvoice',
       getValue: (s) => s.voucherType,
       setValue: (s, v) => s.copyWith(voucherType: v as String?),
+      section: 'Series Info',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'prefix',
@@ -78,6 +83,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       hintText: 'SI',
       getValue: (s) => s.prefix,
       setValue: (s, v) => s.copyWith(prefix: v as String?),
+      section: 'Series Info',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'displayName',
@@ -87,16 +93,36 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       required: true,
       getValue: (s) => s.displayName,
       setValue: (s, v) => s.copyWith(displayName: v as String?),
+      section: 'Series Info',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'companyId',
       wireKey: 'company_id',
-      label: 'Company id',
-      type: FieldType.int,
+      label: 'Company',
+      type: FieldType.fk,
       required: true,
-      helperText: 'CompanyProfile picker deferred — enter company id',
-      getValue: (s) => s.companyId,
-      setValue: (s, v) => s.copyWith(companyId: v as int? ?? 0),
+      getValue: (s) => s.companyId == 0 ? null : s.companyId,
+      setValue: (s, v) {
+        final company = v as CompanyProfile?;
+        return s.copyWith(companyId: company?.id ?? 0);
+      },
+      fkSearch: (query) async {
+        final result = await _companyRepository.list(
+          PageQuery(search: query, limit: 100),
+        );
+        return result.fold((_) => const [], (page) => page.items);
+      },
+      fkDisplayOf: (item) {
+        final c = item as CompanyProfile;
+        final name = c.name?.trim();
+        if (name != null && name.isNotEmpty) return name;
+        return 'Company #${c.id}';
+      },
+      fkResolveById: (id) async {
+        final result = await _companyRepository.getById(id as int);
+        return result.fold((_) => null, (c) => c);
+      },
+      section: 'Scope',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'branchId',
@@ -118,6 +144,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
         final result = await _branchRepository.getById(id as int);
         return result.fold((_) => null, (b) => b);
       },
+      section: 'Scope',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'financialYearId',
@@ -142,6 +169,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
         final result = await _financialYearRepository.getById(id as int);
         return result.fold((_) => null, (fy) => fy);
       },
+      section: 'Scope',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'numberLength',
@@ -150,6 +178,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       type: FieldType.int,
       getValue: (s) => s.numberLength,
       setValue: (s, v) => s.copyWith(numberLength: v as int? ?? 5),
+      section: 'Numbering',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'prefixSeparator',
@@ -158,6 +187,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       type: FieldType.text,
       getValue: (s) => s.prefixSeparator,
       setValue: (s, v) => s.copyWith(prefixSeparator: v as String? ?? '/'),
+      section: 'Numbering',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'startingNumber',
@@ -166,6 +196,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       type: FieldType.int,
       getValue: (s) => s.startingNumber,
       setValue: (s, v) => s.copyWith(startingNumber: v as int? ?? 1),
+      section: 'Numbering',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'isDefault',
@@ -174,6 +205,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
       type: FieldType.bool,
       getValue: (s) => s.isDefault,
       setValue: (s, v) => s.copyWith(isDefault: v as bool?),
+      section: 'Settings',
     ),
     FormFieldSpec<VoucherSeries>(
       key: 'requireApproval',
@@ -185,6 +217,7 @@ final voucherSeriesManifest = EntityManifest<VoucherSeries>(
           'Create-as-Posted still books immediately.',
       getValue: (s) => s.requireApproval,
       setValue: (s, v) => s.copyWith(requireApproval: v as bool?),
+      section: 'Settings',
     ),
   ],
   emptyEntity: () => const VoucherSeries(

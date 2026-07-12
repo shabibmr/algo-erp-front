@@ -38,32 +38,18 @@ class TaxCategoryFormPage extends StatelessWidget {
             idOf: (t) => t.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(taxCategoryManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${taxCategoryManifest.label}'
-                      : taxCategoryManifest.supportsUpdate
-                      ? 'Edit ${taxCategoryManifest.label}'
-                      : 'View ${taxCategoryManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<TaxCategory, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<TaxCategory, int>>(
                     create: (ctx) => DetailBloc<TaxCategory, int>(
                       repository: ctx.read<Repository<TaxCategory, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

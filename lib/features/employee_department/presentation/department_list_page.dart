@@ -19,23 +19,11 @@ class DepartmentListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Department, int, void>>.value(
       value: departmentCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              departmentManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Department>(
-                manifest: departmentManifest,
-                idOf: (d) => d.id,
-                onCreate: () => context.push('/employee/department/new'),
-                onTap: (d) => context.push('/employee/department/${d.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Department>(
+          manifest: departmentManifest,
+          idOf: (d) => d.id,
+          onCreate: () => context.push('/employee/department/new'),
+          onTap: (d) => context.push('/employee/department/${d.id}'),
         ),
       ),
     );

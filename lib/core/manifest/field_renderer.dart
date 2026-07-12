@@ -5,6 +5,7 @@ import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_switch_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/fields/field_label.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
@@ -24,6 +25,7 @@ abstract final class FieldRenderer {
     required ValueChanged<Object?> onChanged,
     required bool enabled,
     String? errorText,
+
     /// Optional override for [FieldType.fk]/[FieldType.selfFk] loaders
     /// (used by the form surface to exclude the draft row on selfFk).
     Future<List<Object>> Function(String query)? fkLoaderOverride,
@@ -36,10 +38,14 @@ abstract final class FieldRenderer {
       return field.validator?.call(v);
     }
 
+    // Required fields carry a brass asterisk — an instruction, not an error.
+    final label = FieldLabel(text: field.label, isRequired: field.required);
+
     switch (field.type) {
       case FieldType.text:
         return AppTextField(
           label: field.label,
+          labelWidget: label,
           initialValue: value as String?,
           helperText: field.helperText,
           hintText: field.hintText,
@@ -50,6 +56,7 @@ abstract final class FieldRenderer {
       case FieldType.int:
         return AppNumberField(
           label: field.label,
+          labelWidget: label,
           initialValue: value as int?,
           helperText: field.helperText,
           hintText: field.hintText,
@@ -60,6 +67,7 @@ abstract final class FieldRenderer {
       case FieldType.decimal:
         return AppDecimalField(
           label: field.label,
+          labelWidget: label,
           initialValue: value as Decimal?,
           helperText: field.helperText,
           hintText: field.hintText,
@@ -70,6 +78,7 @@ abstract final class FieldRenderer {
       case FieldType.bool:
         return AppSwitchField(
           label: field.label,
+          labelWidget: label,
           value: (value as bool?) ?? false,
           helperText: field.helperText,
           enabled: isEnabled,
@@ -78,6 +87,7 @@ abstract final class FieldRenderer {
       case FieldType.dateTime:
         return AppDateField(
           label: field.label,
+          labelWidget: label,
           value: value as DateTime?,
           helperText: field.helperText,
           enabled: isEnabled,
@@ -88,6 +98,7 @@ abstract final class FieldRenderer {
       case FieldType.selfFk:
         return FkLookupField<Object>(
           label: field.label,
+          labelWidget: label,
           value: value,
           displayOf: field.fkDisplayOf!,
           loader: fkLoaderOverride ?? field.fkSearch!,

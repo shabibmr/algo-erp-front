@@ -44,8 +44,12 @@ void main() {
   });
 
   test('round-trip toEntity(toDto(x)) is identity', () {
-    const category =
-        Category(id: 5, name: 'Groceries', code: 'GRO', description: 'Food');
+    const category = Category(
+      id: 5,
+      name: 'Groceries',
+      code: 'GRO',
+      description: 'Food',
+    );
     expect(mapper.toEntity(mapper.toDto(category)), category);
   });
 }

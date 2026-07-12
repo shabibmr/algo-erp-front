@@ -59,9 +59,9 @@ void main() {
       'stored token but /me fails → [loading, unauthenticated]',
       setUp: () {
         when(() => storage.accessToken).thenAnswer((_) async => 'stale');
-        when(() => repo.me()).thenAnswer(
-          (_) async => const Left(Failure.unauthorized('expired')),
-        );
+        when(
+          () => repo.me(),
+        ).thenAnswer((_) async => const Left(Failure.unauthorized('expired')));
       },
       build: build,
       act: (bloc) => bloc.add(const AuthStarted()),
@@ -79,9 +79,8 @@ void main() {
         ),
       ).thenAnswer((_) async => const Right(user)),
       build: build,
-      act: (bloc) => bloc.add(
-        const AuthLoginRequested(username: 'admin', password: 'pw'),
-      ),
+      act: (bloc) =>
+          bloc.add(const AuthLoginRequested(username: 'admin', password: 'pw')),
       expect: () => [
         isA<AuthLoading>(),
         isA<AuthAuthenticated>().having((s) => s.user, 'user', user),
@@ -90,14 +89,16 @@ void main() {
 
     blocTest<AuthBloc, AuthState>(
       'failure → [loading, failure] with the failure preserved',
-      setUp: () => when(
-        () => repo.login(
-          username: any(named: 'username'),
-          password: any(named: 'password'),
-        ),
-      ).thenAnswer(
-        (_) async => const Left(Failure.unauthorized('Invalid credentials')),
-      ),
+      setUp: () =>
+          when(
+            () => repo.login(
+              username: any(named: 'username'),
+              password: any(named: 'password'),
+            ),
+          ).thenAnswer(
+            (_) async =>
+                const Left(Failure.unauthorized('Invalid credentials')),
+          ),
       build: build,
       act: (bloc) => bloc.add(
         const AuthLoginRequested(username: 'admin', password: 'bad'),
@@ -114,29 +115,30 @@ void main() {
 
     blocTest<AuthBloc, AuthState>(
       'validation failure → field errors are stripped of the body prefix',
-      setUp: () => when(
-        () => repo.login(
-          username: any(named: 'username'),
-          password: any(named: 'password'),
-        ),
-      ).thenAnswer(
-        (_) async => const Left(
-          Failure.validation('Invalid', [
-            ValidationFieldError(field: 'body.username', message: 'Required'),
-          ]),
-        ),
-      ),
+      setUp: () =>
+          when(
+            () => repo.login(
+              username: any(named: 'username'),
+              password: any(named: 'password'),
+            ),
+          ).thenAnswer(
+            (_) async => const Left(
+              Failure.validation('Invalid', [
+                ValidationFieldError(
+                  field: 'body.username',
+                  message: 'Required',
+                ),
+              ]),
+            ),
+          ),
       build: build,
-      act: (bloc) => bloc.add(
-        const AuthLoginRequested(username: '', password: 'pw'),
-      ),
+      act: (bloc) =>
+          bloc.add(const AuthLoginRequested(username: '', password: 'pw')),
       expect: () => [
         isA<AuthLoading>(),
-        isA<AuthFailure>().having(
-          (s) => s.fieldErrors,
-          'fieldErrors',
-          {'username': 'Required'},
-        ),
+        isA<AuthFailure>().having((s) => s.fieldErrors, 'fieldErrors', {
+          'username': 'Required',
+        }),
       ],
     );
   });

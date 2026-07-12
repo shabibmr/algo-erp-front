@@ -59,8 +59,7 @@ void main() {
     );
   });
 
-  test(
-      'BranchMapper.toDto round-trips back to the wire shape '
+  test('BranchMapper.toDto round-trips back to the wire shape '
       '(omitting isActive)', () {
     const branch = Branch(
       id: 1,

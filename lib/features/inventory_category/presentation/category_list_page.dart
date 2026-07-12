@@ -18,23 +18,11 @@ class CategoryListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<Category, int, void>>.value(
       value: categoryCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              categoryManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<Category>(
-                manifest: categoryManifest,
-                idOf: (c) => c.id,
-                onCreate: () => context.push('/inventory/category/new'),
-                onTap: (c) => context.push('/inventory/category/${c.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<Category>(
+          manifest: categoryManifest,
+          idOf: (c) => c.id,
+          onCreate: () => context.push('/inventory/category/new'),
+          onTap: (c) => context.push('/inventory/category/${c.id}'),
         ),
       ),
     );

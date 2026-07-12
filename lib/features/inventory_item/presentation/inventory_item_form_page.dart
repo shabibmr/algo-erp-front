@@ -38,32 +38,18 @@ class InventoryItemFormPage extends StatelessWidget {
             idOf: (i) => i.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(inventoryItemManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${inventoryItemManifest.label}'
-                      : inventoryItemManifest.supportsUpdate
-                      ? 'Edit ${inventoryItemManifest.label}'
-                      : 'View ${inventoryItemManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<InventoryItem, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<InventoryItem, int>>(
                     create: (ctx) => DetailBloc<InventoryItem, int>(
                       repository: ctx.read<Repository<InventoryItem, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

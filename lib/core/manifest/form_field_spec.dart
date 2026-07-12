@@ -25,13 +25,13 @@ class FormFieldSpec<E> {
     this.fkSearch,
     this.fkDisplayOf,
     this.fkResolveById,
+    this.section,
+    this.half = false,
   }) : assert(
-          (type != FieldType.fk && type != FieldType.selfFk) ||
-              (fkSearch != null &&
-                  fkDisplayOf != null &&
-                  fkResolveById != null),
-          'FieldType.fk/selfFk requires fkSearch, fkDisplayOf, and fkResolveById.',
-        );
+         (type != FieldType.fk && type != FieldType.selfFk) ||
+             (fkSearch != null && fkDisplayOf != null && fkResolveById != null),
+         'FieldType.fk/selfFk requires fkSearch, fkDisplayOf, and fkResolveById.',
+       );
 
   /// The entity-side (mapped, camelCase) field name.
   final String key;
@@ -75,6 +75,16 @@ class FormFieldSpec<E> {
   /// [FieldType.fk]/[FieldType.selfFk] only: resolves a stored raw id back to
   /// its related entity, to seed the picker's initial label in edit mode.
   final Future<Object?> Function(Object id)? fkResolveById;
+
+  /// Which index card this field is filed under. Fields sharing a section
+  /// render together in one card, in manifest order, with the section name as
+  /// the card's header. Leave null and the field lands on the form's single
+  /// unnamed card — which is why adding sections broke no existing manifest.
+  final String? section;
+
+  /// Lets this field share a row with the next half-width field on desktop.
+  /// Ignored below tablet, where every field is full width.
+  final bool half;
 
   /// The key server validation errors are matched against.
   String get errorKey => wireKey ?? key;

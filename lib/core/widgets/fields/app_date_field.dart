@@ -24,9 +24,14 @@ class AppDateField extends StatelessWidget {
     this.helperText,
     this.validator,
     this.enabled = true,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker.
+  final Widget? labelWidget;
   final DateTime? value;
   final ValueChanged<DateTime?> onChanged;
   final DateTime? firstDate;
@@ -56,7 +61,8 @@ class AppDateField extends StatelessWidget {
           onTap: enabled ? () => _pick(context) : null,
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: label,
+              label: labelWidget,
+              labelText: labelWidget == null ? label : null,
               helperText: helperText,
               errorText: state.errorText,
               suffixIcon: const Icon(Icons.calendar_today_outlined),

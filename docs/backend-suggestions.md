@@ -18,6 +18,7 @@ which currently holds the **offline-sync** CRs (deferred while we ship online-on
 | BE-006 | Active FinancialYear in session/`/auth/me` | P2 | Implemented |
 | BE-007 | Standardize every list endpoint to the `Paginated<T>` envelope | P2 | Partially Implemented |
 | BE-008 | Lightweight lookup/projection endpoints for FK pickers | P2 | Partially Implemented |
+| BE-009 | Leave allocation create body missing `employee_id` | P1 | Implemented |
 
 ---
 
@@ -226,6 +227,15 @@ add slim lookup endpoints (`GET /inventory/items/lookup?search=`). Pairs natural
 frontend code calls `/inventory/item/lookup` or `/accounts/ledgers/lookup` yet. Switching it over
 is a data-source change only, and only worth doing once a form actually renders one of those two
 heavy FKs.
+
+---
+
+## BE-009 — Leave allocation create body missing `employee_id`  (P1)  — **Implemented**
+**Resolution.** `leaveAllocationSchema` in `employee.schema.ts` now requires `employee_id`.
+`LeaveService.allocateLeave` already used `data.employee_id`; Zod previously stripped it.
+
+**Frontend impact.** `employee_leave_allocation` can POST
+`{ employee_id, leave_policy_id, year, allocated_days, carried_forward }`.
 
 ---
 

@@ -39,32 +39,18 @@ class DepartmentFormPage extends StatelessWidget {
             idOf: (d) => d.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(departmentManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${departmentManifest.label}'
-                      : departmentManifest.supportsUpdate
-                      ? 'Edit ${departmentManifest.label}'
-                      : 'View ${departmentManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Department, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Department, int>>(
                     create: (ctx) => DetailBloc<Department, int>(
                       repository: ctx.read<Repository<Department, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

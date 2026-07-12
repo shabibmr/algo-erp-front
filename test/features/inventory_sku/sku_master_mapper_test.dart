@@ -31,12 +31,7 @@ void main() {
   });
 
   test('SkuMasterMapper.toEntity uses Decimal for rate', () {
-    const dto = SkuMasterDto(
-      id: 1,
-      itemId: 'X',
-      rate: '12.25',
-      skuType: 2,
-    );
+    const dto = SkuMasterDto(id: 1, itemId: 'X', rate: '12.25', skuType: 2);
     final entity = mapper.toEntity(dto);
     expect(entity.rate, Decimal.parse('12.25'));
     expect(entity.skuType, 2);

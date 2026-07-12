@@ -21,25 +21,11 @@ class VoucherSeriesListPage extends StatelessWidget {
           createVoucherSeriesCrudBloc(getIt<DioClient>())
             ..add(const CrudLoadRequested()),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              voucherSeriesManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<VoucherSeries>(
-                manifest: voucherSeriesManifest,
-                idOf: (s) => s.id,
-                onCreate: () =>
-                    context.push('/organization/voucher-series/new'),
-                onTap: (s) =>
-                    context.push('/organization/voucher-series/${s.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<VoucherSeries>(
+          manifest: voucherSeriesManifest,
+          idOf: (s) => s.id,
+          onCreate: () => context.push('/organization/voucher-series/new'),
+          onTap: (s) => context.push('/organization/voucher-series/${s.id}'),
         ),
       ),
     );

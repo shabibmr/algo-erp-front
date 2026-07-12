@@ -38,32 +38,18 @@ class CurrencyFormPage extends StatelessWidget {
             idOf: (currency) => currency.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(currencyManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${currencyManifest.label}'
-                      : currencyManifest.supportsUpdate
-                      ? 'Edit ${currencyManifest.label}'
-                      : 'View ${currencyManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Currency, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Currency, int>>(
                     create: (ctx) => DetailBloc<Currency, int>(
                       repository: ctx.read<Repository<Currency, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

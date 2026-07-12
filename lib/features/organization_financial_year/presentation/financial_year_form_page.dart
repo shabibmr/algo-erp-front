@@ -38,32 +38,18 @@ class FinancialYearFormPage extends StatelessWidget {
             idOf: (fy) => fy.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(financialYearManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${financialYearManifest.label}'
-                      : financialYearManifest.supportsUpdate
-                      ? 'Edit ${financialYearManifest.label}'
-                      : 'View ${financialYearManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<FinancialYear, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<FinancialYear, int>>(
                     create: (ctx) => DetailBloc<FinancialYear, int>(
                       repository: ctx.read<Repository<FinancialYear, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

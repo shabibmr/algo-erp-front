@@ -56,24 +56,23 @@ void main() {
     expect(find.text('hello world'), findsOneWidget);
   });
 
-  testWidgets(
-    'renders ErrorState with the failure message and wires retry',
-    (tester) async {
-      var retried = false;
-      await tester.pumpWidget(
-        _wrap(
-          AsyncStateView<String>(
-            state: const ViewError<String>(Failure.network('offline')),
-            onRetry: () => retried = true,
-            builder: (context, data) => Text(data),
-          ),
+  testWidgets('renders ErrorState with the failure message and wires retry', (
+    tester,
+  ) async {
+    var retried = false;
+    await tester.pumpWidget(
+      _wrap(
+        AsyncStateView<String>(
+          state: const ViewError<String>(Failure.network('offline')),
+          onRetry: () => retried = true,
+          builder: (context, data) => Text(data),
         ),
-      );
+      ),
+    );
 
-      expect(find.text('offline'), findsOneWidget);
-      await tester.tap(find.text('Retry'));
-      await tester.pump();
-      expect(retried, isTrue);
-    },
-  );
+    expect(find.text('offline'), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(retried, isTrue);
+  });
 }

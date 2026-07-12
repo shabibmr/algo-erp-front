@@ -10,6 +10,9 @@ import 'package:algo_erp_front/core/manifest/field_spec.dart';
 import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/core/theme/app_theme.dart';
+import 'package:algo_erp_front/core/widgets/filters/filter_bar.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/states/ledger_skeleton.dart';
 import 'package:algo_erp_front/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -89,10 +92,9 @@ void main() {
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: BlocProvider<CrudBloc<_Widget, int, void>>(
-          create: (_) => CrudBloc<_Widget, int, void>(
-            repository: repo,
-            idOf: (w) => w.id,
-          )..add(const CrudLoadRequested()),
+          create: (_) =>
+              CrudBloc<_Widget, int, void>(repository: repo, idOf: (w) => w.id)
+                ..add(const CrudLoadRequested()),
           child: child,
         ),
       ),
@@ -109,18 +111,76 @@ void main() {
     await tester.pumpWidget(
       wrap(MasterListSurface<_Widget>(manifest: _manifest, idOf: (w) => w.id)),
     );
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // The ledger holds its own shape while loading rather than collapsing to a
+    // spinner in an empty sheet.
+    expect(find.byType(LedgerSkeleton), findsOneWidget);
 
     await tester.pumpAndSettle();
+    expect(find.byType(LedgerSkeleton), findsNothing);
     expect(find.text('Alpha'), findsOneWidget);
   });
 
-  testWidgets('renders the error state with retry on failure', (
+  testWidgets('the create action sits on the header, not in the toolbar', (
     tester,
   ) async {
     when(() => repo.list(any())).thenAnswer(
-      (_) async => const Left(Failure.network('offline')),
+      (_) async => Right(_page([const _Widget(1, 'Alpha')], total: 1)),
     );
+
+    await tester.pumpWidget(
+      wrap(
+        MasterListSurface<_Widget>(
+          manifest: _manifest,
+          idOf: (w) => w.id,
+          onCreate: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Page action lives on the PageHeader; the sheet's FilterBar only carries
+    // controls that act on the sheet's contents.
+    expect(
+      find.descendant(
+        of: find.byType(PageHeader),
+        matching: find.widgetWithText(FilledButton, 'New widget'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(FilterBar),
+        matching: find.byType(FilledButton),
+      ),
+      findsNothing,
+    );
+    expect(find.text('1 record'), findsOneWidget);
+  });
+
+  testWidgets('an empty list invites the first record', (tester) async {
+    when(
+      () => repo.list(any()),
+    ).thenAnswer((_) async => Right(_page([], total: 0)));
+
+    await tester.pumpWidget(
+      wrap(
+        MasterListSurface<_Widget>(
+          manifest: _manifest,
+          idOf: (w) => w.id,
+          onCreate: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No widget yet.'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'New widget'), findsNWidgets(2));
+  });
+
+  testWidgets('renders the error state with retry on failure', (tester) async {
+    when(
+      () => repo.list(any()),
+    ).thenAnswer((_) async => const Left(Failure.network('offline')));
 
     await tester.pumpWidget(
       wrap(MasterListSurface<_Widget>(manifest: _manifest, idOf: (w) => w.id)),
@@ -146,8 +206,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
-    final query = verify(() => repo.list(captureAny())).captured.last
-        as PageQuery;
+    final query =
+        verify(() => repo.list(captureAny())).captured.last as PageQuery;
     expect(query.search, 'alp');
   });
 }

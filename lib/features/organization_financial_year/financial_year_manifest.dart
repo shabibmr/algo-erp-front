@@ -1,7 +1,14 @@
+import 'package:algo_erp_front/core/di/injection.dart';
+import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/manifest/entity_manifest.dart';
 import 'package:algo_erp_front/core/manifest/field_spec.dart';
 import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
+import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/features/organization_company/company_profile_di.dart';
+import 'package:algo_erp_front/features/organization_company/domain/company_profile.dart';
 import 'package:algo_erp_front/features/organization_financial_year/domain/financial_year.dart';
+
+final _companyRepository = createCompanyProfileRepository(getIt<DioClient>());
 
 final _isoDatePattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
 
@@ -15,9 +22,6 @@ String? _validateIsoDate(Object? value) {
 /// gates per entity (`organization.routes.ts`). `supportsDelete: false`: the
 /// backend has no `DELETE /organization/fy/:id` route at all (list/active/
 /// create/update only).
-///
-/// `companyId` is modeled as a plain `FieldType.int`, not `FieldType.fk`, for
-/// the same reason as `Branch.companyId`: CompanyProfile is deferred.
 final financialYearManifest = EntityManifest<FinancialYear>(
   id: 'financial-year',
   label: 'Financial year',
@@ -108,11 +112,30 @@ final financialYearManifest = EntityManifest<FinancialYear>(
     FormFieldSpec<FinancialYear>(
       key: 'companyId',
       wireKey: 'company_id',
-      label: 'Company ID',
-      type: FieldType.int,
+      label: 'Company',
+      type: FieldType.fk,
       required: true,
-      getValue: (fy) => fy.companyId,
-      setValue: (fy, v) => fy.copyWith(companyId: v as int?),
+      getValue: (fy) => fy.companyId == 0 ? null : fy.companyId,
+      setValue: (fy, v) {
+        final company = v as CompanyProfile?;
+        return fy.copyWith(companyId: company?.id ?? 0);
+      },
+      fkSearch: (query) async {
+        final result = await _companyRepository.list(
+          PageQuery(search: query, limit: 100),
+        );
+        return result.fold((_) => const [], (page) => page.items);
+      },
+      fkDisplayOf: (item) {
+        final c = item as CompanyProfile;
+        final name = c.name?.trim();
+        if (name != null && name.isNotEmpty) return name;
+        return 'Company #${c.id}';
+      },
+      fkResolveById: (id) async {
+        final result = await _companyRepository.getById(id as int);
+        return result.fold((_) => null, (c) => c);
+      },
     ),
     FormFieldSpec<FinancialYear>(
       key: 'status',

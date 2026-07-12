@@ -18,23 +18,11 @@ class InventoryGroupListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<InventoryGroup, int, void>>.value(
       value: inventoryGroupCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              inventoryGroupManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<InventoryGroup>(
-                manifest: inventoryGroupManifest,
-                idOf: (g) => g.id,
-                onCreate: () => context.push('/inventory/group/new'),
-                onTap: (g) => context.push('/inventory/group/${g.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<InventoryGroup>(
+          manifest: inventoryGroupManifest,
+          idOf: (g) => g.id,
+          onCreate: () => context.push('/inventory/group/new'),
+          onTap: (g) => context.push('/inventory/group/${g.id}'),
         ),
       ),
     );

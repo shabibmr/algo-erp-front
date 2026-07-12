@@ -8,14 +8,17 @@ import 'package:intl/intl.dart';
 extension DecimalFormatX on Decimal {
   /// e.g. `AED 1,234.50`. Default UAE currency + 2 dp.
   String toMoney({String symbol = 'AED ', int decimalDigits = 2}) {
-    return NumberFormat.currency(symbol: symbol, decimalDigits: decimalDigits)
-        .format(toDouble());
+    return NumberFormat.currency(
+      symbol: symbol,
+      decimalDigits: decimalDigits,
+    ).format(toDouble());
   }
 
   /// Grouped number without a currency symbol, e.g. `1,234.5`.
   String toQuantity({int maxDecimals = 3}) {
-    return NumberFormat.decimalPatternDigits(decimalDigits: maxDecimals)
-        .format(toDouble());
+    return NumberFormat.decimalPatternDigits(
+      decimalDigits: maxDecimals,
+    ).format(toDouble());
   }
 
   /// The exact, loss-free string — use this for anything sent back to the API.

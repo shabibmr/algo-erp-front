@@ -18,23 +18,11 @@ class PriceListListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<PriceList, int, void>>.value(
       value: priceListCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              priceListManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<PriceList>(
-                manifest: priceListManifest,
-                idOf: (p) => p.id,
-                onCreate: () => context.push('/inventory/pricelist/new'),
-                onTap: (p) => context.push('/inventory/pricelist/${p.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<PriceList>(
+          manifest: priceListManifest,
+          idOf: (p) => p.id,
+          onCreate: () => context.push('/inventory/pricelist/new'),
+          onTap: (p) => context.push('/inventory/pricelist/${p.id}'),
         ),
       ),
     );

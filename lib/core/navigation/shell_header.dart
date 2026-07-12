@@ -36,9 +36,7 @@ class ShellHeader extends StatelessWidget implements PreferredSizeWidget {
           height: preferredSize.height,
           padding: EdgeInsets.symmetric(horizontal: tokens.spacing.sm),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: brand.mist),
-            ),
+            border: Border(bottom: BorderSide(color: brand.mist)),
           ),
           child: Row(
             children: [
@@ -59,9 +57,7 @@ class ShellHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
               ] else ...[
-                Expanded(
-                  child: SessionContextBar(compact: isMobile),
-                ),
+                Expanded(child: SessionContextBar(compact: isMobile)),
               ],
               IconButton(
                 tooltip: 'Command palette (coming soon)',
@@ -85,9 +81,9 @@ class ShellHeader extends StatelessWidget implements PreferredSizeWidget {
                   padding: EdgeInsetsDirectional.only(end: tokens.spacing.xs),
                   child: Text(
                     _paletteShortcutLabel(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: brand.inkMuted,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: brand.inkMuted),
                   ),
                 ),
               const _AccountMenu(),
@@ -134,10 +130,7 @@ class _AccountMenu extends StatelessWidget {
           itemBuilder: (context) => [
             PopupMenuItem<String>(
               enabled: false,
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+              child: Text(label, style: Theme.of(context).textTheme.titleSmall),
             ),
             const PopupMenuDivider(),
             const PopupMenuItem<String>(
@@ -170,9 +163,9 @@ class _AccountMenu extends StatelessWidget {
               child: Text(
                 initial,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: brand.lagoon,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: brand.lagoon,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

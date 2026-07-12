@@ -18,23 +18,11 @@ class UomConversionListPage extends StatelessWidget {
     return BlocProvider<CrudBloc<UomConversion, int, void>>.value(
       value: uomConversionCrudBloc(context),
       child: AdaptiveLayout(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              uomConversionManifest.label,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: MasterListSurface<UomConversion>(
-                manifest: uomConversionManifest,
-                idOf: (u) => u.id,
-                onCreate: () => context.push('/inventory/conversion/new'),
-                onTap: (u) => context.push('/inventory/conversion/${u.id}'),
-              ),
-            ),
-          ],
+        child: MasterListSurface<UomConversion>(
+          manifest: uomConversionManifest,
+          idOf: (u) => u.id,
+          onCreate: () => context.push('/inventory/conversion/new'),
+          onTap: (u) => context.push('/inventory/conversion/${u.id}'),
         ),
       ),
     );

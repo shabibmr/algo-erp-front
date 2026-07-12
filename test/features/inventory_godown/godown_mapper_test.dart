@@ -42,18 +42,17 @@ void main() {
     );
     expect(
       mapper.toEntity(dto),
-      const Godown(
-        id: 1,
-        name: 'Main store',
-        code: 'MAIN',
-        isDefault: true,
-      ),
+      const Godown(id: 1, name: 'Main store', code: 'MAIN', isDefault: true),
     );
   });
 
   test('GodownMapper.toDto round-trips back to the wire shape', () {
-    const godown =
-        Godown(id: 1, name: 'Main store', code: 'MAIN', isDefault: true);
+    const godown = Godown(
+      id: 1,
+      name: 'Main store',
+      code: 'MAIN',
+      isDefault: true,
+    );
     final dto = mapper.toDto(godown);
 
     expect(dto.toJson(), {

@@ -5,4 +5,10 @@
 /// the outbox for this row and hasn't been confirmed by the server yet.
 /// `conflict` — the outbox processor got a 409/validation error replaying
 /// this row's mutation and needs user or policy resolution (see Step 6).
-enum SyncStatus { synced, pendingCreate, pendingUpdate, pendingDelete, conflict }
+enum SyncStatus {
+  synced,
+  pendingCreate,
+  pendingUpdate,
+  pendingDelete,
+  conflict,
+}

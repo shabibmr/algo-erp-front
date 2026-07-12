@@ -191,6 +191,63 @@ class SemanticColors {
   );
 }
 
+/// How a ledger sheet rules its lines.
+///
+/// The rules are drawn faint between rows and at full strength every
+/// [groupEvery] rows — the way a paper ledger pad rules in fives so the eye
+/// can count down a column without losing its place. This is the one place
+/// that rhythm is defined; `LedgerTable` reads it and nothing else should
+/// hardcode a row divider.
+@immutable
+class LedgerTokens {
+  const LedgerTokens({
+    required this.ruleFaint,
+    required this.ruleStrong,
+    required this.rowHover,
+    required this.rowSelected,
+    required this.gutter,
+    this.groupEvery = 5,
+    this.gutterWidth = 2,
+    this.rowMinHeight = 44,
+  });
+
+  /// The rule drawn between ordinary rows.
+  final Color ruleFaint;
+
+  /// The rule drawn under the header and under every [groupEvery]th row.
+  final Color ruleStrong;
+
+  final Color rowHover;
+  final Color rowSelected;
+
+  /// The edge lit in a row's left gutter on hover/focus.
+  final Color gutter;
+
+  final int groupEvery;
+  final double gutterWidth;
+  final double rowMinHeight;
+
+  // The two rules are drawn from one ink at two strengths, not from two
+  // different greys — that's what makes every fifth line read as *the same
+  // line, pressed harder*. Plain `mist` is too pale against paper to carry the
+  // difference, so the ledger rules in a deeper slate of its own.
+  static const light = LedgerTokens(
+    ruleFaint: Color(0x40B3C0CC), // slate @ 25%
+    ruleStrong: Color(0xFFB3C0CC), // slate
+    rowHover: Color(0x73D7EFED), // lagoonSoft @ 45%
+    rowSelected: Color(0xFFD7EFED), // lagoonSoft
+    gutter: Color(0xFF0E6B68), // lagoon
+  );
+
+  static const dark = LedgerTokens(
+    ruleFaint: Color(0x40566274),
+    ruleStrong: Color(0xFF566274),
+    rowHover: Color(0x731A3D3B),
+    rowSelected: Color(0xFF1A3D3B),
+    gutter: Color(0xFF3CB8B0),
+  );
+}
+
 /// Design-token layer so widgets never hardcode colors/spacing/radii.
 /// Access via `Theme.of(context).extension<AppTokens>()!` or the
 /// `context.tokens` extension in `core/utils/extensions`.
@@ -200,28 +257,45 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.brand,
     required this.semanticColors,
     required this.voucherStatusColors,
+    required this.ledger,
     this.spacing = const AppSpacing(),
     this.radii = const AppRadii(),
     this.elevation = const AppElevation(),
+    this.figures = defaultFigures,
   });
+
+  /// Fallback figure style. `AppTheme` replaces this with IBM Plex Mono at
+  /// theme-build time; the const default keeps [AppTokens] const-constructible
+  /// (and keeps tests that build tokens directly from needing a font).
+  static const defaultFigures = TextStyle(
+    fontFeatures: [FontFeature('tnum'), FontFeature('lnum')],
+  );
 
   final BrandColors brand;
   final SemanticColors semanticColors;
   final VoucherStatusColors voucherStatusColors;
+  final LedgerTokens ledger;
   final AppSpacing spacing;
   final AppRadii radii;
   final AppElevation elevation;
+
+  /// IBM Plex Mono with tabular, lining figures — for codes, quantities and
+  /// money, so digits align on the decimal down a column. Never use it for
+  /// prose. Callers restyle color/size via `copyWith`.
+  final TextStyle figures;
 
   static const light = AppTokens(
     brand: BrandColors.light,
     semanticColors: SemanticColors.light,
     voucherStatusColors: VoucherStatusColors.light,
+    ledger: LedgerTokens.light,
   );
 
   static const dark = AppTokens(
     brand: BrandColors.dark,
     semanticColors: SemanticColors.dark,
     voucherStatusColors: VoucherStatusColors.dark,
+    ledger: LedgerTokens.dark,
   );
 
   @override
@@ -229,17 +303,21 @@ class AppTokens extends ThemeExtension<AppTokens> {
     BrandColors? brand,
     SemanticColors? semanticColors,
     VoucherStatusColors? voucherStatusColors,
+    LedgerTokens? ledger,
     AppSpacing? spacing,
     AppRadii? radii,
     AppElevation? elevation,
+    TextStyle? figures,
   }) {
     return AppTokens(
       brand: brand ?? this.brand,
       semanticColors: semanticColors ?? this.semanticColors,
       voucherStatusColors: voucherStatusColors ?? this.voucherStatusColors,
+      ledger: ledger ?? this.ledger,
       spacing: spacing ?? this.spacing,
       radii: radii ?? this.radii,
       elevation: elevation ?? this.elevation,
+      figures: figures ?? this.figures,
     );
   }
 

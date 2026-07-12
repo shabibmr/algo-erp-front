@@ -76,9 +76,9 @@ class _ContextChips extends StatelessWidget {
       children: [
         Text(
           'Workplace',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: brand.inkMuted,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: brand.inkMuted),
         ),
         ...chips,
       ],
@@ -112,9 +112,9 @@ class _ContextChip extends StatelessWidget {
           SizedBox(width: tokens.spacing.xs),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: brand.ink,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: brand.ink),
           ),
         ],
       ),

@@ -29,9 +29,14 @@ class AppDecimalField extends StatelessWidget {
     this.maxDecimals = 3,
     this.controller,
     this.prefixText,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker.
+  final Widget? labelWidget;
   final Decimal? initialValue;
   final String? helperText;
   final String? hintText;
@@ -59,15 +64,18 @@ class AppDecimalField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(
-          RegExp(r'^\d*\.?\d{0,' '$maxDecimals}'),
+          RegExp(
+            r'^\d*\.?\d{0,'
+            '$maxDecimals}',
+          ),
         ),
       ],
-      validator:
-          validator == null ? null : (text) => validator!(_parse(text)),
+      validator: validator == null ? null : (text) => validator!(_parse(text)),
       onChanged: onChanged == null ? null : (text) => onChanged!(_parse(text)),
       onSaved: onSaved == null ? null : (text) => onSaved!(_parse(text)),
       decoration: InputDecoration(
-        labelText: label,
+        label: labelWidget,
+        labelText: labelWidget == null ? label : null,
         hintText: hintText,
         helperText: helperText,
         prefixText: prefixText == null ? null : '$prefixText ',

@@ -20,9 +20,14 @@ class AppSwitchField extends StatelessWidget {
     super.key,
     this.helperText,
     this.enabled = true,
+    this.labelWidget,
   });
 
   final String label;
+
+  /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
+  /// required marker.
+  final Widget? labelWidget;
   final bool value;
   final ValueChanged<bool>? onChanged;
   final String? helperText;
@@ -35,7 +40,7 @@ class AppSwitchField extends StatelessWidget {
       padding: EdgeInsetsDirectional.symmetric(vertical: tokens.spacing.xxs),
       child: SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
-        title: Text(label),
+        title: labelWidget ?? Text(label),
         subtitle: helperText == null ? null : Text(helperText!),
         value: value,
         onChanged: enabled ? onChanged : null,

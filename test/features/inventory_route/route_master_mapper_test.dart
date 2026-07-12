@@ -33,8 +33,7 @@ void main() {
   });
 
   test('RouteMasterMapper.toDto round-trips back to the wire shape', () {
-    const route =
-        RouteMaster(id: 1, routeCode: 'R001', name: 'North route');
+    const route = RouteMaster(id: 1, routeCode: 'R001', name: 'North route');
     final dto = mapper.toDto(route);
 
     expect(dto.toJson(), {

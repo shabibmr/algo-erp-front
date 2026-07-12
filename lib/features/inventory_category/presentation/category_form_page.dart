@@ -38,32 +38,18 @@ class CategoryFormPage extends StatelessWidget {
             idOf: (c) => c.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(categoryManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${categoryManifest.label}'
-                      : categoryManifest.supportsUpdate
-                      ? 'Edit ${categoryManifest.label}'
-                      : 'View ${categoryManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<Category, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<Category, int>>(
                     create: (ctx) => DetailBloc<Category, int>(
                       repository: ctx.read<Repository<Category, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),

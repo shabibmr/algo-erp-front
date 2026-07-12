@@ -26,8 +26,7 @@ void main() {
     expect(dto.isActive, false);
   });
 
-  test('CurrencyDto.fromJson applies defaults when optional fields absent',
-      () {
+  test('CurrencyDto.fromJson applies defaults when optional fields absent', () {
     final dto = CurrencyDto.fromJson(const {
       'id': 1,
       'iso_code': 'INR',
@@ -63,8 +62,7 @@ void main() {
     );
   });
 
-  test(
-      'CurrencyMapper.toDto round-trips back to the wire shape '
+  test('CurrencyMapper.toDto round-trips back to the wire shape '
       '(omitting isActive)', () {
     const currency = Currency(
       id: 1,

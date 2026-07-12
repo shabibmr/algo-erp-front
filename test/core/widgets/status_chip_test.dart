@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _wrap(Widget child) {
-  return MaterialApp(theme: AppTheme.light, home: Scaffold(body: child));
+  return MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(body: child),
+  );
 }
 
 void main() {

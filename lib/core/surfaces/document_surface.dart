@@ -160,25 +160,25 @@ class _TotalsBar extends StatelessWidget {
     final tokens = context.tokens;
     final theme = Theme.of(context);
     Widget row(String k, Decimal v, {bool emphasize = false}) => Padding(
-          padding: EdgeInsets.symmetric(vertical: tokens.spacing.xxs),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                k,
-                style: emphasize
-                    ? theme.textTheme.titleMedium
-                    : theme.textTheme.bodyMedium,
-              ),
-              Text(
-                v.toMoney(),
-                style: emphasize
-                    ? theme.textTheme.titleMedium
-                    : theme.textTheme.bodyMedium,
-              ),
-            ],
+      padding: EdgeInsets.symmetric(vertical: tokens.spacing.xxs),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            k,
+            style: emphasize
+                ? theme.textTheme.titleMedium
+                : theme.textTheme.bodyMedium,
           ),
-        );
+          Text(
+            v.toMoney(),
+            style: emphasize
+                ? theme.textTheme.titleMedium
+                : theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
 
     return Card(
       child: Padding(

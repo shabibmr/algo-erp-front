@@ -38,32 +38,18 @@ class AddressBookFormPage extends StatelessWidget {
             idOf: (contact) => contact.id,
             onSaved: (_) => refreshListAndReturn(),
             onDeleted: refreshListAndReturn,
+            onCancel: () => context.go(addressBookManifest.resourcePath),
           );
           return AdaptiveLayout(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  mode == FormMode.create
-                      ? 'New ${addressBookManifest.label}'
-                      : addressBookManifest.supportsUpdate
-                      ? 'Edit ${addressBookManifest.label}'
-                      : 'View ${addressBookManifest.label}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                if (mode == FormMode.edit)
-                  BlocProvider<DetailBloc<AddressBook, int>>(
+            child: mode == FormMode.edit
+                ? BlocProvider<DetailBloc<AddressBook, int>>(
                     create: (ctx) => DetailBloc<AddressBook, int>(
                       repository: ctx.read<Repository<AddressBook, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
                     child: surface,
                   )
-                else
-                  surface,
-              ],
-            ),
+                : surface,
           );
         },
       ),
