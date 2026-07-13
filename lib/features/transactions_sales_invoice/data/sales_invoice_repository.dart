@@ -7,7 +7,6 @@ import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/data/sales_invoice_dto.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_invoice.dart';
-import 'package:dio/dio.dart';
 
 /// Online repository for Sales Invoice list, detail, post, and lifecycle.
 ///
@@ -356,24 +355,6 @@ class SalesInvoiceRepository {
         throw const FormatException('Expected source voucher');
       }
       return SalesInvoiceDto.sourceFromJson(data, type: type);
-    });
-  }
-
-  /// Authenticated HTML invoice (backend print template).
-  Future<Result<String>> fetchPdfHtml(int id) {
-    return safeCall(() async {
-      final res = await _client.dio.get<String>(
-        '/transactions/sales-invoices/$id/pdf',
-        options: Options(
-          responseType: ResponseType.plain,
-          headers: {'Accept': 'text/html'},
-        ),
-      );
-      final body = res.data;
-      if (body == null || body.isEmpty) {
-        throw const FormatException('Empty PDF/HTML response');
-      }
-      return body;
     });
   }
 

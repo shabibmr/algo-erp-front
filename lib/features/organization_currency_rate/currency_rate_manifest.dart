@@ -98,8 +98,7 @@ final currencyRateManifest = EntityManifest<CurrencyRate>(
       type: FieldType.decimal,
       required: true,
       getValue: (r) => r.buyRate,
-      setValue: (r, v) =>
-          r.copyWith(buyRate: v as Decimal? ?? Decimal.zero),
+      setValue: (r, v) => r.copyWith(buyRate: v as Decimal? ?? Decimal.zero),
     ),
     FormFieldSpec<CurrencyRate>(
       key: 'sellRate',
@@ -108,8 +107,7 @@ final currencyRateManifest = EntityManifest<CurrencyRate>(
       type: FieldType.decimal,
       required: true,
       getValue: (r) => r.sellRate,
-      setValue: (r, v) =>
-          r.copyWith(sellRate: v as Decimal? ?? Decimal.zero),
+      setValue: (r, v) => r.copyWith(sellRate: v as Decimal? ?? Decimal.zero),
     ),
     FormFieldSpec<CurrencyRate>(
       key: 'midRate',

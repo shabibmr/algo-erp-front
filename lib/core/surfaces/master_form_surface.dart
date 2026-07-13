@@ -277,9 +277,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   children: [
                     Expanded(child: _field(context, field, enabled: enabled)),
                     SizedBox(width: tokens.spacing.md),
-                    Expanded(
-                      child: _field(context, next, enabled: enabled),
-                    ),
+                    Expanded(child: _field(context, next, enabled: enabled)),
                   ],
                 )
               : _field(context, field, enabled: enabled),
@@ -409,9 +407,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
       final col2 = <Widget>[];
       for (final (index, entry) in sections.entries.indexed) {
         final sectionWidget = Padding(
-          padding: EdgeInsets.only(
-            bottom: tokens.spacing.md,
-          ),
+          padding: EdgeInsets.only(bottom: tokens.spacing.md),
           child: WorkSheet(
             fill: false,
             title: entry.key,

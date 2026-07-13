@@ -1,0 +1,317 @@
+import 'dart:typed_data';
+
+import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
+import 'package:decimal/decimal.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+/// Company letterhead for a printed document, from
+/// `CompanyProfileRepository` via [fetchCurrentCompanyHeader].
+class PdfCompanyHeader {
+  const PdfCompanyHeader({required this.name, this.trn, this.address});
+
+  final String name;
+  final String? trn;
+  final String? address;
+}
+
+/// The voucher-level fields shown above the line grid.
+class PdfDocHeader {
+  const PdfDocHeader({
+    required this.voucherNo,
+    this.dateStr,
+    required this.status,
+    required this.partyLabel,
+    this.narration,
+  });
+
+  final String voucherNo;
+  final String? dateStr;
+  final String status;
+  final String partyLabel;
+  final String? narration;
+}
+
+/// One row of the printed line grid. [qty]/[price] are omitted (shown blank)
+/// for ledger-shape vouchers (Payment/Receipt/Journal/Contra).
+class PdfDocLine {
+  const PdfDocLine({
+    required this.description,
+    this.qty,
+    this.price,
+    required this.amount,
+  });
+
+  final String description;
+  final String? qty;
+  final String? price;
+  final Decimal amount;
+}
+
+class PdfDocTotals {
+  const PdfDocTotals({
+    required this.subtotal,
+    this.discount,
+    this.vat,
+    required this.total,
+  });
+
+  final Decimal subtotal;
+  final Decimal? discount;
+  final Decimal? vat;
+  final Decimal total;
+}
+
+/// Renders any voucher (or report) into a print-ready PDF. Shared by every
+/// voucher detail page and by [ReportViewer] — the caller resolves its own
+/// line shape (item vs ledger) into [PdfDocLine] before calling this.
+Future<Uint8List> buildVoucherPdf({
+  required String title,
+  required PdfCompanyHeader? company,
+  required PdfDocHeader header,
+  required List<PdfDocLine> lines,
+  required PdfDocTotals totals,
+  bool showQtyPrice = true,
+}) async {
+  final doc = pw.Document();
+
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(32),
+      header: (context) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    title.toUpperCase(),
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColor.fromHex('#1F497D'),
+                    ),
+                  ),
+                  pw.Text(
+                    'Original Copy',
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.grey700,
+                    ),
+                  ),
+                ],
+              ),
+              if (company != null)
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      company.name,
+                      style: pw.TextStyle(
+                        fontSize: 13,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#1F497D'),
+                      ),
+                    ),
+                    if (company.trn != null && company.trn!.isNotEmpty)
+                      pw.Text(
+                        'TRN: ${company.trn}',
+                        style: const pw.TextStyle(fontSize: 9),
+                      ),
+                    if (company.address != null && company.address!.isNotEmpty)
+                      pw.Text(
+                        company.address!,
+                        style: const pw.TextStyle(fontSize: 9),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+          pw.SizedBox(height: 16),
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: _detailsBox(<String, String>{
+                  'No': header.voucherNo,
+                  if (header.dateStr != null) 'Date': header.dateStr!,
+                  'Status': header.status,
+                }),
+              ),
+              pw.SizedBox(width: 12),
+              pw.Expanded(
+                child: _detailsBox(<String, String>{
+                  'Party': header.partyLabel,
+                  if (header.narration != null && header.narration!.isNotEmpty)
+                    'Narration': header.narration!,
+                }),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 16),
+        ],
+      ),
+      footer: (context) => pw.Text(
+        'Generated by algoERP. Subject to Terms & Conditions.',
+        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+        textAlign: pw.TextAlign.center,
+      ),
+      build: (context) => [
+        pw.TableHelper.fromTextArray(
+          headerDecoration: pw.BoxDecoration(
+            color: PdfColor.fromHex('#1F497D'),
+          ),
+          headerStyle: pw.TextStyle(
+            color: PdfColors.white,
+            fontSize: 9,
+            fontWeight: pw.FontWeight.bold,
+          ),
+          cellStyle: const pw.TextStyle(fontSize: 9),
+          cellAlignments: showQtyPrice
+              ? {
+                  0: pw.Alignment.centerLeft,
+                  1: pw.Alignment.centerRight,
+                  2: pw.Alignment.centerRight,
+                  3: pw.Alignment.centerRight,
+                }
+              : {0: pw.Alignment.centerLeft, 1: pw.Alignment.centerRight},
+          headers: showQtyPrice
+              ? ['Description', 'Quantity', 'Unit Price', 'Amount']
+              : ['Description', 'Amount'],
+          data: [
+            for (final line in lines)
+              if (showQtyPrice)
+                [
+                  line.description,
+                  line.qty ?? '',
+                  line.price ?? '',
+                  line.amount.toMoney(),
+                ]
+              else
+                [line.description, line.amount.toMoney()],
+          ],
+        ),
+        pw.SizedBox(height: 16),
+        pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.SizedBox(
+            width: 260,
+            child: pw.Column(
+              children: [
+                _totalsRow('Sub Total', totals.subtotal),
+                if (totals.discount != null)
+                  _totalsRow('Discount', totals.discount!),
+                if (totals.vat != null) _totalsRow('VAT', totals.vat!),
+                pw.Divider(),
+                _totalsRow('Total', totals.total, bold: true),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  return doc.save();
+}
+
+/// Renders a simple tabular or label/value document — used by [ReportViewer]
+/// for both list-shape and summary-shape reports (which pass a single row).
+Future<Uint8List> buildTablePdf({
+  required String title,
+  required List<String> headers,
+  required List<List<String>> rows,
+}) async {
+  final doc = pw.Document();
+
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4.landscape,
+      margin: const pw.EdgeInsets.all(32),
+      header: (context) => pw.Text(
+        title.toUpperCase(),
+        style: pw.TextStyle(
+          fontSize: 18,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColor.fromHex('#1F497D'),
+        ),
+      ),
+      build: (context) => [
+        pw.TableHelper.fromTextArray(
+          headerDecoration: pw.BoxDecoration(
+            color: PdfColor.fromHex('#1F497D'),
+          ),
+          headerStyle: pw.TextStyle(
+            color: PdfColors.white,
+            fontSize: 9,
+            fontWeight: pw.FontWeight.bold,
+          ),
+          cellStyle: const pw.TextStyle(fontSize: 9),
+          headers: headers,
+          data: rows,
+        ),
+      ],
+    ),
+  );
+
+  return doc.save();
+}
+
+pw.Widget _detailsBox(Map<String, String> fields) {
+  return pw.Container(
+    padding: const pw.EdgeInsets.all(8),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.grey100,
+      border: pw.Border.all(color: PdfColors.grey300),
+      borderRadius: pw.BorderRadius.circular(4),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        for (final entry in fields.entries)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 2),
+            child: pw.RichText(
+              text: pw.TextSpan(
+                children: [
+                  pw.TextSpan(
+                    text: '${entry.key}: ',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.TextSpan(
+                    text: entry.value,
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+pw.Widget _totalsRow(String label, Decimal value, {bool bold = false}) {
+  final style = pw.TextStyle(
+    fontSize: bold ? 12 : 10,
+    fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+    color: bold ? PdfColor.fromHex('#1F497D') : PdfColors.black,
+  );
+  return pw.Padding(
+    padding: const pw.EdgeInsets.symmetric(vertical: 2),
+    child: pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Text(label, style: style),
+        pw.Text(value.toMoney(), style: style),
+      ],
+    ),
+  );
+}

@@ -77,8 +77,7 @@ class ProjectMasterDto extends Equatable {
       'Project_Status': projectStatus,
     if (startDate != null && startDate!.isNotEmpty) 'Start_Date': startDate,
     if (endDate != null && endDate!.isNotEmpty) 'End_Date': endDate,
-    if (estimatedValue != null)
-      'Estimated_Value': estimatedValue!.toDouble(),
+    if (estimatedValue != null) 'Estimated_Value': estimatedValue!.toDouble(),
     if (location != null && location!.isNotEmpty) 'Location': location,
     if (detail != null && detail!.isNotEmpty) 'Detail': detail,
   };

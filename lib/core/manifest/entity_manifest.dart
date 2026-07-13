@@ -123,5 +123,3 @@ class EntityManifest<E> {
   /// The eyebrow actually rendered.
   String get eyebrowText => eyebrow ?? rbacModule;
 }
-
-

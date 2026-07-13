@@ -1,11 +1,12 @@
 # algoERP Frontend — Living Status
 
-> **Last updated:** 2026-07-13 (Sprint F: leave allocation + BE-009 employee_id)  
+> **Last updated:** 2026-07-13 (Module hubs; narrative audit — scorecard/archetypes/§4 reconciled with shipped voucher + report stacks)  
 > **Code ground truth:** `lib/features/**`, `lib/core/**`  
 > **Required surface area:** [`feature-inventory.md`](./feature-inventory.md)  
 > **Deferred entities:** [`manifest-exceptions.md`](./manifest-exceptions.md)  
 > **Recipe:** [`manifest-spec.md`](./manifest-spec.md)  
-> **Execution plan (wave narrative):** [`BUILD_TASKS_V2.md`](./BUILD_TASKS_V2.md)
+> **Execution plan (wave narrative):** [`BUILD_TASKS_V2.md`](./BUILD_TASKS_V2.md)  
+> **Reports context & status:** [`REPORTS_STATUS.md`](./REPORTS_STATUS.md)
 
 Legend:
 
@@ -76,8 +77,8 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 | Archetype | Engine | Example |
 |-----------|--------|---------|
 | Master-CRUD | `EntityManifest` + list/form surfaces | Brand, Designation |
-| Voucher document | `VoucherBlueprint` + DocumentSurface (**not built**) | SalesInvoice |
-| Report | `ReportDefinition` + ReportViewer (**not built**) | Trial balance |
+| Voucher document | `VoucherBlueprint` (`core/vouchers/voucher_blueprint.dart`) + DocumentSurface | SalesInvoice |
+| Report | `ReportDefinition` (`core/reports/`) + `ReportViewer` (`core/surfaces/report_viewer.dart`) | Trial balance |
 | Workflow (non-GL) | Treat as master or mini-surface later | LeaveRequest |
 
 ### Dependency direction (must hold)
@@ -97,13 +98,13 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
   [ ] Dept parent                                ── optional
   [x] InventoryItem + SKU + Batch + group FK     ── Sprint B
   [x] Line Engine + DocumentSurface + SI gold    ── Sprint C
-  [x] Item-qty trading family (Q/SO/DN/PO/RN/PI/CN/DN) ── Sprint D
+  [x] Item-qty family (Q/SO/DelN/PO/RN/PI/CN/DbN)      ── Sprint D
   [x] Payment + Receipt (ledgerAmount engine)            ── Sprint D
   [x] Journal + Contra (debitCredit engine)              ── Sprint D
   [x] Stock vouchers GT/MI/RQ/SR                         ── Sprint D done
   [x] Org access (company, users, role matrix)           ── Sprint E
   [~] HR depth (employee + leave + shift; attendance/payslip later) ── F
-  [ ] Reports · palette                                  ── G
+  [x] Reports · palette · settings                       ── G (core)
   [P] Offline sync
 ```
 
@@ -113,16 +114,16 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 
 | Layer | Progress | Notes |
 |-------|----------|-------|
-| Platform (shell, network, auth, widgets) | ~90% | Matrix RBAC; no command palette |
-| EMR runtime (list/form/FK) | ~75% | selfFk shipped; still missing binary, registry, ClientQuery |
+| Platform (shell, network, auth, widgets) | ~95% | Palette + settings + locale; matrix RBAC |
+| EMR runtime (list/form/FK) | ~75% | selfFk shipped; still missing binary, full ManifestRegistry, ClientQuery |
 | Organization masters | **13 / ~14** | Full masters; extras polymorphic still deferred |
 | Inventory masters | **13 / ~20** | Flat + Item/Group/SKU/Batch; image still deferred |
 | Employee masters | **7 / ~14** | + LeaveAllocation (per-employee list/create; BE-009) |
 | Accounts masters | **2 / ~8** | AccountGroup (selfFk parent) + Ledger core |
 | Vouchers / documents | **17 / ~17** | Full Sprint D voucher matrix (SI gold + 16 kinds) |
-| Reports / dashboard data | ~5% | Desk shell + empty invitations |
+| Reports / dashboard data | ~60% | Live desk KPIs/alerts; ReportViewer + 7 defs + CSV |
 | Offline / sync | `P` | Scaffold only under `lib/core/database/**` |
-| **ERP end-to-end usability** | **Early mid** | Party + item masters; still no documents |
+| **ERP end-to-end usability** | **Trading loop closes** | Party + item masters → 17 voucher kinds → reports/CSV. Gaps: billwise/settlement, stock views, attendance/payslip |
 
 **Shipped master packages (30+):** Brand, UOM, Category, TaxCategory, Godown, RouteMaster, UOMConversion, PriceList, ItemProperty, Department, Designation, Employee, LeavePolicy, LeaveAllocation, LeaveRequest, Shift, Branch, Currency, CurrencyRate, UserRole, AddressBook, FinancialYear, AccountGroup, Ledger, InventoryItem, SKU, Batch, InventoryGroup, Company, Users, Project, Config, AuditLog, ErrorReport, VoucherSeries.  
 Plus **Auth** (full) and **Today’s Desk** (shell).
@@ -137,7 +138,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | DI | `core/di` | `[x]` | get_it + injectable |
 | Design tokens + theme | `core/theme` | `[x]` | light/dark, motion, preview |
 | l10n en + ar | `lib/l10n` | `[x]` | ARB + gen |
-| Adaptive shell + menu | `core/navigation` | `[x]` | Some menu routes still placeholders |
+| Adaptive shell + menu | `core/navigation` | `[x]` | Domain hubs + hub-only binder; masters via tiles |
 | Network (Dio + interceptors) | `core/network` | `[x]` | auth, tenant, request-id |
 | Failure + safeCall | `core/error` | `[x]` | |
 | Wave-0 contracts | `feature-contract.md` | `[x]` | Frozen interfaces |
@@ -158,9 +159,9 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | Generic `/m/:id` routes | | `[ ]` | Per-entity routes today |
 | ClientQuery (client search/sort) | | `[ ]` | BE-002–004 workaround |
 | Idempotency-Key interceptor | | `[ ]` | See CR-004 / BE-005 |
-| Command palette | shell header stub | `[ ]` | Tooltip “coming soon” |
+| Command palette | `core/navigation/command_palette.dart` | `[x]` | Ctrl/Cmd+K; NavigationRegistry |
 | DocumentSurface + Line Engine | `core/domain/line_engine`, `core/surfaces` | `[x]` | SI gold; expand lifecycle later |
-| Report framework | | `[ ]` | |
+| Report framework | `core/reports` + `ReportViewer` | `[x]` | CSV; 49 stamped defs |
 | Offline DB / outbox / sync | `core/database`, `core/sync` | `P` | Parked |
 
 ---
@@ -200,7 +201,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | BillwiseRecord | `/accounts/billwise` | `[ ]` | Settlement-related |
 | ChequeDetails | `/accounts/cheque` | `[ ]` | |
 | Outstanding / aging | `/outstanding`, `/aging` | `[ ]` | Report-ish |
-| Accounts hub | `/accounts` | `[~]` | Placeholder |
+| Accounts hub | `/accounts` | `[x]` | Hub tiles (`AppMenu.accountsMasters`); binder hub-only |
 
 ### 2.3 Inventory
 
@@ -227,7 +228,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | RouteMaster | `/inventory/route` | `[x]` | `inventory_route` |
 | RouteCustomerMapping | route/customer-mapping | `[!]` | Cross-module |
 | RouteMapping | route/mapping | `[!]` | Cross-module |
-| Inventory hub | `/inventory` | `[~]` | Placeholder |
+| Inventory hub | `/inventory` | `[x]` | Hub tiles (`AppMenu.inventoryMasters`); binder hub-only |
 
 ### 2.4 Employee (HR)
 
@@ -247,7 +248,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | ShiftMaster | `/shifts` | `[x]` | `employee_shift` · create-only API |
 | EmployeeShiftAssignment | | `[ ]` | Nested assign under employee |
 | PayslipMain | payslips | `[ ]` | Voucher-like; period list needs query params |
-| Employee hub | `/employee` | `[~]` | Placeholder; masters on binder |
+| Employee hub | `/employee` | `[x]` | Hub tiles (`AppMenu.employeeMasters`); binder hub-only |
 
 ### 2.5 Transactions (vouchers)
 
@@ -275,37 +276,38 @@ All types share **header + main + lines + lifecycle**. DocumentSurface + Line En
 | Lifecycle (edit/approve/reject/cancel) | `[~]` | Cancel wired on item-qty kinds; full generic toolbar later |
 | TermsAndConditions | `[ ]` | Ancillary master |
 | TransportationDetails | `[ ]` | Ancillary master |
-| Transactions hub | `/transactions` | `[~]` | Placeholder |
+| Transactions hub | `/transactions` | `[x]` | Hub tiles (`AppMenu.transactionMasters`); binder hub-only |
 
 ### 2.6 Reports & desk
 
-| Surface | API | Status |
-|---------|-----|--------|
-| Today’s desk | — | `[~]` | Layout live; no live KPIs/queues |
-| Dashboard summary | `/reports/dashboard` | `[ ]` |
-| Alerts | `/reports/alerts` | `[ ]` |
-| Global search | `/reports/search` | `[ ]` |
-| Sales / purchase register | `/transactions/reports/...` | `[ ]` |
-| Stock summary / valuation | | `[ ]` |
-| VAT return | | `[ ]` |
-| Trial balance / P&L / BS / day-book | | `[ ]` |
-| Ledger statement | | `[ ]` |
-| Aging | `/accounts/aging` | `[ ]` |
-| HR summaries / overtime | employee reports | `[ ]` |
-| Reports hub | `/reports` | `[~]` | Placeholder |
-| Settings | `/settings` | `[~]` | Placeholder |
+| Surface | API | Status | Notes |
+|---------|-----|--------|-------|
+| Today’s desk | — | `[x]` | Live alerts + quiet pulse KPIs; continue chips |
+| Dashboard summary | `/reports/dashboard` | `[x]` | Desk “Quiet pulse” |
+| Alerts | `/reports/alerts` | `[x]` | Desk “Needs you” |
+| Global search | `/reports/search` | `[ ]` | Palette uses local NavigationRegistry for now |
+| Sales / purchase register | `/transactions/reports/...` | `[x]` | ReportCatalog |
+| Stock summary / valuation | | `[x]` | ReportCatalog |
+| VAT return | | `[x]` | Summary shape + period param |
+| Trial balance / day-book | | `[x]` | ReportCatalog |
+| P&L / balance sheet | `/reports/...` | `[x]` | ReportCatalog (`profit-loss`, `balance-sheet`) |
+| Ledger statement | `/reports/ledger-statement` | `[x]` | ReportCatalog (`ledger-statement`) |
+| Aging | `/transactions/reports/aging` | `[x]` | ReportCatalog (`accounts-aging`) |
+| HR summaries / overtime | `/reports/overtime` | `[x]` | ReportCatalog (`overtime-summary`) |
+| Reports hub | `/reports` | `[x]` | Catalog list → `/reports/:id` |
+| Settings | `/settings` | `[x]` | Theme, locale, password, sign-out |
 
 ### 2.7 Auth & product chrome
 
-| Item | Status |
-|------|--------|
-| Login / logout / session restore | `[x]` |
-| Change password | `[x]` |
-| Router auth redirect | `[x]` |
-| 403 page | `[x]` |
+| Item | Status | Notes |
+|------|--------|-------|
+| Login / logout / session restore | `[x]` | |
+| Change password | `[x]` | |
+| Router auth redirect | `[x]` | |
+| 403 page | `[x]` | |
 | Session context bar (company/branch/FY) | `[~]` | FY still placeholder |
-| Theme preview | `[x]` |
-| Widget gallery | `[x]` |
+| Theme preview | `[x]` | |
+| Widget gallery | `[x]` | |
 
 ---
 
@@ -324,29 +326,38 @@ Entity-level backend gaps live in [`manifest-exceptions.md`](./manifest-exceptio
 
 ---
 
-## 4. Recommended build order
+## 4. Build order
 
-Goal: unlock **real trading workflow** (party + item + sales invoice) before mass-stamping remaining HR/ancillary masters.
+The original goal — unlock a **real trading workflow** (party + item + sales invoice) before
+mass-stamping remaining HR/ancillary masters — is **met**. Sprints A–E and G are shipped; F is
+partial. The live goal is now to close the remaining `[ ]` rows in §2:
 
-### Sprint A — Unblock ledgers & parties (1–2 weeks)
+1. Accounts extensions — billwise / cheque / aging.
+2. Inventory read-only stock views (stock ledger, stock balance).
+3. HR depth — employee documents, attendance, shift assignment, payslip.
+4. Reports — P&L + balance sheet defs (endpoint exists, def not stamped), ledger statement.
 
-| # | Work | Why |
-|---|------|-----|
-| A1 | **LedgerMaster** (list + core form; bank/credit/tax as form sections or follow-ups) | Customer/supplier/cash/bank for vouchers |
-| A2 | **AccountGroup** — needs `FieldType.selfFk` + tree picker | Ledger parent hierarchy |
-| A3 | Cross-module **FK repository injection pattern** (document in manifest-spec) | Item → ledger, route → employee later |
-| A4 | Optional: **ClientQuery** on list surface for usable search | Day-to-day master UX |
+Sprints A–G below are kept as the shipped record.
 
-*Parallel:* polish session context (branch/FY) if API claims exist.
+### Sprint A — Unblock ledgers & parties
+
+| # | Work | Status |
+|---|------|--------|
+| A1 | **LedgerMaster** (list + core form; bank/credit/tax tabs) | `[x]` `accounts_ledger` |
+| A2 | **AccountGroup** — `FieldType.selfFk` + parent picker | `[x]` `accounts_account_group` |
+| A3 | Cross-module **FK repository injection pattern** | `[x]` proven Designation → Department |
+| A4 | **ClientQuery** on list surface for usable search | `[ ]` still deferred (BE-002–004) |
+
+*Parallel:* polish session context (branch/FY) — FY still a placeholder, see §2.7.
 
 ### Sprint B — Inventory sellable catalogue
 
-| # | Work | Why |
-|---|------|-----|
-| B1 | **InventoryGroup** (after selfFk) | Item classification |
-| B2 | **InventoryItem** (phased fields: identity, UOM, brand, category, tax, stock flags first; GL FKs second) | Invoice lines need items |
-| B3 | SKU / Batch as needed by posting rules | Only if invoice lines require them early |
-| B4 | Stock balance **read-only** views | Ops confidence |
+| # | Work | Status |
+|---|------|--------|
+| B1 | **InventoryGroup** (after selfFk) | `[x]` `inventory_group` |
+| B2 | **InventoryItem** (identity, UOM, brand, category, tax, stock flags; GL FKs) | `[x]` `inventory_item` |
+| B3 | SKU / Batch | `[x]` `inventory_sku`, `inventory_batch` |
+| B4 | Stock balance **read-only** views | `[ ]` not started |
 
 ### Sprint C — Document stack (critical path)
 
@@ -411,12 +422,12 @@ EmployeeDetails → leave policy/request → shifts shipped. Documents, attendan
 
 ### Sprint G — Desk, reports, polish
 
-| # | Work |
-|---|------|
-| G1 | Wire desk to `/reports/dashboard` + `/reports/alerts` |
-| G2 | `ReportDefinition` + `ReportViewer` + CSV |
-| G3 | Command palette over ManifestRegistry + voucher routes |
-| G4 | Settings, RTL QA matrix, goldens, `architecture.md` |
+| # | Work | Status |
+|---|------|--------|
+| G1 | Wire desk to `/reports/dashboard` + `/reports/alerts` | `[x]` |
+| G2 | `ReportDefinition` + `ReportViewer` + CSV (7 defs) | `[x]` |
+| G3 | Command palette over NavigationRegistry + report/create routes | `[x]` |
+| G4 | Settings + locale; `architecture.md`; responsive QA matrix seed | `[x]` (goldens later) |
 
 ### Explicitly later
 
@@ -427,9 +438,10 @@ EmployeeDetails → leave policy/request → shifts shipped. Documents, attendan
 
 ---
 
-## 4.1 Sprint A — design notes (ready to implement)
+## 4.1 Sprint A/B — design notes (historical, as shipped)
 
-> Next engineering work when implementation starts. Do **not** invent GL or voucher UI here.
+> The decisions these sections describe are all implemented. Kept as the record of *why* the
+> accounts and inventory packages are shaped the way they are — not as pending work.
 
 ### A0. EMR unlocks (do first if AccountGroup is in scope)
 
@@ -491,7 +503,7 @@ Rules to add to `manifest-spec.md` when implementing:
 - [x] `menu_model.dart` — Account group + Ledger items (`requiredModule: 'Accounts'`)
 - [x] `app_router.dart` — list + `/new` + `/:id` for each
 - [x] Mapper tests under `test/features/accounts_*`
-- [x] Leave `/accounts` hub as placeholder or make it a simple links page
+- [x] Accounts / Inventory / Employee / Transactions hubs (`ModuleHubPage` + hub-only binder)
 
 ### A5. Explicit non-goals for Sprint A
 
@@ -545,13 +557,13 @@ When you ship or defer work:
 
 ### Count helpers (masters only, approximate)
 
-| Domain | Done | Deferred/blocked | Not started | Partial hubs |
-|--------|------|------------------|-------------|--------------|
-| Organization | 13 | 1 (extras) | 0 | 1 |
-| Accounts | 2 | 0 | ~6 (extensions + billwise/cheque) | 1 |
-| Inventory | 9 | ~11 | ~2 stock views | 1 |
-| Employee | 7 | 0 | ~5 | 1 |
-| Vouchers | 0 | 0 | ~17 + lifecycle | 1 |
+| Domain | Done | Deferred/blocked | Not started | Hubs |
+|--------|------|------------------|-------------|------|
+| Organization | 13 | 1 (extras) | 0 | `[x]` |
+| Accounts | 2 | 0 | ~6 (extensions + billwise/cheque) | `[x]` |
+| Inventory | 13 | ~11 | ~2 stock views | `[x]` |
+| Employee | 7 | 0 | ~5 | `[x]` |
+| Vouchers | 17 | lifecycle partial | ancillaries | `[x]` |
 
 ---
 
@@ -560,6 +572,7 @@ When you ship or defer work:
 | Doc | Role |
 |-----|------|
 | [`feature-inventory.md`](./feature-inventory.md) | Full backend entity + endpoint map |
+| [`architecture.md`](./architecture.md) | Layering + engine walkthrough |
 | [`feature-contract.md`](./feature-contract.md) | What a feature must supply |
 | [`manifest-spec.md`](./manifest-spec.md) | 7-file master recipe |
 | [`manifest-exceptions.md`](./manifest-exceptions.md) | Why an entity is not registered yet |
@@ -569,3 +582,4 @@ When you ship or defer work:
 | [`SESSION_CONTEXT_EXPORT.md`](./SESSION_CONTEXT_EXPORT.md) | Architectural decisions snapshot |
 | [`BUILD_TASKS_V2.md`](./BUILD_TASKS_V2.md) | Wave plan (EMR-driven) |
 | [`UI_DESIGN_PLAN.md`](./UI_DESIGN_PLAN.md) | Visual / UX direction |
+| [`user_manual.md`](./user_manual.md) | End-user walkthrough |

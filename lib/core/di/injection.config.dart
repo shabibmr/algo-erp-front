@@ -23,6 +23,7 @@ import '../auth/permission_service.dart' as _i483;
 import '../auth/token_storage.dart' as _i1002;
 import '../network/dio_client.dart' as _i667;
 import '../network/tenant_context.dart' as _i489;
+import '../theme/locale_cubit.dart' as _i624;
 import '../theme/theme_cubit.dart' as _i611;
 import 'register_module.dart' as _i291;
 
@@ -57,6 +58,9 @@ Future<_i174.GetIt> init(
     () => permissionModule.permissionMatrixSink(
       gh<_i483.MatrixPermissionService>(),
     ),
+  );
+  gh.factory<_i624.LocaleCubit>(
+    () => _i624.LocaleCubit(gh<_i460.SharedPreferences>()),
   );
   gh.factory<_i611.ThemeCubit>(
     () => _i611.ThemeCubit(gh<_i460.SharedPreferences>()),

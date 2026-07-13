@@ -16,10 +16,7 @@ void main() {
       'allocated_days': '30.0',
       'carried_forward': '2.5',
       'used_days': '5',
-      'leave_policy': {
-        'display_name': 'Annual leave',
-        'leave_type': 'Annual',
-      },
+      'leave_policy': {'display_name': 'Annual leave', 'leave_type': 'Annual'},
     });
 
     final entity = mapper.toEntity(dto);

@@ -75,9 +75,8 @@ final employeeManifest = EntityManifest<Employee>(
       label: 'Contact',
       type: FieldType.fk,
       getValue: (e) => e.contactId,
-      setValue: (e, v) => e.copyWith(
-        contactId: v == null ? null : (v as AddressBook).id,
-      ),
+      setValue: (e, v) =>
+          e.copyWith(contactId: v == null ? null : (v as AddressBook).id),
       fkSearch: (query) async {
         final result = await _addressBookRepository.list(
           PageQuery(search: query),
@@ -96,9 +95,8 @@ final employeeManifest = EntityManifest<Employee>(
       label: 'Department',
       type: FieldType.fk,
       getValue: (e) => e.departmentId,
-      setValue: (e, v) => e.copyWith(
-        departmentId: v == null ? null : (v as Department).id,
-      ),
+      setValue: (e, v) =>
+          e.copyWith(departmentId: v == null ? null : (v as Department).id),
       fkSearch: (query) async {
         final result = await _departmentRepository.list(
           PageQuery(search: query),
@@ -117,9 +115,8 @@ final employeeManifest = EntityManifest<Employee>(
       label: 'Designation',
       type: FieldType.fk,
       getValue: (e) => e.designationId,
-      setValue: (e, v) => e.copyWith(
-        designationId: v == null ? null : (v as Designation).id,
-      ),
+      setValue: (e, v) =>
+          e.copyWith(designationId: v == null ? null : (v as Designation).id),
       fkSearch: (query) async {
         final result = await _designationRepository.list(
           PageQuery(search: query),

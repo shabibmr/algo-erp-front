@@ -1,9 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/network/tenant_context.dart';
+import 'package:algo_erp_front/core/printing/company_header_provider.dart';
+import 'package:algo_erp_front/core/printing/voucher_pdf.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/document_pdf_preview_page.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
@@ -15,6 +21,7 @@ import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
 import 'package:algo_erp_front/features/transactions_item_qty/item_qty_di.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -126,6 +133,57 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
     );
   }
 
+  Future<Uint8List> _buildPdf(ItemQtyDetail doc) async {
+    final company = await fetchCurrentCompanyHeader(
+      getIt<DioClient>(),
+      getIt<TenantContext>(),
+    );
+    return buildVoucherPdf(
+      title: kind.blueprint.label,
+      company: company,
+      header: PdfDocHeader(
+        voucherNo: doc.displayNo,
+        dateStr: doc.voucherDate?.toDayString(),
+        status: doc.status,
+        partyLabel:
+            doc.partyLabel ??
+            doc.billingName ??
+            (doc.partyLedgerId != null ? '#${doc.partyLedgerId}' : '—'),
+        narration: doc.narration,
+      ),
+      lines: [
+        for (final line in doc.lines)
+          PdfDocLine(
+            description:
+                line.itemLabel ??
+                (line.itemId != null ? '#${line.itemId}' : 'Line ${line.id}'),
+            qty: line.quantity?.toQuantity(),
+            price: line.price?.toMoney(),
+            amount:
+                (line.subtotal ?? Decimal.zero) +
+                (line.taxAmount ?? Decimal.zero),
+          ),
+      ],
+      totals: PdfDocTotals(
+        subtotal: doc.total ?? Decimal.zero,
+        discount: doc.discount,
+        vat: doc.vat,
+        total: doc.grossTotal ?? doc.total ?? Decimal.zero,
+      ),
+    );
+  }
+
+  void _print(ItemQtyDetail doc) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DocumentPdfPreviewPage(
+          title: 'Print ${doc.displayNo}',
+          pdfBuilder: () => _buildPdf(doc),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
@@ -163,6 +221,11 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
                   StatusChip(
                     status: _entityStatus(doc.status),
                     label: doc.status,
+                  ),
+                  IconButton(
+                    tooltip: 'Print',
+                    onPressed: () => _print(doc),
+                    icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
                     PermissionGate(

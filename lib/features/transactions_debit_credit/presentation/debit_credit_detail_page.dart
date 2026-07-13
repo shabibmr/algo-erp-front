@@ -1,9 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/network/tenant_context.dart';
+import 'package:algo_erp_front/core/printing/company_header_provider.dart';
+import 'package:algo_erp_front/core/printing/voucher_pdf.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/document_pdf_preview_page.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_kind.dart';
 import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_models.dart';
@@ -13,6 +19,7 @@ import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/debit_credit_di.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -117,6 +124,51 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
     );
   }
 
+  Future<Uint8List> _buildPdf(DebitCreditDetail doc) async {
+    final company = await fetchCurrentCompanyHeader(
+      getIt<DioClient>(),
+      getIt<TenantContext>(),
+    );
+    return buildVoucherPdf(
+      title: kind.blueprint.label,
+      company: company,
+      showQtyPrice: false,
+      header: PdfDocHeader(
+        voucherNo: doc.displayNo,
+        dateStr: doc.voucherDate?.toDayString(),
+        status: doc.status,
+        partyLabel: kind.blueprint.label,
+        narration: doc.narration,
+      ),
+      lines: [
+        for (final line in doc.lines)
+          PdfDocLine(
+            description:
+                '${line.ledgerLabel ?? (line.ledgerId != null ? '#${line.ledgerId}' : 'Line ${line.id}')} '
+                '(${(line.debit ?? Decimal.zero) > Decimal.zero ? 'Dr' : 'Cr'})',
+            amount: (line.debit ?? Decimal.zero) > Decimal.zero
+                ? line.debit!
+                : (line.credit ?? Decimal.zero),
+          ),
+      ],
+      totals: PdfDocTotals(
+        total: doc.total ?? Decimal.zero,
+        subtotal: doc.total ?? Decimal.zero,
+      ),
+    );
+  }
+
+  void _print(DebitCreditDetail doc) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DocumentPdfPreviewPage(
+          title: 'Print ${doc.displayNo}',
+          pdfBuilder: () => _buildPdf(doc),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
@@ -154,6 +206,11 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
                   StatusChip(
                     status: _entityStatus(doc.status),
                     label: doc.status,
+                  ),
+                  IconButton(
+                    tooltip: 'Print',
+                    onPressed: () => _print(doc),
+                    icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
                     PermissionGate(

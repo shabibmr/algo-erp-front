@@ -39,12 +39,5 @@ class ErrorReport extends Equatable {
   );
 
   @override
-  List<Object?> get props => [
-    id,
-    error,
-    tablename,
-    query,
-    clientId,
-    timeStamp,
-  ];
+  List<Object?> get props => [id, error, tablename, query, clientId, timeStamp];
 }

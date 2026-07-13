@@ -101,9 +101,7 @@ final projectMasterManifest = EntityManifest<ProjectMaster>(
         parentProjectMasterId: v == null ? null : (v as ProjectMaster).id,
       ),
       fkSearch: (query) async {
-        final result = await _projectRepository.list(
-          PageQuery(search: query),
-        );
+        final result = await _projectRepository.list(PageQuery(search: query));
         return result.fold((_) => const [], (page) => page.items);
       },
       fkDisplayOf: (item) {
@@ -215,9 +213,8 @@ final projectMasterManifest = EntityManifest<ProjectMaster>(
       label: 'Associated ledger',
       type: FieldType.fk,
       getValue: (p) => p.associatedLedgerId,
-      setValue: (p, v) => p.copyWith(
-        associatedLedgerId: v == null ? null : (v as Ledger).id,
-      ),
+      setValue: (p, v) =>
+          p.copyWith(associatedLedgerId: v == null ? null : (v as Ledger).id),
       fkSearch: (query) async {
         final result = await _ledgerRepository.list(PageQuery(search: query));
         return result.fold((_) => const [], (page) => page.items);

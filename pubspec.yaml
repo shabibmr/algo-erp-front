@@ -33,7 +33,9 @@ dependencies:
   json_annotation: ^4.9.0
   path: ^1.9.1
   path_provider: ^2.1.5
+  pdf: ^3.13.0
   pretty_dio_logger: ^1.4.0
+  printing: ^5.15.0
   shared_preferences: ^2.5.5
   sqlite3_flutter_libs: ^0.5.31
   stream_transform: ^2.1.1

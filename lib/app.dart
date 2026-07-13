@@ -1,6 +1,7 @@
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/navigation/app_router.dart';
 import 'package:algo_erp_front/core/theme/app_theme.dart';
+import 'package:algo_erp_front/core/theme/locale_cubit.dart';
 import 'package:algo_erp_front/core/theme/theme_cubit.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:algo_erp_front/l10n/gen/app_localizations.dart';
@@ -16,6 +17,7 @@ class App extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeCubit>(create: (_) => getIt<ThemeCubit>()),
+        BlocProvider<LocaleCubit>(create: (_) => getIt<LocaleCubit>()),
         BlocProvider<AuthBloc>(
           create: (_) => getIt<AuthBloc>()..add(const AuthStarted()),
         ),
@@ -41,12 +43,14 @@ class _AppViewState extends State<_AppView> {
   @override
   Widget build(BuildContext context) {
     final themeMode = context.watch<ThemeCubit>().state;
+    final locale = context.watch<LocaleCubit>().state;
     return MaterialApp.router(
       title: 'algoERP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,

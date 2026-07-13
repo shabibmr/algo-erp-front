@@ -22,11 +22,7 @@ void main() {
         'iban': 'AE00',
       },
       'employee_salary_details': [
-        {
-          'Basic_Salary': 5000,
-          'HRA': 1000,
-          'salary_ledger_id': 10,
-        },
+        {'Basic_Salary': 5000, 'HRA': 1000, 'salary_ledger_id': 10},
       ],
     });
 
@@ -39,32 +35,29 @@ void main() {
     expect(dto.salaryDetails?.salaryLedgerId, 10);
   });
 
-  test('toEntity maps money to Decimal; toJson nests bankDetails/salaryDetails', () {
-    final entity = mapper.toEntity(
-      EmployeeDto.fromJson({
-        'id': 1,
-        'Name': 'Test',
-        'bank_details': {
-          'bank_name': 'ENBD',
-          'account_number': '99',
-        },
-        'salaryDetails': {
-          'Basic_Salary': '2500.50',
-          'DA': 0,
-        },
-      }),
-    );
+  test(
+    'toEntity maps money to Decimal; toJson nests bankDetails/salaryDetails',
+    () {
+      final entity = mapper.toEntity(
+        EmployeeDto.fromJson({
+          'id': 1,
+          'Name': 'Test',
+          'bank_details': {'bank_name': 'ENBD', 'account_number': '99'},
+          'salaryDetails': {'Basic_Salary': '2500.50', 'DA': 0},
+        }),
+      );
 
-    expect(entity.name, 'Test');
-    expect(entity.bank.bankName, 'ENBD');
-    expect(entity.salary.basicSalary, Decimal.parse('2500.50'));
+      expect(entity.name, 'Test');
+      expect(entity.bank.bankName, 'ENBD');
+      expect(entity.salary.basicSalary, Decimal.parse('2500.50'));
 
-    final json = mapper.toDto(entity).toJson();
-    expect(json['Name'], 'Test');
-    expect(json['bankDetails'], isA<Map<String, dynamic>>());
-    expect(json['salaryDetails'], isA<Map<String, dynamic>>());
-    expect((json['bankDetails'] as Map)['account_number'], '99');
-  });
+      final json = mapper.toDto(entity).toJson();
+      expect(json['Name'], 'Test');
+      expect(json['bankDetails'], isA<Map<String, dynamic>>());
+      expect(json['salaryDetails'], isA<Map<String, dynamic>>());
+      expect((json['bankDetails'] as Map)['account_number'], '99');
+    },
+  );
 
   test('toJson omits empty bank/salary when shouldWrite is false', () {
     const employee = Employee(id: 1, name: 'Bare');
@@ -80,10 +73,7 @@ void main() {
       code: 'S-1',
       gender: 'Male',
       departmentId: 1,
-      bank: const EmployeeBankDetails(
-        bankName: 'X',
-        accountNumber: '1',
-      ),
+      bank: const EmployeeBankDetails(bankName: 'X', accountNumber: '1'),
       salary: EmployeeSalaryDetails(
         basicSalary: Decimal.fromInt(1000),
         workingHours: 8,

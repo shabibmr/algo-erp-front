@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/config/app_config.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// wash (ledger lines) + form card; mobile stacks logo + form. Fully token-
 /// and RTL-aware. Drives [AuthBloc]; navigation on success is the router's
 /// auth redirect.
+///
+/// In dev with [AppConfig.skipLogin], the form is prefilled with the test
+/// credentials so a failed auto-login is one tap to retry.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -18,9 +22,22 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefillUser = AppConfig.isReady && !AppConfig.instance.isProd
+        ? AppConfig.instance.devUsername
+        : '';
+    final prefillPass = AppConfig.isReady && !AppConfig.instance.isProd
+        ? AppConfig.instance.devPassword
+        : '';
+    _usernameController = TextEditingController(text: prefillUser);
+    _passwordController = TextEditingController(text: prefillPass);
+  }
 
   @override
   void dispose() {

@@ -1,3 +1,4 @@
+import 'package:algo_erp_front/core/navigation/command_palette.dart';
 import 'package:algo_erp_front/core/navigation/session_context_bar.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
@@ -60,19 +61,8 @@ class ShellHeader extends StatelessWidget implements PreferredSizeWidget {
                 Expanded(child: SessionContextBar(compact: isMobile)),
               ],
               IconButton(
-                tooltip: 'Command palette (coming soon)',
-                onPressed: () {
-                  ScaffoldMessenger.of(context)
-                    ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Command palette will arrive with the full '
-                          'manifest registry.',
-                        ),
-                      ),
-                    );
-                },
+                tooltip: 'Command palette',
+                onPressed: () => CommandPalette.show(context),
                 icon: const Icon(Icons.search),
               ),
               // Subtle kbd hint on desktop only — not a second control.

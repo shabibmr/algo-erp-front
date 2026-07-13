@@ -37,12 +37,7 @@ class Employee extends Equatable {
   });
 
   static const genders = ['Male', 'Female', 'Other'];
-  static const maritalStatuses = [
-    'Single',
-    'Married',
-    'Divorced',
-    'Widowed',
-  ];
+  static const maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
 
   final int id;
   final String name;

@@ -1,10 +1,14 @@
+import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/bloc/crud_bloc_scope.dart';
+import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/navigation/binder_sidebar.dart';
+import 'package:algo_erp_front/core/navigation/command_palette.dart';
 import 'package:algo_erp_front/core/navigation/menu_model.dart';
 import 'package:algo_erp_front/core/navigation/shell_header.dart';
 import 'package:algo_erp_front/core/responsive/breakpoints.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 /// Adaptive binder shell: drawer on mobile, icon spine on tablet, extended
@@ -14,61 +18,99 @@ class AppShell extends StatelessWidget {
 
   final Widget child;
 
-  int _selectedIndex(BuildContext context) {
+  /// The binder entry to highlight. Not a route-prefix match: Sales owns
+  /// `/transactions/sales-invoices`, whose prefix says Transactions, so the
+  /// owning hub is resolved through [AppMenu] instead.
+  int _selectedIndex(BuildContext context, List<MenuItemModel> items) {
     final location = GoRouterState.of(context).uri.toString();
-    final items = AppMenu.allItems;
-    final index = items.indexWhere(
-      (item) => location == item.route || location.startsWith('${item.route}/'),
-    );
+    final route = AppMenu.selectedBinderRoute(location);
+    final index = items.indexWhere((item) => item.route == route);
     return index == -1 ? 0 : index;
-  }
-
-  void _onSelect(BuildContext context, int index) {
-    context.go(AppMenu.allItems[index].route);
   }
 
   @override
   Widget build(BuildContext context) {
     final device = Breakpoints.of(context);
-    final selectedIndex = _selectedIndex(context);
-    final items = AppMenu.allItems;
+
+    // Filtered once, here, and passed down: the rail, the drawer and the
+    // selected index all index into the same flat list.
+    final sections = AppMenu.visibleSections(getIt<PermissionService>());
+    final items = [for (final s in sections) ...s.items];
+    if (items.isEmpty) return _EmptyBinderShell(child: child);
+
+    final selectedIndex = _selectedIndex(context, items);
     final title = items[selectedIndex.clamp(0, items.length - 1)].label;
+    void onSelect(int index) => context.go(items[index].route);
 
     // Above every shell route, so a master's list and form routes — which are
     // siblings, not ancestors — resolve the same CrudBloc.
-    return CrudBlocScope(
-      child: switch (device) {
-        DeviceClass.mobile => _MobileShell(
-          selectedIndex: selectedIndex,
-          title: title,
-          onSelect: (i) => _onSelect(context, i),
-          child: child,
-        ),
-        DeviceClass.tablet => _RailShell(
-          extended: false,
-          selectedIndex: selectedIndex,
-          onSelect: (i) => _onSelect(context, i),
-          child: child,
-        ),
-        DeviceClass.desktop || DeviceClass.large => _RailShell(
-          extended: true,
-          selectedIndex: selectedIndex,
-          onSelect: (i) => _onSelect(context, i),
-          child: child,
-        ),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+            CommandPalette.show(context),
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () =>
+            CommandPalette.show(context),
       },
+      child: CrudBlocScope(
+        child: switch (device) {
+          DeviceClass.mobile => _MobileShell(
+            sections: sections,
+            selectedIndex: selectedIndex,
+            title: title,
+            onSelect: onSelect,
+            child: child,
+          ),
+          DeviceClass.tablet => _RailShell(
+            extended: false,
+            sections: sections,
+            selectedIndex: selectedIndex,
+            onSelect: onSelect,
+            child: child,
+          ),
+          DeviceClass.desktop || DeviceClass.large => _RailShell(
+            extended: true,
+            sections: sections,
+            selectedIndex: selectedIndex,
+            onSelect: onSelect,
+            child: child,
+          ),
+        },
+      ),
+    );
+  }
+}
+
+/// The user can read nothing in the binder. Show the page without a spine
+/// rather than a rail of zero destinations.
+class _EmptyBinderShell extends StatelessWidget {
+  const _EmptyBinderShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.tokens.brand.linen,
+      body: Column(
+        children: [
+          const ShellHeader(),
+          Expanded(child: child),
+        ],
+      ),
     );
   }
 }
 
 class _MobileShell extends StatefulWidget {
   const _MobileShell({
+    required this.sections,
     required this.selectedIndex,
     required this.title,
     required this.onSelect,
     required this.child,
   });
 
+  final List<MenuSectionModel> sections;
   final int selectedIndex;
   final String title;
   final ValueChanged<int> onSelect;
@@ -142,7 +184,7 @@ class _MobileShellState extends State<_MobileShell> {
     final widgets = <Widget>[];
     var flatIndex = 0;
 
-    for (final section in AppMenu.sections) {
+    for (final section in widget.sections) {
       if (section.title != null) {
         widgets.add(
           Padding(
@@ -200,12 +242,14 @@ class _MobileShellState extends State<_MobileShell> {
 class _RailShell extends StatelessWidget {
   const _RailShell({
     required this.extended,
+    required this.sections,
     required this.selectedIndex,
     required this.onSelect,
     required this.child,
   });
 
   final bool extended;
+  final List<MenuSectionModel> sections;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final Widget child;
@@ -221,6 +265,7 @@ class _RailShell extends StatelessWidget {
           BinderSidebar(
             key: const Key('binder-sidebar'),
             extended: extended,
+            sections: sections,
             selectedIndex: selectedIndex,
             onSelect: onSelect,
           ),

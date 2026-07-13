@@ -11,6 +11,7 @@ import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_kind.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_kind.dart';
 import 'package:algo_erp_front/core/widgets/gallery/widget_gallery_page.dart';
+import 'package:algo_erp_front/core/widgets/layout/module_hub_page.dart';
 import 'package:algo_erp_front/features/accounts_account_group/presentation/account_group_form_page.dart';
 import 'package:algo_erp_front/features/accounts_account_group/presentation/account_group_list_page.dart';
 import 'package:algo_erp_front/features/accounts_ledger/presentation/ledger_form_page.dart';
@@ -58,7 +59,6 @@ import 'package:algo_erp_front/features/inventory_uom/presentation/uom_form_page
 import 'package:algo_erp_front/features/inventory_uom/presentation/uom_list_page.dart';
 import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_form_page.dart';
 import 'package:algo_erp_front/features/inventory_uom_conversion/presentation/uom_conversion_list_page.dart';
-import 'package:algo_erp_front/features/organization/presentation/organization_hub_page.dart';
 import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_form_page.dart';
 import 'package:algo_erp_front/features/organization_address_book/presentation/address_book_list_page.dart';
 import 'package:algo_erp_front/features/organization_audit/presentation/audit_log_list_page.dart';
@@ -85,6 +85,9 @@ import 'package:algo_erp_front/features/organization_user_role/presentation/user
 import 'package:algo_erp_front/features/organization_user_role/presentation/user_role_list_page.dart';
 import 'package:algo_erp_front/features/organization_voucher_series/presentation/voucher_series_form_page.dart';
 import 'package:algo_erp_front/features/organization_voucher_series/presentation/voucher_series_list_page.dart';
+import 'package:algo_erp_front/features/reports/presentation/report_page.dart';
+import 'package:algo_erp_front/features/reports/presentation/reports_hub_page.dart';
+import 'package:algo_erp_front/features/settings/presentation/settings_page.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/presentation/debit_credit_detail_page.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/presentation/debit_credit_form_page.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/presentation/debit_credit_list_page.dart';
@@ -96,7 +99,6 @@ import 'package:algo_erp_front/features/transactions_ledger_amount/presentation/
 import 'package:algo_erp_front/features/transactions_ledger_amount/presentation/ledger_amount_list_page.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_detail_page.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_form_page.dart';
-import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_html_pdf_page.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_list_page.dart';
 import 'package:algo_erp_front/features/transactions_stock/presentation/stock_voucher_detail_page.dart';
 import 'package:algo_erp_front/features/transactions_stock/presentation/stock_voucher_form_page.dart';
@@ -255,187 +257,25 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [
-        for (final item in AppMenu.allItems)
+        // Binder hubs + hub-tile masters (masters are not in the rail).
+        for (final item in AppMenu.allShellListItems)
           GoRoute(
             path: item.route,
             pageBuilder: (context, state) => buildPageWithMotion(
               state: state,
-              child: switch (item.route) {
-                '/dashboard' => const TodaysDeskPage(),
-                '/theme-preview' => const ThemePreviewPage(),
-                '/widget-gallery' => const WidgetGalleryPage(),
-                '/inventory/item' => const InventoryItemListPage(),
-                '/inventory/group' => const InventoryGroupListPage(),
-                '/inventory/sku' => const SkuMasterListPage(),
-                '/inventory/batch' => const ItemBatchListPage(),
-                '/inventory/brand' => const BrandListPage(),
-                '/inventory/uom' => const UomListPage(),
-                '/inventory/category' => const CategoryListPage(),
-                '/inventory/tax-category' => const TaxCategoryListPage(),
-                '/inventory/godown' => const GodownListPage(),
-                '/inventory/route' => const RouteMasterListPage(),
-                '/inventory/conversion' => const UomConversionListPage(),
-                '/inventory/pricelist' => const PriceListListPage(),
-                '/employee/employees' => const EmployeeListPage(),
-                '/employee/department' => const DepartmentListPage(),
-                '/employee/designation' => const DesignationListPage(),
-                '/employee/leave/policies' => const LeavePolicyListPage(),
-                '/employee/leave/allocations' =>
-                  const LeaveAllocationListPage(),
-                '/employee/leave-requests' => const LeaveRequestListPage(),
-                '/employee/shifts' => const ShiftMasterListPage(),
-                '/organization' => const OrganizationHubPage(),
-                '/inventory/property' => const ItemPropertyListPage(),
-                '/accounts/groups' => const AccountGroupListPage(),
-                '/accounts/ledgers' => const LedgerListPage(),
-                '/transactions/sales-invoices' => const SalesInvoiceListPage(),
-                '/transactions/quotations' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.quotation,
-                ),
-                '/transactions/sales-orders' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.salesOrder,
-                ),
-                '/transactions/delivery-notes' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.deliveryNote,
-                ),
-                '/transactions/purchase-orders' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.purchaseOrder,
-                ),
-                '/transactions/receipt-notes' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.receiptNote,
-                ),
-                '/transactions/purchase-invoices' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.purchaseInvoice,
-                ),
-                '/transactions/payments' => const LedgerAmountListPage(
-                  kind: LedgerAmountKinds.payment,
-                ),
-                '/transactions/receipts' => const LedgerAmountListPage(
-                  kind: LedgerAmountKinds.receipt,
-                ),
-                '/transactions/credit-notes' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.creditNote,
-                ),
-                '/transactions/debit-notes' => const ItemQtyListPage(
-                  kind: ItemQtyKinds.debitNote,
-                ),
-                '/transactions/journals' => const DebitCreditListPage(
-                  kind: DebitCreditKinds.journal,
-                ),
-                '/transactions/contra' => const DebitCreditListPage(
-                  kind: DebitCreditKinds.contra,
-                ),
-                '/transactions/godown-transfers' => const StockVoucherListPage(
-                  kind: StockVoucherKinds.godownTransfer,
-                ),
-                '/transactions/material-in' => const StockVoucherListPage(
-                  kind: StockVoucherKinds.materialIn,
-                ),
-                '/transactions/requirements' => const StockVoucherListPage(
-                  kind: StockVoucherKinds.requirement,
-                ),
-                '/transactions/stock-requests' => const StockVoucherListPage(
-                  kind: StockVoucherKinds.stockRequest,
-                ),
-                _ => _PlaceholderPage(title: item.label),
-              },
+              child: shellListPageFor(item.route, fallbackTitle: item.label),
             ),
           ),
-        // Organization masters live on the hub tiles, not the binder — list
-        // routes still need registration outside AppMenu.allItems.
+        // Report viewer (hub is AppMenu `/reports`).
         GoRoute(
-          path: '/organization/companies',
+          path: '/reports/:reportId',
           pageBuilder: (context, state) => buildPageWithMotion(
             state: state,
-            child: const CompanyProfileListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/branches',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const BranchListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/currencies',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const CurrencyListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/roles',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const UserRoleListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/users',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const UserCredentialsListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/contacts',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const AddressBookListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/fy',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const FinancialYearListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/voucher-series',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const VoucherSeriesListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/projects',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const ProjectMasterListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/rates/history',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const CurrencyRateListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/config',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const ConfigSettingListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/audit-logs',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const AuditLogListPage(),
-          ),
-        ),
-        GoRoute(
-          path: '/organization/error-reports',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: const ErrorReportListPage(),
+            child: ReportPage(reportId: state.pathParameters['reportId']!),
           ),
         ),
         // Manifest create/edit routes — not menu items, so registered
-        // directly rather than through the AppMenu.allItems loop above.
+        // directly rather than through the AppMenu shell list loop above.
         GoRoute(
           path: '/transactions/sales-invoices/new',
           pageBuilder: (context, state) => buildPageWithMotion(
@@ -449,15 +289,6 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
             state: state,
             child: SalesInvoiceFormPage(
               entityId: int.parse(state.pathParameters['id']!),
-            ),
-          ),
-        ),
-        GoRoute(
-          path: '/transactions/sales-invoices/:id/pdf',
-          pageBuilder: (context, state) => buildPageWithMotion(
-            state: state,
-            child: SalesInvoiceHtmlPdfPage(
-              id: int.parse(state.pathParameters['id']!),
             ),
           ),
         ),
@@ -1109,6 +940,111 @@ class _ForbiddenPage extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Resolves binder hubs and hub-master list pages for AppMenu shell list items.
+Widget shellListPageFor(String route, {required String fallbackTitle}) {
+  // Every business hub renders from its manifest — Sales, Purchase, Inventory,
+  // Finance, People, General, Organization, and the All-documents index.
+  if (AppMenu.hubs[route] case final hub?) return ModuleHubPage(hub: hub);
+
+  return switch (route) {
+    '/dashboard' => const TodaysDeskPage(),
+    '/reports' => const ReportsHubPage(),
+    '/settings' => const SettingsPage(),
+    '/theme-preview' => const ThemePreviewPage(),
+    '/widget-gallery' => const WidgetGalleryPage(),
+    // Organization masters
+    '/organization/companies' => const CompanyProfileListPage(),
+    '/organization/branches' => const BranchListPage(),
+    '/organization/currencies' => const CurrencyListPage(),
+    '/organization/roles' => const UserRoleListPage(),
+    '/organization/users' => const UserCredentialsListPage(),
+    '/organization/contacts' => const AddressBookListPage(),
+    '/organization/fy' => const FinancialYearListPage(),
+    '/organization/voucher-series' => const VoucherSeriesListPage(),
+    '/organization/projects' => const ProjectMasterListPage(),
+    '/organization/rates/history' => const CurrencyRateListPage(),
+    '/organization/config' => const ConfigSettingListPage(),
+    '/organization/audit-logs' => const AuditLogListPage(),
+    '/organization/error-reports' => const ErrorReportListPage(),
+    // Accounts
+    '/accounts/groups' => const AccountGroupListPage(),
+    '/accounts/ledgers' => const LedgerListPage(),
+    // Inventory
+    '/inventory/item' => const InventoryItemListPage(),
+    '/inventory/group' => const InventoryGroupListPage(),
+    '/inventory/sku' => const SkuMasterListPage(),
+    '/inventory/batch' => const ItemBatchListPage(),
+    '/inventory/brand' => const BrandListPage(),
+    '/inventory/uom' => const UomListPage(),
+    '/inventory/category' => const CategoryListPage(),
+    '/inventory/tax-category' => const TaxCategoryListPage(),
+    '/inventory/godown' => const GodownListPage(),
+    '/inventory/route' => const RouteMasterListPage(),
+    '/inventory/conversion' => const UomConversionListPage(),
+    '/inventory/pricelist' => const PriceListListPage(),
+    '/inventory/property' => const ItemPropertyListPage(),
+    // Employee
+    '/employee/employees' => const EmployeeListPage(),
+    '/employee/department' => const DepartmentListPage(),
+    '/employee/designation' => const DesignationListPage(),
+    '/employee/leave/policies' => const LeavePolicyListPage(),
+    '/employee/leave/allocations' => const LeaveAllocationListPage(),
+    '/employee/leave-requests' => const LeaveRequestListPage(),
+    '/employee/shifts' => const ShiftMasterListPage(),
+    // Transactions
+    '/transactions/sales-invoices' => const SalesInvoiceListPage(),
+    '/transactions/quotations' => const ItemQtyListPage(
+      kind: ItemQtyKinds.quotation,
+    ),
+    '/transactions/sales-orders' => const ItemQtyListPage(
+      kind: ItemQtyKinds.salesOrder,
+    ),
+    '/transactions/delivery-notes' => const ItemQtyListPage(
+      kind: ItemQtyKinds.deliveryNote,
+    ),
+    '/transactions/purchase-orders' => const ItemQtyListPage(
+      kind: ItemQtyKinds.purchaseOrder,
+    ),
+    '/transactions/receipt-notes' => const ItemQtyListPage(
+      kind: ItemQtyKinds.receiptNote,
+    ),
+    '/transactions/purchase-invoices' => const ItemQtyListPage(
+      kind: ItemQtyKinds.purchaseInvoice,
+    ),
+    '/transactions/payments' => const LedgerAmountListPage(
+      kind: LedgerAmountKinds.payment,
+    ),
+    '/transactions/receipts' => const LedgerAmountListPage(
+      kind: LedgerAmountKinds.receipt,
+    ),
+    '/transactions/credit-notes' => const ItemQtyListPage(
+      kind: ItemQtyKinds.creditNote,
+    ),
+    '/transactions/debit-notes' => const ItemQtyListPage(
+      kind: ItemQtyKinds.debitNote,
+    ),
+    '/transactions/journals' => const DebitCreditListPage(
+      kind: DebitCreditKinds.journal,
+    ),
+    '/transactions/contra' => const DebitCreditListPage(
+      kind: DebitCreditKinds.contra,
+    ),
+    '/transactions/godown-transfers' => const StockVoucherListPage(
+      kind: StockVoucherKinds.godownTransfer,
+    ),
+    '/transactions/material-in' => const StockVoucherListPage(
+      kind: StockVoucherKinds.materialIn,
+    ),
+    '/transactions/requirements' => const StockVoucherListPage(
+      kind: StockVoucherKinds.requirement,
+    ),
+    '/transactions/stock-requests' => const StockVoucherListPage(
+      kind: StockVoucherKinds.stockRequest,
+    ),
+    _ => _PlaceholderPage(title: fallbackTitle),
+  };
 }
 
 class _PlaceholderPage extends StatelessWidget {

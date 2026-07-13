@@ -55,9 +55,7 @@ class LeaveRequestFormPage extends StatelessWidget {
 
     return RepositoryProvider<LeaveRequestRepository>(
       create: (_) => createLeaveRequestRepository(getIt<DioClient>()),
-      child: AdaptiveLayout(
-        child: _LeaveRequestDetail(entityId: entityId!),
-      ),
+      child: AdaptiveLayout(child: _LeaveRequestDetail(entityId: entityId!)),
     );
   }
 }
@@ -144,19 +142,17 @@ class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
     final repo = context.read<LeaveRequestRepository>();
 
     return BlocProvider(
-      create: (_) => DetailBloc<LeaveRequest, int>(
-        repository: repo,
-        id: widget.entityId,
-      )..add(const DetailLoadRequested()),
+      create: (_) =>
+          DetailBloc<LeaveRequest, int>(repository: repo, id: widget.entityId)
+            ..add(const DetailLoadRequested()),
       child:
           BlocBuilder<DetailBloc<LeaveRequest, int>, DetailState<LeaveRequest>>(
             builder: (context, state) {
               return AsyncStateView<LeaveRequest>(
                 state: state.toViewState(),
-                onRetry: () =>
-                    context.read<DetailBloc<LeaveRequest, int>>().add(
-                      const DetailLoadRequested(),
-                    ),
+                onRetry: () => context
+                    .read<DetailBloc<LeaveRequest, int>>()
+                    .add(const DetailLoadRequested()),
                 builder: (context, request) {
                   final pending = request.status == 'Pending';
                   final empLabel =
@@ -173,9 +169,7 @@ class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
                       if (_error != null) ...[
                         Text(
                           _error!,
-                          style: TextStyle(
-                            color: tokens.semanticColors.danger,
-                          ),
+                          style: TextStyle(color: tokens.semanticColors.danger),
                         ),
                         SizedBox(height: tokens.spacing.sm),
                       ],
@@ -191,15 +185,11 @@ class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
                       ),
                       _row('Days', request.numberOfDays.toString()),
                       _row('Status', request.status),
-                      if (request.reason != null &&
-                          request.reason!.isNotEmpty)
+                      if (request.reason != null && request.reason!.isNotEmpty)
                         _row('Reason', request.reason!),
                       if (request.rejectionReason != null &&
                           request.rejectionReason!.isNotEmpty)
-                        _row(
-                          'Rejection reason',
-                          request.rejectionReason!,
-                        ),
+                        _row('Rejection reason', request.rejectionReason!),
                       SizedBox(height: tokens.spacing.lg),
                       if (pending)
                         PermissionGate(

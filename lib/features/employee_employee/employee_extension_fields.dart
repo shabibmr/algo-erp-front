@@ -127,9 +127,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Basic salary',
     type: FieldType.decimal,
     getValue: (e) => e.salary.basicSalary,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(basicSalary: v as Decimal?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(basicSalary: v as Decimal?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.da',
@@ -155,9 +154,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Conveyance',
     type: FieldType.decimal,
     getValue: (e) => e.salary.conveyance,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(conveyance: v as Decimal?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(conveyance: v as Decimal?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.overtimeHourlyRate',
@@ -175,9 +173,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'OT multiplier',
     type: FieldType.decimal,
     getValue: (e) => e.salary.overTimePay,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(overTimePay: v as Decimal?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(overTimePay: v as Decimal?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.monthlyLeave',
@@ -185,9 +182,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Monthly leave days',
     type: FieldType.int,
     getValue: (e) => e.salary.monthlyLeave,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(monthlyLeave: v as int?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(monthlyLeave: v as int?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.weeklyLeave',
@@ -195,9 +191,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Weekly leave days',
     type: FieldType.int,
     getValue: (e) => e.salary.weeklyLeave,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(weeklyLeave: v as int?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(weeklyLeave: v as int?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.annualLeave',
@@ -205,9 +200,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Annual leave days',
     type: FieldType.int,
     getValue: (e) => e.salary.annualLeave,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(annualLeave: v as int?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(annualLeave: v as int?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.workingHours',
@@ -215,9 +209,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Working hours',
     type: FieldType.int,
     getValue: (e) => e.salary.workingHours,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(workingHours: v as int?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(workingHours: v as int?)),
   ),
   FormFieldSpec<Employee>(
     key: 'salary.effectiveFrom',
@@ -225,9 +218,8 @@ final employeeSalaryFormFields = <FormFieldSpec<Employee>>[
     label: 'Effective from',
     type: FieldType.dateTime,
     getValue: (e) => e.salary.effectiveFrom,
-    setValue: (e, v) => e.copyWith(
-      salary: e.salary.copyWith(effectiveFrom: v as DateTime?),
-    ),
+    setValue: (e, v) =>
+        e.copyWith(salary: e.salary.copyWith(effectiveFrom: v as DateTime?)),
   ),
 ];
 

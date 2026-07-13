@@ -16,7 +16,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Item {
-  const _Item({this.id = 0, this.code = '', this.name = '', this.active = true});
+  const _Item({
+    this.id = 0,
+    this.code = '',
+    this.name = '',
+    this.active = true,
+  });
   final int id;
   final String code;
   final String name;

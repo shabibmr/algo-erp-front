@@ -1,9 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/network/tenant_context.dart';
+import 'package:algo_erp_front/core/printing/company_header_provider.dart';
+import 'package:algo_erp_front/core/printing/voucher_pdf.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/document_pdf_preview_page.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_kind.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_models.dart';
@@ -14,6 +20,7 @@ import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
 import 'package:algo_erp_front/features/transactions_stock/stock_voucher_di.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -123,6 +130,53 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
     );
   }
 
+  Future<Uint8List> _buildPdf(StockVoucherDetail doc) async {
+    final company = await fetchCurrentCompanyHeader(
+      getIt<DioClient>(),
+      getIt<TenantContext>(),
+    );
+    final partyLabel = doc.fromGodownLabel != null && doc.toGodownLabel != null
+        ? '${doc.fromGodownLabel} → ${doc.toGodownLabel}'
+        : doc.godownLabel ?? doc.billingName ?? '—';
+    return buildVoucherPdf(
+      title: kind.blueprint.label,
+      company: company,
+      header: PdfDocHeader(
+        voucherNo: doc.displayNo,
+        dateStr: doc.voucherDate?.toDayString(),
+        status: doc.status,
+        partyLabel: partyLabel,
+        narration: doc.narration,
+      ),
+      lines: [
+        for (final line in doc.lines)
+          PdfDocLine(
+            description:
+                line.itemLabel ??
+                (line.itemId != null ? '#${line.itemId}' : 'Line ${line.id}'),
+            qty: (line.quantity ?? line.requestQty)?.toQuantity(),
+            price: line.price?.toMoney(),
+            amount: line.subtotal ?? Decimal.zero,
+          ),
+      ],
+      totals: PdfDocTotals(
+        total: doc.total ?? Decimal.zero,
+        subtotal: doc.total ?? Decimal.zero,
+      ),
+    );
+  }
+
+  void _print(StockVoucherDetail doc) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DocumentPdfPreviewPage(
+          title: 'Print ${doc.displayNo}',
+          pdfBuilder: () => _buildPdf(doc),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
@@ -160,6 +214,11 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
                   StatusChip(
                     status: _entityStatus(doc.status),
                     label: doc.status,
+                  ),
+                  IconButton(
+                    tooltip: 'Print',
+                    onPressed: () => _print(doc),
+                    icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
                     PermissionGate(

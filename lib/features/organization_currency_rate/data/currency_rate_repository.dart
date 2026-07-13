@@ -40,10 +40,7 @@ class CurrencyRateRepository implements Repository<CurrencyRate, int> {
       if (data is! Map<String, dynamic>) {
         throw const FormatException('Expected paginated rates payload');
       }
-      final page = Paginated<JsonMap>.fromJson(
-        data,
-        (j) => j! as JsonMap,
-      );
+      final page = Paginated<JsonMap>.fromJson(data, (j) => j! as JsonMap);
       return Paginated<CurrencyRate>(
         items: [
           for (final raw in page.items)

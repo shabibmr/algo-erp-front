@@ -1,5 +1,6 @@
 import 'package:algo_erp_front/core/auth/token_storage.dart';
 import 'package:algo_erp_front/core/bloc/form_mixin.dart';
+import 'package:algo_erp_front/core/config/app_config.dart';
 import 'package:algo_erp_front/features/auth/domain/auth_repository.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_event.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_state.dart';
@@ -16,6 +17,10 @@ export 'auth_state.dart';
 /// session, logs in/out, and changes the password. Login and change-password
 /// validation errors are turned into per-field messages via [FormMixin], so
 /// the forms can bind them to inputs.
+///
+/// **Dev auto-login:** when [AppConfig.shouldAutoLogin] is true and no token
+/// is stored, boot signs in as the configured test user so the login page is
+/// skipped during local testing.
 @injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> with FormMixin {
   AuthBloc(this._repository, this._tokenStorage) : super(const AuthInitial()) {
@@ -31,6 +36,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with FormMixin {
   Future<void> _onStarted(AuthStarted event, Emitter<AuthState> emit) async {
     final token = await _tokenStorage.accessToken;
     if (token == null) {
+      if (AppConfig.shouldAutoLogin) {
+        await _autoLogin(emit);
+        return;
+      }
       emit(const AuthUnauthenticated());
       return;
     }
@@ -38,8 +47,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> with FormMixin {
     // after the interceptor's refresh attempt), treat the session as gone.
     emit(const AuthLoading());
     final result = await _repository.me();
+    await result.fold((_) async {
+      if (AppConfig.shouldAutoLogin) {
+        await _autoLogin(emit);
+        return;
+      }
+      emit(const AuthUnauthenticated());
+    }, (user) async => emit(AuthAuthenticated(user)));
+  }
+
+  /// Signs in with [AppConfig] dev credentials. On failure, falls through to
+  /// the login page so a down backend is still visible.
+  Future<void> _autoLogin(Emitter<AuthState> emit) async {
+    final config = AppConfig.instance;
+    emit(const AuthLoading());
+    final result = await _repository.login(
+      username: config.devUsername,
+      password: config.devPassword,
+    );
     result.fold(
-      (_) => emit(const AuthUnauthenticated()),
+      (failure) =>
+          emit(AuthFailure(failure, fieldErrors: fieldErrorsFrom(failure))),
       (user) => emit(AuthAuthenticated(user)),
     );
   }

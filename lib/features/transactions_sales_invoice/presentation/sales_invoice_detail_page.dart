@@ -1,10 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/error/safe_call.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/network/tenant_context.dart';
+import 'package:algo_erp_front/core/printing/company_header_provider.dart';
+import 'package:algo_erp_front/core/printing/voucher_pdf.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
+import 'package:algo_erp_front/core/surfaces/document_pdf_preview_page.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
@@ -17,7 +23,6 @@ import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/data/sales_invoice_dto.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_invoice.dart';
-import 'package:algo_erp_front/features/transactions_sales_invoice/presentation/sales_invoice_print_page.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/sales_invoice_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
@@ -248,14 +253,55 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
     );
   }
 
-  void _print(SalesInvoiceDetail doc) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => SalesInvoicePrintPage(doc: doc)),
+  Future<Uint8List> _buildPdf(SalesInvoiceDetail doc) async {
+    final company = await fetchCurrentCompanyHeader(
+      getIt<DioClient>(),
+      getIt<TenantContext>(),
+    );
+    return buildVoucherPdf(
+      title: _bp.label,
+      company: company,
+      header: PdfDocHeader(
+        voucherNo: doc.displayNo,
+        dateStr: doc.voucherDate?.toDayString(),
+        status: doc.status,
+        partyLabel:
+            doc.customerLabel ??
+            doc.billingName ??
+            (doc.customerLedgerId != null ? '#${doc.customerLedgerId}' : '—'),
+        narration: doc.narration,
+      ),
+      lines: [
+        for (final line in doc.lines)
+          PdfDocLine(
+            description:
+                line.itemLabel ??
+                (line.itemId != null ? '#${line.itemId}' : '—'),
+            qty: line.quantity?.toQuantity(),
+            price: line.price?.toMoney(),
+            amount:
+                (line.subtotal ?? Decimal.zero) +
+                (line.taxAmount ?? Decimal.zero),
+          ),
+      ],
+      totals: PdfDocTotals(
+        subtotal: doc.total ?? Decimal.zero,
+        discount: doc.discount,
+        vat: doc.vat,
+        total: doc.grossTotal ?? doc.total ?? Decimal.zero,
+      ),
     );
   }
 
-  void _printHtmlServer() {
-    context.push('/transactions/sales-invoices/${widget.id}/pdf');
+  void _print(SalesInvoiceDetail doc) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DocumentPdfPreviewPage(
+          title: 'Print ${doc.displayNo}',
+          pdfBuilder: () => _buildPdf(doc),
+        ),
+      ),
+    );
   }
 
   @override
@@ -317,7 +363,6 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
                   onReject: doc.canReject ? _reject : null,
                   onCancel: doc.canCancel ? _cancel : null,
                   onPrint: () => _print(doc),
-                  onPrintHtml: _printHtmlServer,
                   spacing: tokens.spacing.md,
                 );
               },
@@ -342,7 +387,6 @@ class _DetailBody extends StatelessWidget {
     this.onReject,
     this.onCancel,
     this.onPrint,
-    this.onPrintHtml,
   });
 
   static const _bp = VoucherBlueprints.salesInvoice;
@@ -358,7 +402,6 @@ class _DetailBody extends StatelessWidget {
   final VoidCallback? onReject;
   final VoidCallback? onCancel;
   final VoidCallback? onPrint;
-  final VoidCallback? onPrintHtml;
 
   @override
   Widget build(BuildContext context) {
@@ -484,13 +527,7 @@ class _DetailBody extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: busy ? null : onPrint,
                   icon: const Icon(Icons.print_outlined),
-                  label: const Text('Print preview'),
-                ),
-              if (onPrintHtml != null)
-                OutlinedButton.icon(
-                  onPressed: busy ? null : onPrintHtml,
-                  icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('Server HTML'),
+                  label: const Text('Print'),
                 ),
               if (onEdit != null)
                 PermissionGate(

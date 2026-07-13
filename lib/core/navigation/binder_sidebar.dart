@@ -7,12 +7,16 @@ import 'package:flutter/material.dart';
 /// [extended] shows labels and brand word; collapsed is icon-only (tablet).
 class BinderSidebar extends StatelessWidget {
   const BinderSidebar({
+    required this.sections,
     required this.selectedIndex,
     required this.onSelect,
     required this.extended,
     super.key,
   });
 
+  /// Already RBAC-filtered by `AppShell`. [selectedIndex] is a flat index into
+  /// these sections' items, so the filtering must not be repeated here.
+  final List<MenuSectionModel> sections;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final bool extended;
@@ -56,7 +60,7 @@ class BinderSidebar extends StatelessWidget {
     final widgets = <Widget>[];
     var flatIndex = 0;
 
-    for (final section in AppMenu.sections) {
+    for (final section in sections) {
       if (section.title != null && extended) {
         widgets.add(
           Padding(

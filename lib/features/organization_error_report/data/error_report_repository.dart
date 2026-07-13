@@ -26,10 +26,7 @@ class ErrorReportRepository implements Repository<ErrorReport, int> {
     return safeCall(() async {
       final res = await _client.dio.get<Object?>(
         _path,
-        queryParameters: {
-          'page': query.page,
-          'limit': query.limit,
-        },
+        queryParameters: {'page': query.page, 'limit': query.limit},
       );
       final envelope = decodeApiResponse<Object?>(res.data, (j) => j);
       final data = envelope.data;
