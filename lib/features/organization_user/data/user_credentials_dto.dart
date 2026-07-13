@@ -4,7 +4,7 @@ class UserCredentialsDto extends Equatable {
   const UserCredentialsDto({
     required this.id,
     required this.username,
-    required this.contactId,
+    this.contactId,
     required this.roleId,
     this.password,
     this.branchId,
@@ -16,7 +16,7 @@ class UserCredentialsDto extends Equatable {
       UserCredentialsDto(
         id: json['id'] as int,
         username: json['username'] as String? ?? '',
-        contactId: json['contact_id'] as int? ?? 0,
+        contactId: json['contact_id'] as int?,
         roleId: json['role_id'] as int? ?? 0,
         branchId: json['branch_id'] as int?,
         employeeId: json['employee_id'] as int?,
@@ -25,7 +25,7 @@ class UserCredentialsDto extends Equatable {
 
   final int id;
   final String username;
-  final int contactId;
+  final int? contactId;
   final int roleId;
   final String? password;
   final int? branchId;
@@ -42,9 +42,10 @@ class UserCredentialsDto extends Equatable {
     if (employeeId != null) 'employee_id': employeeId,
   };
 
-  /// Update body (`userUpdateCredentialsSchema`) — no username/contact.
+  /// Update body (`userUpdateCredentialsSchema`).
   Map<String, dynamic> toUpdateJson() => {
     if (password != null && password!.isNotEmpty) 'password': password,
+    'contact_id': contactId,
     'role_id': roleId,
     if (branchId != null) 'branch_id': branchId,
     if (employeeId != null) 'employee_id': employeeId,

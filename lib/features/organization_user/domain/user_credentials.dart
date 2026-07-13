@@ -8,7 +8,7 @@ class UserCredentials extends Equatable {
   const UserCredentials({
     required this.id,
     required this.username,
-    required this.contactId,
+    this.contactId,
     required this.roleId,
     this.password,
     this.branchId,
@@ -18,7 +18,7 @@ class UserCredentials extends Equatable {
 
   final int id;
   final String username;
-  final int contactId;
+  final int? contactId;
   final int roleId;
 
   /// Create/update write-only; never loaded from GET.

@@ -72,11 +72,10 @@ final userCredentialsManifest = EntityManifest<UserCredentials>(
       wireKey: 'contact_id',
       label: 'Contact',
       type: FieldType.fk,
-      required: true,
       getValue: (u) => u.contactId == 0 ? null : u.contactId,
       setValue: (u, v) {
         final contact = v as AddressBook?;
-        return u.copyWith(contactId: contact?.id ?? 0);
+        return u.copyWith(contactId: contact?.id);
       },
       fkSearch: (q) async {
         final r = await _contactRepo.list(PageQuery(search: q));
@@ -143,6 +142,6 @@ final userCredentialsManifest = EntityManifest<UserCredentials>(
     ),
   ],
   emptyEntity: () =>
-      const UserCredentials(id: 0, username: '', contactId: 0, roleId: 0),
+      const UserCredentials(id: 0, username: '', roleId: 0),
   // DELETE deactivates (soft) — hardDelete defaults to false.
 );
