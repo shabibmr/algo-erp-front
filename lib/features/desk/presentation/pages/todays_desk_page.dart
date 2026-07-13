@@ -418,7 +418,6 @@ class _QuietPulseSection extends StatelessWidget {
         else
           LayoutBuilder(
             builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 720;
               final tiles = [
                 _PulseTile(
                   label: 'Sales invoices',
@@ -443,7 +442,7 @@ class _QuietPulseSection extends StatelessWidget {
                   brass: true,
                 ),
               ];
-              if (wide) {
+              if (constraints.maxWidth >= 900) {
                 return Row(
                   children: [
                     for (var i = 0; i < tiles.length; i++) ...[
@@ -455,10 +454,21 @@ class _QuietPulseSection extends StatelessWidget {
               }
               return Column(
                 children: [
-                  for (var i = 0; i < tiles.length; i++) ...[
-                    if (i > 0) SizedBox(height: tokens.spacing.sm),
-                    tiles[i],
-                  ],
+                  Row(
+                    children: [
+                      Expanded(child: tiles[0]),
+                      SizedBox(width: tokens.spacing.sm),
+                      Expanded(child: tiles[1]),
+                    ],
+                  ),
+                  SizedBox(height: tokens.spacing.sm),
+                  Row(
+                    children: [
+                      Expanded(child: tiles[2]),
+                      SizedBox(width: tokens.spacing.sm),
+                      Expanded(child: tiles[3]),
+                    ],
+                  ),
                 ],
               );
             },
@@ -467,7 +477,6 @@ class _QuietPulseSection extends StatelessWidget {
           SizedBox(height: tokens.spacing.sm),
           LayoutBuilder(
             builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 720;
               final trendChart = SignedBarChart(
                 title: 'Sales vs purchase invoices',
                 seriesLabels: const ['Sales', 'Purchase'],
@@ -499,13 +508,48 @@ class _QuietPulseSection extends StatelessWidget {
                 ],
                 valueFormatter: _money,
               );
-              if (wide) {
+              final topCustomersChart = RankedBarChart(
+                title: 'Top customers (by invoice count)',
+                barColor: brand.lagoon,
+                entries: [
+                  for (final c in dash.topCustomers)
+                    RankedBarEntry(
+                      label: 'Ledger #${c.voucherLedgerId}',
+                      value: c.count.toDouble(),
+                    ),
+                ],
+              );
+
+              final width = constraints.maxWidth;
+              if (width >= 1100) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 2, child: trendChart),
+                    Expanded(child: trendChart),
                     SizedBox(width: tokens.spacing.sm),
                     Expanded(child: positionDonut),
+                    SizedBox(width: tokens.spacing.sm),
+                    Expanded(child: topCustomersChart),
+                  ],
+                );
+              } else if (width >= 700) {
+                return Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: trendChart),
+                        SizedBox(width: tokens.spacing.sm),
+                        Expanded(child: positionDonut),
+                      ],
+                    ),
+                    SizedBox(height: tokens.spacing.sm),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: topCustomersChart),
+                      ],
+                    ),
                   ],
                 );
               }
@@ -514,24 +558,12 @@ class _QuietPulseSection extends StatelessWidget {
                   trendChart,
                   SizedBox(height: tokens.spacing.sm),
                   positionDonut,
+                  SizedBox(height: tokens.spacing.sm),
+                  topCustomersChart,
                 ],
               );
             },
           ),
-          if (dash.topCustomers.isNotEmpty) ...[
-            SizedBox(height: tokens.spacing.sm),
-            RankedBarChart(
-              title: 'Top customers (by invoice count)',
-              barColor: brand.lagoon,
-              entries: [
-                for (final c in dash.topCustomers)
-                  RankedBarEntry(
-                    label: 'Ledger #${c.voucherLedgerId}',
-                    value: c.count.toDouble(),
-                  ),
-              ],
-            ),
-          ],
         ],
       ],
     );

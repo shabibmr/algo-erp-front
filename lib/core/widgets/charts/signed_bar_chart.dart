@@ -43,28 +43,11 @@ class SignedBarChart extends StatelessWidget {
     final tokens = context.tokens;
     final brand = tokens.brand;
     final format = valueFormatter ?? (v) => v.toStringAsFixed(0);
-
-    if (groups.isEmpty) {
-      return PaperCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleSmall),
-            SizedBox(height: tokens.spacing.sm),
-            Text(
-              'No data for this period.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final maxY = groups
-        .expand((g) => g.values)
-        .fold<double>(0, (m, v) => v > m ? v : m);
+    final maxY = groups.isEmpty
+        ? 0.0
+        : groups
+            .expand((g) => g.values)
+            .fold<double>(0, (m, v) => v > m ? v : m);
     final totals = List<double>.filled(seriesLabels.length, 0);
     for (final g in groups) {
       for (var i = 0; i < g.values.length; i++) {
@@ -78,73 +61,86 @@ class SignedBarChart extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           SizedBox(height: tokens.spacing.md),
-          SizedBox(
-            height: 220,
-            child: BarChart(
-              BarChartData(
-                maxY: maxY <= 0 ? 1 : maxY * 1.2,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => brand.ink,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) =>
-                        BarTooltipItem(
-                          '${seriesLabels[rodIndex]}\n${format(rod.toY)}',
-                          TextStyle(color: brand.paper, fontSize: 12),
-                        ),
-                  ),
+          if (groups.isEmpty)
+            SizedBox(
+              height: 220,
+              child: Center(
+                child: Text(
+                  'No data for this period.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
                 ),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(),
-                  rightTitles: const AxisTitles(),
-                  leftTitles: const AxisTitles(),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      getTitlesWidget: (value, meta) {
-                        final i = value.toInt();
-                        if (i < 0 || i >= groups.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: EdgeInsets.only(top: tokens.spacing.xs),
-                          child: Text(
-                            groups[i].label,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: brand.inkMuted),
+              ),
+            )
+          else
+            SizedBox(
+              height: 220,
+              child: BarChart(
+                BarChartData(
+                  maxY: maxY <= 0 ? 1 : maxY * 1.2,
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => brand.ink,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                          BarTooltipItem(
+                            '${seriesLabels[rodIndex]}\n${format(rod.toY)}',
+                            TextStyle(color: brand.paper, fontSize: 12),
                           ),
-                        );
-                      },
                     ),
                   ),
-                ),
-                borderData: FlBorderData(show: false),
-                gridData: FlGridData(
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) =>
-                      FlLine(color: brand.mist, strokeWidth: 1),
-                ),
-                barGroups: [
-                  for (var i = 0; i < groups.length; i++)
-                    BarChartGroupData(
-                      x: i,
-                      barRods: [
-                        for (var s = 0; s < seriesLabels.length; s++)
-                          BarChartRodData(
-                            toY: groups[i].values[s],
-                            color: seriesColors[s],
-                            width: seriesLabels.length > 1 ? 8 : 14,
-                            borderRadius: BorderRadius.circular(
-                              tokens.radii.sm,
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    leftTitles: const AxisTitles(),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= groups.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: EdgeInsets.only(top: tokens.spacing.xs),
+                            child: Text(
+                              groups[i].label,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: brand.inkMuted),
                             ),
-                          ),
-                      ],
-                      barsSpace: 4,
+                          );
+                        },
+                      ),
                     ),
-                ],
+                  ),
+                  borderData: FlBorderData(show: false),
+                  gridData: FlGridData(
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: brand.mist, strokeWidth: 1),
+                  ),
+                  barGroups: [
+                    for (var i = 0; i < groups.length; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          for (var s = 0; s < seriesLabels.length; s++)
+                            BarChartRodData(
+                              toY: groups[i].values[s],
+                              color: seriesColors[s],
+                              width: seriesLabels.length > 1 ? 8 : 14,
+                              borderRadius: BorderRadius.circular(
+                                tokens.radii.sm,
+                              ),
+                            ),
+                        ],
+                        barsSpace: 4,
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
           SizedBox(height: tokens.spacing.sm),
           ChartLegend(
             entries: [

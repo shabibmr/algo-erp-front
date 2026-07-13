@@ -43,15 +43,20 @@ class RankedBarChart extends StatelessWidget {
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           SizedBox(height: tokens.spacing.md),
           if (entries.isEmpty)
-            Text(
-              emptyMessage,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
+            SizedBox(
+              height: 220,
+              child: Center(
+                child: Text(
+                  emptyMessage,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
+                ),
+              ),
             )
           else
             SizedBox(
-              height: (entries.length * 32).clamp(80, 220).toDouble(),
+              height: 220,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -117,6 +122,8 @@ class RankedBarChart extends StatelessWidget {
                 ),
               ),
             ),
+          SizedBox(height: tokens.spacing.sm),
+          const SizedBox(height: 24),
         ],
       ),
     );

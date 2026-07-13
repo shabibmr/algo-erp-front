@@ -40,6 +40,7 @@ class ShareDonutChart extends StatelessWidget {
     final brand = tokens.brand;
     final format = valueFormatter ?? (v) => v.toStringAsFixed(0);
     final total = slices.fold<double>(0, (s, e) => s + e.value.abs());
+    final isEmpty = slices.isEmpty || total == 0;
 
     return PaperCard(
       child: Column(
@@ -47,16 +48,21 @@ class ShareDonutChart extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           SizedBox(height: tokens.spacing.md),
-          if (slices.isEmpty || total == 0)
-            Text(
-              emptyMessage,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
-            )
-          else ...[
+          if (isEmpty)
             SizedBox(
-              height: 160,
+              height: 220,
+              child: Center(
+                child: Text(
+                  emptyMessage,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: brand.inkMuted),
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 220,
               child: PieChart(
                 PieChartData(
                   sectionsSpace: 2,
@@ -73,18 +79,17 @@ class ShareDonutChart extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: tokens.spacing.sm),
-            ChartLegend(
-              entries: [
-                for (final slice in slices)
-                  ChartLegendEntry(
-                    color: slice.color,
-                    label: slice.label,
-                    value: format(slice.value),
-                  ),
-              ],
-            ),
-          ],
+          SizedBox(height: tokens.spacing.sm),
+          ChartLegend(
+            entries: [
+              for (final slice in slices)
+                ChartLegendEntry(
+                  color: slice.color,
+                  label: slice.label,
+                  value: format(slice.value),
+                ),
+            ],
+          ),
         ],
       ),
     );
