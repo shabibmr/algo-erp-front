@@ -58,16 +58,6 @@ final _manifest = EntityManifest<_Item>(
   ],
   formFields: [
     FormFieldSpec<_Item>(
-      key: 'code',
-      label: 'Item code',
-      type: FieldType.text,
-      required: true,
-      half: true,
-      section: 'Identity',
-      getValue: (i) => i.code,
-      setValue: (i, v) => i.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<_Item>(
       key: 'name',
       label: 'Item name',
       type: FieldType.text,
@@ -76,6 +66,15 @@ final _manifest = EntityManifest<_Item>(
       section: 'Identity',
       getValue: (i) => i.name,
       setValue: (i, v) => i.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<_Item>(
+      key: 'code',
+      label: 'Item code',
+      type: FieldType.text,
+      half: true,
+      section: 'Identity',
+      getValue: (i) => i.code,
+      setValue: (i, v) => i.copyWith(code: v as String?),
     ),
     FormFieldSpec<_Item>(
       key: 'reorder',
@@ -136,8 +135,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('New item'), findsOneWidget);
-    expect(find.text('Item code'), findsOneWidget);
-    expect(find.text('Item name'), findsOneWidget);
+    expect(find.textContaining('New item'), findsOneWidget);
+    expect(find.textContaining('Item name'), findsOneWidget);
+    expect(find.textContaining('Item code'), findsOneWidget);
   });
 }

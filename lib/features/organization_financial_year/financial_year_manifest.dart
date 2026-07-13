@@ -29,18 +29,17 @@ final financialYearManifest = EntityManifest<FinancialYear>(
   resourcePath: '/organization/fy',
   listColumns: [
     FieldSpec<FinancialYear>(
-      key: 'fyCode',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      cellValue: (fy) => fy.fyCode,
-    ),
-    FieldSpec<FinancialYear>(
       key: 'displayName',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (fy) => fy.displayName,
+    ),
+    FieldSpec<FinancialYear>(
+      key: 'fyCode',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (fy) => fy.fyCode,
     ),
     FieldSpec<FinancialYear>(
       key: 'status',
@@ -58,21 +57,6 @@ final financialYearManifest = EntityManifest<FinancialYear>(
   searchFields: const ['fyCode', 'displayName'],
   formFields: [
     FormFieldSpec<FinancialYear>(
-      key: 'fyCode',
-      wireKey: 'fy_code',
-      label: 'FY code',
-      type: FieldType.text,
-      required: true,
-      // financialYearSchema: z.string().min(4).max(20)
-      validator: (v) {
-        final text = v as String?;
-        if (text == null || text.isEmpty) return null;
-        return text.length >= 4 ? null : 'Must be at least 4 characters';
-      },
-      getValue: (fy) => fy.fyCode,
-      setValue: (fy, v) => fy.copyWith(fyCode: v as String?),
-    ),
-    FormFieldSpec<FinancialYear>(
       key: 'displayName',
       wireKey: 'display_name',
       label: 'Display name',
@@ -86,6 +70,20 @@ final financialYearManifest = EntityManifest<FinancialYear>(
       },
       getValue: (fy) => fy.displayName,
       setValue: (fy, v) => fy.copyWith(displayName: v as String?),
+    ),
+    FormFieldSpec<FinancialYear>(
+      key: 'fyCode',
+      wireKey: 'fy_code',
+      label: 'FY code',
+      type: FieldType.text,
+      // financialYearSchema: z.string().min(4).max(20)
+      validator: (v) {
+        final text = v as String?;
+        if (text == null || text.isEmpty) return null;
+        return text.length >= 4 ? null : 'Must be at least 4 characters';
+      },
+      getValue: (fy) => fy.fyCode,
+      setValue: (fy, v) => fy.copyWith(fyCode: v as String?),
     ),
     FormFieldSpec<FinancialYear>(
       key: 'startDate',

@@ -14,13 +14,6 @@ final itemPropertyManifest = EntityManifest<ItemProperty>(
   resourcePath: '/inventory/property',
   listColumns: [
     FieldSpec<ItemProperty>(
-      key: 'propertyId',
-      label: 'Property ID',
-      type: FieldType.text,
-      required: true,
-      cellValue: (p) => p.propertyId,
-    ),
-    FieldSpec<ItemProperty>(
       key: 'itemId',
       label: 'Item ID',
       type: FieldType.text,
@@ -34,17 +27,8 @@ final itemPropertyManifest = EntityManifest<ItemProperty>(
       cellValue: (p) => p.defaultValue ?? '—',
     ),
   ],
-  searchFields: const ['propertyId', 'itemId'],
+  searchFields: const ['itemId'],
   formFields: [
-    FormFieldSpec<ItemProperty>(
-      key: 'propertyId',
-      wireKey: 'Property_ID',
-      label: 'Property ID',
-      type: FieldType.text,
-      required: true,
-      getValue: (p) => p.propertyId,
-      setValue: (p, v) => p.copyWith(propertyId: v as String?),
-    ),
     FormFieldSpec<ItemProperty>(
       key: 'itemId',
       wireKey: 'Item_ID',

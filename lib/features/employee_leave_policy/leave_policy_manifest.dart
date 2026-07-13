@@ -13,17 +13,17 @@ final leavePolicyManifest = EntityManifest<LeavePolicy>(
   supportsDelete: false,
   listColumns: [
     FieldSpec<LeavePolicy>(
-      key: 'leaveType',
-      label: 'Type',
-      type: FieldType.text,
-      cellValue: (p) => p.leaveType,
-    ),
-    FieldSpec<LeavePolicy>(
       key: 'displayName',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (p) => p.displayName,
+    ),
+    FieldSpec<LeavePolicy>(
+      key: 'leaveType',
+      label: 'Type',
+      type: FieldType.text,
+      cellValue: (p) => p.leaveType,
     ),
     FieldSpec<LeavePolicy>(
       key: 'maxDays',
@@ -47,6 +47,15 @@ final leavePolicyManifest = EntityManifest<LeavePolicy>(
   searchFields: const ['leave_type', 'display_name'],
   formFields: [
     FormFieldSpec<LeavePolicy>(
+      key: 'displayName',
+      wireKey: 'display_name',
+      label: 'Display name',
+      type: FieldType.text,
+      required: true,
+      getValue: (p) => p.displayName,
+      setValue: (p, v) => p.copyWith(displayName: v as String?),
+    ),
+    FormFieldSpec<LeavePolicy>(
       key: 'leaveType',
       wireKey: 'leave_type',
       label: 'Leave type',
@@ -63,15 +72,6 @@ final leavePolicyManifest = EntityManifest<LeavePolicy>(
         }
         return null;
       },
-    ),
-    FormFieldSpec<LeavePolicy>(
-      key: 'displayName',
-      wireKey: 'display_name',
-      label: 'Display name',
-      type: FieldType.text,
-      required: true,
-      getValue: (p) => p.displayName,
-      setValue: (p, v) => p.copyWith(displayName: v as String?),
     ),
     FormFieldSpec<LeavePolicy>(
       key: 'maxDaysPerYear',

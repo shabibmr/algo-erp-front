@@ -270,13 +270,13 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
 
       rows.add(
         Padding(
-          padding: EdgeInsets.only(top: rows.isEmpty ? 0 : tokens.spacing.md),
+          padding: EdgeInsets.only(top: rows.isEmpty ? 0 : tokens.spacing.lg),
           child: pairs
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(child: _field(context, field, enabled: enabled)),
-                    SizedBox(width: tokens.spacing.md),
+                    SizedBox(width: tokens.spacing.lg),
                     Expanded(child: _field(context, next, enabled: enabled)),
                   ],
                 )
@@ -382,7 +382,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                       child: WorkSheet(
                         fill: false,
                         title: entry.key,
-                        padding: EdgeInsets.all(tokens.spacing.md),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: tokens.spacing.lg,
+                          vertical: tokens.spacing.md,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
@@ -411,7 +414,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
           child: WorkSheet(
             fill: false,
             title: entry.key,
-            padding: EdgeInsets.all(tokens.spacing.md),
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.spacing.lg,
+              vertical: tokens.spacing.md,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -492,7 +498,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
               WorkSheet(
                 fill: false,
                 title: entry.key,
-                padding: EdgeInsets.all(tokens.spacing.md),
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.lg,
+                  vertical: tokens.spacing.md,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,

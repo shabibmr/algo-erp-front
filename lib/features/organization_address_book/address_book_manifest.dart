@@ -46,6 +46,15 @@ final addressBookManifest = EntityManifest<AddressBook>(
   searchFields: const ['name', 'companyName', 'email'],
   formFields: [
     FormFieldSpec<AddressBook>(
+      key: 'name',
+      wireKey: 'Name',
+      label: 'Name',
+      type: FieldType.text,
+      required: true,
+      getValue: (c) => c.name,
+      setValue: (c, v) => c.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<AddressBook>(
       key: 'contactType',
       wireKey: 'contact_type',
       label: 'Type',
@@ -62,24 +71,6 @@ final addressBookManifest = EntityManifest<AddressBook>(
             ? null
             : 'Must be one of: ${AddressBook.contactTypes.join(', ')}';
       },
-    ),
-    FormFieldSpec<AddressBook>(
-      key: 'addressId',
-      wireKey: 'Address_Id',
-      label: 'Contact ID',
-      type: FieldType.text,
-      required: true,
-      getValue: (c) => c.addressId,
-      setValue: (c, v) => c.copyWith(addressId: v as String?),
-    ),
-    FormFieldSpec<AddressBook>(
-      key: 'name',
-      wireKey: 'Name',
-      label: 'Name',
-      type: FieldType.text,
-      required: true,
-      getValue: (c) => c.name,
-      setValue: (c, v) => c.copyWith(name: v as String?),
     ),
     FormFieldSpec<AddressBook>(
       key: 'designation',

@@ -14,17 +14,17 @@ final shiftMasterManifest = EntityManifest<ShiftMaster>(
   supportsDelete: false,
   listColumns: [
     FieldSpec<ShiftMaster>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (s) => s.code,
-    ),
-    FieldSpec<ShiftMaster>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (s) => s.name,
+    ),
+    FieldSpec<ShiftMaster>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (s) => s.code,
     ),
     FieldSpec<ShiftMaster>(
       key: 'start',
@@ -48,15 +48,6 @@ final shiftMasterManifest = EntityManifest<ShiftMaster>(
   searchFields: const ['shift_code', 'shift_name'],
   formFields: [
     FormFieldSpec<ShiftMaster>(
-      key: 'code',
-      wireKey: 'shift_code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      getValue: (s) => s.code,
-      setValue: (s, v) => s.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<ShiftMaster>(
       key: 'name',
       wireKey: 'shift_name',
       label: 'Name',
@@ -64,6 +55,14 @@ final shiftMasterManifest = EntityManifest<ShiftMaster>(
       required: true,
       getValue: (s) => s.name,
       setValue: (s, v) => s.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<ShiftMaster>(
+      key: 'code',
+      wireKey: 'shift_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (s) => s.code,
+      setValue: (s, v) => s.copyWith(code: v as String?),
     ),
     FormFieldSpec<ShiftMaster>(
       key: 'startTime',

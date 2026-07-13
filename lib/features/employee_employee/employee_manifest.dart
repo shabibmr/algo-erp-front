@@ -25,17 +25,17 @@ final employeeManifest = EntityManifest<Employee>(
   resourcePath: '/employee/employees',
   listColumns: [
     FieldSpec<Employee>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (e) => e.code ?? '—',
-    ),
-    FieldSpec<Employee>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (e) => e.name,
+    ),
+    FieldSpec<Employee>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (e) => e.code ?? '—',
     ),
     FieldSpec<Employee>(
       key: 'phone',
@@ -53,14 +53,6 @@ final employeeManifest = EntityManifest<Employee>(
   searchFields: const ['Name', 'employee_code', 'Phone'],
   formFields: [
     FormFieldSpec<Employee>(
-      key: 'code',
-      wireKey: 'employee_code',
-      label: 'Code',
-      type: FieldType.text,
-      getValue: (e) => e.code,
-      setValue: (e, v) => e.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<Employee>(
       key: 'name',
       wireKey: 'Name',
       label: 'Name',
@@ -68,6 +60,14 @@ final employeeManifest = EntityManifest<Employee>(
       required: true,
       getValue: (e) => e.name,
       setValue: (e, v) => e.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Employee>(
+      key: 'code',
+      wireKey: 'employee_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (e) => e.code,
+      setValue: (e, v) => e.copyWith(code: v as String?),
     ),
     FormFieldSpec<Employee>(
       key: 'contactId',

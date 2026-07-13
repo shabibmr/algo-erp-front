@@ -13,18 +13,17 @@ final currencyManifest = EntityManifest<Currency>(
   resourcePath: '/organization/currencies',
   listColumns: [
     FieldSpec<Currency>(
-      key: 'isoCode',
-      label: 'ISO',
-      type: FieldType.text,
-      required: true,
-      cellValue: (c) => c.isoCode,
-    ),
-    FieldSpec<Currency>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (c) => c.name,
+    ),
+    FieldSpec<Currency>(
+      key: 'isoCode',
+      label: 'ISO',
+      type: FieldType.text,
+      cellValue: (c) => c.isoCode,
     ),
     FieldSpec<Currency>(
       key: 'symbol',
@@ -36,11 +35,19 @@ final currencyManifest = EntityManifest<Currency>(
   searchFields: const ['name', 'isoCode'],
   formFields: [
     FormFieldSpec<Currency>(
+      key: 'name',
+      wireKey: 'currency_name',
+      label: 'Name',
+      type: FieldType.text,
+      required: true,
+      getValue: (c) => c.name,
+      setValue: (c, v) => c.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Currency>(
       key: 'isoCode',
       wireKey: 'iso_code',
       label: 'ISO code',
       type: FieldType.text,
-      required: true,
       hintText: 'AED',
       helperText: 'Exactly 3 characters',
       getValue: (c) => c.isoCode,
@@ -51,15 +58,6 @@ final currencyManifest = EntityManifest<Currency>(
         if (text == null || text.isEmpty) return null;
         return text.length == 3 ? null : 'Must be exactly 3 characters';
       },
-    ),
-    FormFieldSpec<Currency>(
-      key: 'name',
-      wireKey: 'currency_name',
-      label: 'Name',
-      type: FieldType.text,
-      required: true,
-      getValue: (c) => c.name,
-      setValue: (c, v) => c.copyWith(name: v as String?),
     ),
     FormFieldSpec<Currency>(
       key: 'symbol',

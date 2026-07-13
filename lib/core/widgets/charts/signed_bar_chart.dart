@@ -46,8 +46,8 @@ class SignedBarChart extends StatelessWidget {
     final maxY = groups.isEmpty
         ? 0.0
         : groups
-            .expand((g) => g.values)
-            .fold<double>(0, (m, v) => v > m ? v : m);
+              .expand((g) => g.values)
+              .fold<double>(0, (m, v) => v > m ? v : m);
     final totals = List<double>.filled(seriesLabels.length, 0);
     for (final g in groups) {
       for (var i = 0; i < g.values.length; i++) {

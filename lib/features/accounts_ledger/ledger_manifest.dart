@@ -29,17 +29,17 @@ final ledgerManifest = EntityManifest<Ledger>(
   resourcePath: '/accounts/ledgers',
   listColumns: [
     FieldSpec<Ledger>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (l) => l.code ?? '—',
-    ),
-    FieldSpec<Ledger>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (l) => l.name,
+    ),
+    FieldSpec<Ledger>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (l) => l.code ?? '—',
     ),
     FieldSpec<Ledger>(
       key: 'ledgerType',
@@ -68,14 +68,6 @@ final ledgerManifest = EntityManifest<Ledger>(
   ],
   formFields: [
     FormFieldSpec<Ledger>(
-      key: 'code',
-      wireKey: 'ledger_code',
-      label: 'Code',
-      type: FieldType.text,
-      getValue: (l) => l.code,
-      setValue: (l, v) => l.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<Ledger>(
       key: 'name',
       wireKey: 'Ledger_Name',
       label: 'Name',
@@ -83,6 +75,14 @@ final ledgerManifest = EntityManifest<Ledger>(
       required: true,
       getValue: (l) => l.name,
       setValue: (l, v) => l.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Ledger>(
+      key: 'code',
+      wireKey: 'ledger_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (l) => l.code,
+      setValue: (l, v) => l.copyWith(code: v as String?),
     ),
     FormFieldSpec<Ledger>(
       key: 'ledgerType',

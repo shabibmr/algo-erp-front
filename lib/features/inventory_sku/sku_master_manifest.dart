@@ -21,16 +21,16 @@ final skuMasterManifest = EntityManifest<SkuMaster>(
   resourcePath: '/inventory/sku',
   listColumns: [
     FieldSpec<SkuMaster>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (s) => s.code ?? '—',
-    ),
-    FieldSpec<SkuMaster>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       cellValue: (s) => s.name ?? '—',
+    ),
+    FieldSpec<SkuMaster>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (s) => s.code ?? '—',
     ),
     FieldSpec<SkuMaster>(
       key: 'barcode',
@@ -91,20 +91,20 @@ final skuMasterManifest = EntityManifest<SkuMaster>(
       setValue: (s, v) => s.copyWith(itemId: v as String? ?? ''),
     ),
     FormFieldSpec<SkuMaster>(
-      key: 'code',
-      wireKey: 'sku_code',
-      label: 'SKU code',
-      type: FieldType.text,
-      getValue: (s) => s.code,
-      setValue: (s, v) => s.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<SkuMaster>(
       key: 'name',
       wireKey: 'sku_name',
       label: 'Name',
       type: FieldType.text,
       getValue: (s) => s.name,
       setValue: (s, v) => s.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<SkuMaster>(
+      key: 'code',
+      wireKey: 'sku_code',
+      label: 'SKU code',
+      type: FieldType.text,
+      getValue: (s) => s.code,
+      setValue: (s, v) => s.copyWith(code: v as String?),
     ),
     FormFieldSpec<SkuMaster>(
       key: 'barcode',

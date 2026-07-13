@@ -24,18 +24,17 @@ final designationManifest = EntityManifest<Designation>(
   resourcePath: '/employee/designations',
   listColumns: [
     FieldSpec<Designation>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      cellValue: (d) => d.code,
-    ),
-    FieldSpec<Designation>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (d) => d.name,
+    ),
+    FieldSpec<Designation>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (d) => d.code,
     ),
     FieldSpec<Designation>(
       key: 'isActive',
@@ -47,15 +46,6 @@ final designationManifest = EntityManifest<Designation>(
   searchFields: const ['name', 'code'],
   formFields: [
     FormFieldSpec<Designation>(
-      key: 'code',
-      wireKey: 'designation_code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      getValue: (d) => d.code,
-      setValue: (d, v) => d.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<Designation>(
       key: 'name',
       wireKey: 'designation_name',
       label: 'Name',
@@ -63,6 +53,14 @@ final designationManifest = EntityManifest<Designation>(
       required: true,
       getValue: (d) => d.name,
       setValue: (d, v) => d.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Designation>(
+      key: 'code',
+      wireKey: 'designation_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (d) => d.code,
+      setValue: (d, v) => d.copyWith(code: v as String?),
     ),
     FormFieldSpec<Designation>(
       key: 'departmentId',

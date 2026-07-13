@@ -20,12 +20,6 @@ final inventoryGroupManifest = EntityManifest<InventoryGroup>(
   resourcePath: inventoryGroupResourcePath,
   listColumns: [
     FieldSpec<InventoryGroup>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (g) => g.code ?? '—',
-    ),
-    FieldSpec<InventoryGroup>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
@@ -35,6 +29,12 @@ final inventoryGroupManifest = EntityManifest<InventoryGroup>(
         final indent = depth > 0 ? '${'  ' * depth}↳ ' : '';
         return '$indent${g.name}';
       },
+    ),
+    FieldSpec<InventoryGroup>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (g) => g.code ?? '—',
     ),
     FieldSpec<InventoryGroup>(
       key: 'fullPath',
@@ -52,14 +52,13 @@ final inventoryGroupManifest = EntityManifest<InventoryGroup>(
   searchFields: const ['Group_Name', 'group_code', 'Group_Type'],
   formFields: [
     FormFieldSpec<InventoryGroup>(
-      key: 'groupId',
-      wireKey: 'Group_ID',
-      label: 'Group ID',
+      key: 'name',
+      wireKey: 'Group_Name',
+      label: 'Name',
       type: FieldType.text,
       required: true,
-      helperText: 'Legacy unique key (also used by older clients)',
-      getValue: (g) => g.groupId,
-      setValue: (g, v) => g.copyWith(groupId: v as String? ?? ''),
+      getValue: (g) => g.name,
+      setValue: (g, v) => g.copyWith(name: v as String?),
     ),
     FormFieldSpec<InventoryGroup>(
       key: 'code',
@@ -68,15 +67,6 @@ final inventoryGroupManifest = EntityManifest<InventoryGroup>(
       type: FieldType.text,
       getValue: (g) => g.code,
       setValue: (g, v) => g.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<InventoryGroup>(
-      key: 'name',
-      wireKey: 'Group_Name',
-      label: 'Name',
-      type: FieldType.text,
-      required: true,
-      getValue: (g) => g.name,
-      setValue: (g, v) => g.copyWith(name: v as String?),
     ),
     FormFieldSpec<InventoryGroup>(
       key: 'nameArabic',

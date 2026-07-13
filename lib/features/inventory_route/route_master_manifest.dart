@@ -11,30 +11,20 @@ final routeMasterManifest = EntityManifest<RouteMaster>(
   resourcePath: '/inventory/route',
   listColumns: [
     FieldSpec<RouteMaster>(
-      key: 'routeCode',
-      label: 'Route code',
-      type: FieldType.text,
-      required: true,
-      cellValue: (r) => r.routeCode,
-    ),
-    FieldSpec<RouteMaster>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       cellValue: (r) => r.name ?? '—',
     ),
+    FieldSpec<RouteMaster>(
+      key: 'routeCode',
+      label: 'Route code',
+      type: FieldType.text,
+      cellValue: (r) => r.routeCode,
+    ),
   ],
   searchFields: const ['routeCode', 'name'],
   formFields: [
-    FormFieldSpec<RouteMaster>(
-      key: 'routeCode',
-      wireKey: 'route_id',
-      label: 'Route code',
-      type: FieldType.text,
-      required: true,
-      getValue: (r) => r.routeCode,
-      setValue: (r, v) => r.copyWith(routeCode: v as String?),
-    ),
     FormFieldSpec<RouteMaster>(
       key: 'name',
       wireKey: 'route_name',
@@ -42,6 +32,14 @@ final routeMasterManifest = EntityManifest<RouteMaster>(
       type: FieldType.text,
       getValue: (r) => r.name,
       setValue: (r, v) => r.copyWith(name: v),
+    ),
+    FormFieldSpec<RouteMaster>(
+      key: 'routeCode',
+      wireKey: 'route_id',
+      label: 'Route code',
+      type: FieldType.text,
+      getValue: (r) => r.routeCode,
+      setValue: (r, v) => r.copyWith(routeCode: v as String?),
     ),
     FormFieldSpec<RouteMaster>(
       key: 'description',

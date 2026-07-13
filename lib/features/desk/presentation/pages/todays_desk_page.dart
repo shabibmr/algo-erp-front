@@ -546,9 +546,7 @@ class _QuietPulseSection extends StatelessWidget {
                     SizedBox(height: tokens.spacing.sm),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: topCustomersChart),
-                      ],
+                      children: [Expanded(child: topCustomersChart)],
                     ),
                   ],
                 );

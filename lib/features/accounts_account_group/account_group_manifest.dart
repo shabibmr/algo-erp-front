@@ -20,12 +20,6 @@ final accountGroupManifest = EntityManifest<AccountGroup>(
   resourcePath: accountGroupResourcePath,
   listColumns: [
     FieldSpec<AccountGroup>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      cellValue: (g) => g.code ?? '—',
-    ),
-    FieldSpec<AccountGroup>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
@@ -35,6 +29,12 @@ final accountGroupManifest = EntityManifest<AccountGroup>(
         final indent = depth > 0 ? '${'  ' * depth}↳ ' : '';
         return '$indent${g.name}';
       },
+    ),
+    FieldSpec<AccountGroup>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (g) => g.code ?? '—',
     ),
     FieldSpec<AccountGroup>(
       key: 'fullPath',
@@ -52,14 +52,6 @@ final accountGroupManifest = EntityManifest<AccountGroup>(
   searchFields: const ['Group_Name', 'group_code'],
   formFields: [
     FormFieldSpec<AccountGroup>(
-      key: 'code',
-      wireKey: 'group_code',
-      label: 'Code',
-      type: FieldType.text,
-      getValue: (g) => g.code,
-      setValue: (g, v) => g.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<AccountGroup>(
       key: 'name',
       wireKey: 'Group_Name',
       label: 'Name',
@@ -67,6 +59,14 @@ final accountGroupManifest = EntityManifest<AccountGroup>(
       required: true,
       getValue: (g) => g.name,
       setValue: (g, v) => g.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<AccountGroup>(
+      key: 'code',
+      wireKey: 'group_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (g) => g.code,
+      setValue: (g, v) => g.copyWith(code: v as String?),
     ),
     FormFieldSpec<AccountGroup>(
       key: 'parentGroupId',

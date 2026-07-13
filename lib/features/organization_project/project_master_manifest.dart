@@ -35,13 +35,6 @@ final projectMasterManifest = EntityManifest<ProjectMaster>(
   resourcePath: projectMasterResourcePath,
   listColumns: [
     FieldSpec<ProjectMaster>(
-      key: 'projectId',
-      label: 'ID',
-      type: FieldType.text,
-      required: true,
-      cellValue: (p) => p.projectId,
-    ),
-    FieldSpec<ProjectMaster>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
@@ -63,16 +56,6 @@ final projectMasterManifest = EntityManifest<ProjectMaster>(
   ],
   searchFields: const ['Project_Name', 'project_code', 'PROJECT_ID'],
   formFields: [
-    FormFieldSpec<ProjectMaster>(
-      key: 'projectId',
-      wireKey: 'PROJECT_ID',
-      label: 'Project ID',
-      type: FieldType.text,
-      required: true,
-      helperText: 'Legacy unique key',
-      getValue: (p) => p.projectId,
-      setValue: (p, v) => p.copyWith(projectId: v as String? ?? ''),
-    ),
     FormFieldSpec<ProjectMaster>(
       key: 'name',
       wireKey: 'Project_Name',

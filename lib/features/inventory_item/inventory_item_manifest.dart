@@ -54,18 +54,17 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
   formLayout: FormLayout.tabs,
   listColumns: [
     FieldSpec<InventoryItem>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      cellValue: (i) => i.code,
-    ),
-    FieldSpec<InventoryItem>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (i) => i.name,
+    ),
+    FieldSpec<InventoryItem>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (i) => i.code,
     ),
     FieldSpec<InventoryItem>(
       key: 'price',
@@ -89,16 +88,6 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
   searchFields: const ['Item_Name', 'Item_Alias', 'Item_Code'],
   formFields: [
     FormFieldSpec<InventoryItem>(
-      key: 'code',
-      wireKey: 'Item_Code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      getValue: (i) => i.code,
-      setValue: (i, v) => i.copyWith(code: v as String?),
-      section: 'General',
-    ),
-    FormFieldSpec<InventoryItem>(
       key: 'name',
       wireKey: 'Item_Name',
       label: 'Name',
@@ -106,6 +95,15 @@ final inventoryItemManifest = EntityManifest<InventoryItem>(
       required: true,
       getValue: (i) => i.name,
       setValue: (i, v) => i.copyWith(name: v as String?),
+      section: 'General',
+    ),
+    FormFieldSpec<InventoryItem>(
+      key: 'code',
+      wireKey: 'Item_Code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (i) => i.code,
+      setValue: (i, v) => i.copyWith(code: v as String?),
       section: 'General',
     ),
     FormFieldSpec<InventoryItem>(

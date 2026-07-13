@@ -15,18 +15,17 @@ final departmentManifest = EntityManifest<Department>(
   resourcePath: '/employee/departments',
   listColumns: [
     FieldSpec<Department>(
-      key: 'code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      cellValue: (d) => d.code,
-    ),
-    FieldSpec<Department>(
       key: 'name',
       label: 'Name',
       type: FieldType.text,
       required: true,
       cellValue: (d) => d.name,
+    ),
+    FieldSpec<Department>(
+      key: 'code',
+      label: 'Code',
+      type: FieldType.text,
+      cellValue: (d) => d.code,
     ),
     FieldSpec<Department>(
       key: 'isActive',
@@ -38,15 +37,6 @@ final departmentManifest = EntityManifest<Department>(
   searchFields: const ['name', 'code'],
   formFields: [
     FormFieldSpec<Department>(
-      key: 'code',
-      wireKey: 'dept_code',
-      label: 'Code',
-      type: FieldType.text,
-      required: true,
-      getValue: (d) => d.code,
-      setValue: (d, v) => d.copyWith(code: v as String?),
-    ),
-    FormFieldSpec<Department>(
       key: 'name',
       wireKey: 'dept_name',
       label: 'Name',
@@ -54,6 +44,14 @@ final departmentManifest = EntityManifest<Department>(
       required: true,
       getValue: (d) => d.name,
       setValue: (d, v) => d.copyWith(name: v as String?),
+    ),
+    FormFieldSpec<Department>(
+      key: 'code',
+      wireKey: 'dept_code',
+      label: 'Code',
+      type: FieldType.text,
+      getValue: (d) => d.code,
+      setValue: (d, v) => d.copyWith(code: v as String?),
     ),
     FormFieldSpec<Department>(
       key: 'isActive',

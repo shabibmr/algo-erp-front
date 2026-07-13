@@ -32,7 +32,6 @@ final branchManifest = EntityManifest<Branch>(
       key: 'code',
       label: 'Code',
       type: FieldType.text,
-      required: true,
       cellValue: (b) => b.code,
     ),
     FieldSpec<Branch>(
@@ -70,7 +69,6 @@ final branchManifest = EntityManifest<Branch>(
       wireKey: 'branch_code',
       label: 'Code',
       type: FieldType.text,
-      required: true,
       getValue: (b) => b.code,
       setValue: (b, v) => b.copyWith(code: v as String?),
       // branchSchema: z.string().min(2).max(50)
