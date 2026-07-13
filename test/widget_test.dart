@@ -49,8 +49,8 @@ void main() {
       final dio = MockDio();
       when(() => dioClient.dio).thenReturn(dio);
       when(
-        () => dio.get<Map<String, dynamic>>(
-          any(),
+        () => dio.get<Object?>(
+          '/reports/alerts',
           queryParameters: any(named: 'queryParameters'),
           options: any(named: 'options'),
           cancelToken: any(named: 'cancelToken'),
@@ -58,8 +58,42 @@ void main() {
         ),
       ).thenAnswer(
         (_) async => Response(
-          requestOptions: RequestOptions(path: ''),
-          data: <String, dynamic>{'success': true, 'data': <String, dynamic>{}},
+          requestOptions: RequestOptions(path: '/reports/alerts'),
+          data: <String, dynamic>{
+            'success': true,
+            'data': <String, dynamic>{
+              'expiring_documents': <dynamic>[],
+              'overdue_bills': <dynamic>[],
+            },
+          },
+          statusCode: 200,
+        ),
+      );
+      when(
+        () => dio.get<Object?>(
+          '/reports/dashboard',
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+          cancelToken: any(named: 'cancelToken'),
+          onReceiveProgress: any(named: 'onReceiveProgress'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/reports/dashboard'),
+          data: <String, dynamic>{
+            'success': true,
+            'data': <String, dynamic>{
+              'period': <String, String>{
+                'start_date': '2026-07-01T00:00:00.000Z',
+                'end_date': '2026-07-13T00:00:00.000Z',
+              },
+              'sales_count': 0,
+              'purchase_count': 0,
+              'cash_position': 0,
+              'bank_position': 0,
+              'top_customers': <dynamic>[],
+            },
+          },
           statusCode: 200,
         ),
       );
