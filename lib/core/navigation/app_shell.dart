@@ -90,12 +90,17 @@ class _EmptyBinderShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.tokens.brand.linen,
-      body: Column(
-        children: [
-          const ShellHeader(),
-          Expanded(child: child),
-        ],
+      backgroundColor: Colors.transparent,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: context.tokens.gradient.canvasGradient,
+        ),
+        child: Column(
+          children: [
+            const ShellHeader(),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }
@@ -130,7 +135,7 @@ class _MobileShellState extends State<_MobileShell> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: brand.linen,
+      backgroundColor: Colors.transparent,
       appBar: ShellHeader(
         title: widget.title,
         showMenuButton: true,
@@ -174,7 +179,10 @@ class _MobileShellState extends State<_MobileShell> {
           ),
         ),
       ),
-      body: widget.child,
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
+        child: widget.child,
+      ),
     );
   }
 
@@ -256,29 +264,33 @@ class _RailShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.tokens.brand;
+    final tokens = context.tokens;
+    final brand = tokens.brand;
 
     return Scaffold(
-      backgroundColor: brand.linen,
-      body: Row(
-        children: [
-          BinderSidebar(
-            key: const Key('binder-sidebar'),
-            extended: extended,
-            sections: sections,
-            selectedIndex: selectedIndex,
-            onSelect: onSelect,
-          ),
-          VerticalDivider(width: 1, thickness: 1, color: brand.mist),
-          Expanded(
-            child: Column(
-              children: [
-                const ShellHeader(),
-                Expanded(child: child),
-              ],
+      backgroundColor: Colors.transparent,
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
+        child: Row(
+          children: [
+            BinderSidebar(
+              key: const Key('binder-sidebar'),
+              extended: extended,
+              sections: sections,
+              selectedIndex: selectedIndex,
+              onSelect: onSelect,
             ),
-          ),
-        ],
+            VerticalDivider(width: 1, thickness: 1, color: brand.mist),
+            Expanded(
+              child: Column(
+                children: [
+                  const ShellHeader(),
+                  Expanded(child: child),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -129,8 +129,12 @@ String? appRouterRedirect(BuildContext context, GoRouterState state) {
   return null;
 }
 
-/// Wraps a destination widget in a fade-through transition using the shared
-/// [MotionTokens], so every route in the shell animates consistently.
+/// Wraps a destination widget in a Material fade-through transition using
+/// the shared [MotionTokens], so every route — hub switches, list<->form,
+/// login/403 — animates consistently: the outgoing page fades out over the
+/// first third of the duration, the incoming page fades and scales in over
+/// the remaining two thirds. Hand-rolled rather than pulling in
+/// `package:animations` for one transition.
 CustomTransitionPage<void> buildPageWithMotion({
   required Widget child,
   required GoRouterState state,
@@ -139,9 +143,26 @@ CustomTransitionPage<void> buildPageWithMotion({
     key: state.pageKey,
     child: child,
     transitionDuration: MotionTokens.pageTransition,
+    reverseTransitionDuration: MotionTokens.pageTransition,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurveTween(curve: MotionTokens.standardCurve);
-      return FadeTransition(opacity: curved.animate(animation), child: child);
+      final fadeOut = CurvedAnimation(
+        parent: secondaryAnimation,
+        curve: const Interval(0, 0.3, curve: Curves.easeInCubic),
+      );
+      final incoming = CurvedAnimation(
+        parent: animation,
+        curve: const Interval(0.3, 1, curve: Curves.easeOutCubic),
+      );
+      return FadeTransition(
+        opacity: Tween<double>(begin: 1, end: 0).animate(fadeOut),
+        child: FadeTransition(
+          opacity: incoming,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1).animate(incoming),
+            child: child,
+          ),
+        ),
+      );
     },
   );
 }
@@ -252,8 +273,16 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
   refreshListenable: GoRouterRefreshStream(authBloc.stream),
   routes: [
     // Chrome-less routes: no nav rail/drawer.
-    GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
-    GoRoute(path: '/403', builder: (_, __) => const _ForbiddenPage()),
+    GoRoute(
+      path: '/login',
+      pageBuilder: (context, state) =>
+          buildPageWithMotion(state: state, child: const LoginPage()),
+    ),
+    GoRoute(
+      path: '/403',
+      pageBuilder: (context, state) =>
+          buildPageWithMotion(state: state, child: const _ForbiddenPage()),
+    ),
     ShellRoute(
       builder: (context, state, child) => AppShell(child: child),
       routes: [

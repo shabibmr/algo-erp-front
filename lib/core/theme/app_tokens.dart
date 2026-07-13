@@ -107,6 +107,37 @@ class BrandColors {
   );
 }
 
+/// Backdrop washes painted behind full-page canvases (shell scaffolds,
+/// standalone pages) instead of a flat [BrandColors.linen] fill.
+@immutable
+class GradientTokens {
+  const GradientTokens({required this.canvas});
+
+  /// Two stops, not more — the system leans on a faint tonal shift rather
+  /// than a showy multi-stop gradient.
+  final List<Color> canvas;
+
+  LinearGradient get canvasGradient => LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: canvas,
+  );
+
+  // Linen warming the top-left corner, cooling toward lagoon-tinted glass at
+  // the bottom-right — both stops match [BrandColors.light]'s linen and
+  // lagoonSoft, so the wash reads as "the same paper, lit unevenly" rather
+  // than a new hue.
+  static const light = GradientTokens(
+    canvas: [Color(0xFFF1EDE6), Color(0xFFD7EFED)],
+  );
+
+  // Flat until a dark-mode wash is designed — two identical stops keep dark
+  // mode visually unchanged.
+  static const dark = GradientTokens(
+    canvas: [Color(0xFF11161D), Color(0xFF11161D)],
+  );
+}
+
 /// Voucher lifecycle status colors, kept separate from Material's semantic
 /// roles because a voucher's status maps to domain meaning, not UI severity.
 @immutable
@@ -258,6 +289,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.semanticColors,
     required this.voucherStatusColors,
     required this.ledger,
+    required this.gradient,
     this.spacing = const AppSpacing(),
     this.radii = const AppRadii(),
     this.elevation = const AppElevation(),
@@ -275,6 +307,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final SemanticColors semanticColors;
   final VoucherStatusColors voucherStatusColors;
   final LedgerTokens ledger;
+  final GradientTokens gradient;
   final AppSpacing spacing;
   final AppRadii radii;
   final AppElevation elevation;
@@ -289,6 +322,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     semanticColors: SemanticColors.light,
     voucherStatusColors: VoucherStatusColors.light,
     ledger: LedgerTokens.light,
+    gradient: GradientTokens.light,
   );
 
   static const dark = AppTokens(
@@ -296,6 +330,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     semanticColors: SemanticColors.dark,
     voucherStatusColors: VoucherStatusColors.dark,
     ledger: LedgerTokens.dark,
+    gradient: GradientTokens.dark,
   );
 
   @override
@@ -304,6 +339,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     SemanticColors? semanticColors,
     VoucherStatusColors? voucherStatusColors,
     LedgerTokens? ledger,
+    GradientTokens? gradient,
     AppSpacing? spacing,
     AppRadii? radii,
     AppElevation? elevation,
@@ -314,6 +350,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       semanticColors: semanticColors ?? this.semanticColors,
       voucherStatusColors: voucherStatusColors ?? this.voucherStatusColors,
       ledger: ledger ?? this.ledger,
+      gradient: gradient ?? this.gradient,
       spacing: spacing ?? this.spacing,
       radii: radii ?? this.radii,
       elevation: elevation ?? this.elevation,

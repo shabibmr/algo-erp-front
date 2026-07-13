@@ -16,8 +16,8 @@ class ReportsHubPage extends StatelessWidget {
     final brand = tokens.brand;
     const reports = ReportCatalog.all;
 
-    return ColoredBox(
-      color: brand.linen,
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

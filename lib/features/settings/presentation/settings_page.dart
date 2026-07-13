@@ -19,8 +19,8 @@ class SettingsPage extends StatelessWidget {
     final tokens = context.tokens;
     final brand = tokens.brand;
 
-    return ColoredBox(
-      color: brand.linen,
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
       child: AdaptiveLayout(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

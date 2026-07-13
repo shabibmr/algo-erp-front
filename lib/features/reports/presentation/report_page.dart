@@ -17,11 +17,12 @@ class ReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final def = ReportCatalog.byId(reportId);
-    final brand = context.tokens.brand;
+    final tokens = context.tokens;
+    final gradient = tokens.gradient.canvasGradient;
 
     if (def == null) {
-      return ColoredBox(
-        color: brand.linen,
+      return DecoratedBox(
+        decoration: BoxDecoration(gradient: gradient),
         child: AdaptiveLayout(
           child: EmptyState(
             message: 'Unknown report: $reportId',
@@ -33,8 +34,8 @@ class ReportPage extends StatelessWidget {
       );
     }
 
-    return ColoredBox(
-      color: brand.linen,
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: gradient),
       child: AdaptiveLayout(
         child: ReportViewer(
           definition: def,

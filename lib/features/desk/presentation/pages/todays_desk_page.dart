@@ -36,10 +36,9 @@ class _DeskBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final brand = tokens.brand;
 
-    return ColoredBox(
-      color: brand.linen,
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
       child: AdaptiveLayout(
         child: BlocBuilder<AuthBloc, AuthState>(
           builder: (context, authState) {
