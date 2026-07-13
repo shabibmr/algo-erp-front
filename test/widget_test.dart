@@ -1,3 +1,5 @@
+import 'package:algo_erp_front/core/auth/permission_contract.dart';
+import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/navigation/app_shell.dart';
 import 'package:algo_erp_front/core/navigation/binder_sidebar.dart';
 import 'package:algo_erp_front/core/theme/app_theme.dart';
@@ -13,7 +15,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:dio/dio.dart';
+
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+class MockDioClient extends Mock implements DioClient {}
+class MockDio extends Mock implements Dio {}
 
 class _AllowAll implements PermissionService {
   const _AllowAll();
@@ -36,6 +43,27 @@ void main() {
   setUpAll(() {
     if (!getIt.isRegistered<PermissionService>()) {
       getIt.registerSingleton<PermissionService>(const _AllowAll());
+    }
+    if (!getIt.isRegistered<DioClient>()) {
+      final dioClient = MockDioClient();
+      final dio = MockDio();
+      when(() => dioClient.dio).thenReturn(dio);
+      when(
+        () => dio.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+          cancelToken: any(named: 'cancelToken'),
+          onReceiveProgress: any(named: 'onReceiveProgress'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: ''),
+          data: <String, dynamic>{'success': true, 'data': <String, dynamic>{}},
+          statusCode: 200,
+        ),
+      );
+      getIt.registerSingleton<DioClient>(dioClient);
     }
   });
 
