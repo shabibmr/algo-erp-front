@@ -15,6 +15,12 @@ import 'package:mocktail/mocktail.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
+class _AllowAll implements PermissionService {
+  const _AllowAll();
+  @override
+  bool can(String module, PermissionAction action) => true;
+}
+
 void main() {
   late MockAuthBloc authBloc;
 
@@ -26,6 +32,12 @@ void main() {
     companyId: 10,
     branchId: 2,
   );
+
+  setUpAll(() {
+    if (!getIt.isRegistered<PermissionService>()) {
+      getIt.registerSingleton<PermissionService>(const _AllowAll());
+    }
+  });
 
   setUp(() {
     authBloc = MockAuthBloc();
