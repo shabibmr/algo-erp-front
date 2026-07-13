@@ -141,7 +141,6 @@ final userCredentialsManifest = EntityManifest<UserCredentials>(
       section: 'Status',
     ),
   ],
-  emptyEntity: () =>
-      const UserCredentials(id: 0, username: '', roleId: 0),
+  emptyEntity: () => const UserCredentials(id: 0, username: '', roleId: 0),
   // DELETE deactivates (soft) — hardDelete defaults to false.
 );

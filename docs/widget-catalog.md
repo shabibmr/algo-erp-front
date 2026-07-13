@@ -127,6 +127,13 @@ rather than the canvas underneath.
 
 **Key props:** `child`, `toolbar` *or* `title`, `fill`, `padding`.
 
+### `PaperCard` — `layout/paper_card.dart`
+The desk's paper-surfaced card shell — rounded, hairline-bordered, barely
+elevated `Material`. Shared by the desk KPI tiles and every chart card in
+`charts/` so any "sheet on the desk" reads as the same material.
+
+**Key props:** `child`.
+
 ## Filters
 
 ### `FilterBar` — `filters/filter_bar.dart`
@@ -211,6 +218,43 @@ builds its cell from `(context, row, index)` — typically an
 
 **Key props:** `rows`, `columns`, `onChanged`, `newRow` (factory for the
 add-row button; omit to hide it), `addLabel`, `enabled`.
+
+## Charts (`charts/`)
+
+Built on `fl_chart`. Every widget takes plain typed data and caller-supplied
+colors (from `context.tokens`) — none of them hardcode a palette or leak
+`fl_chart` types to call sites. Each renders inside a `PaperCard`. Used on
+Today's Desk (`features/desk/presentation/pages/todays_desk_page.dart`) for
+the "Quiet pulse" insights; demoed in the widget gallery under "Charts".
+
+### `ChartLegend` — `charts/chart_legend.dart`
+A wrapping row of `ChartLegendEntry` (color dot + label + optional value).
+Shared by the other three chart widgets so color-to-label mapping always
+reads the same way.
+
+**Key props:** `entries`.
+
+### `SignedBarChart` — `charts/signed_bar_chart.dart`
+A grouped bar chart comparing 1+ series across a set of x-axis groups — e.g.
+sales vs purchase invoice counts, month over month. Shows an empty-state
+card when `groups` is empty.
+
+**Key props:** `title`, `seriesLabels`, `seriesColors`, `groups`
+(`BarSeriesGroup { label, values }`), `valueFormatter`.
+
+### `RankedBarChart` — `charts/ranked_bar_chart.dart`
+A "top N" bar chart, one bar per entry in the order given, single color —
+used for leaderboards like top customers by invoice count.
+
+**Key props:** `title`, `entries` (`RankedBarEntry { label, value }`),
+`barColor`, `valueFormatter`, `emptyMessage`.
+
+### `ShareDonutChart` — `charts/share_donut_chart.dart`
+A donut/pie chart for part-of-whole breakdowns — e.g. cash vs bank share of
+liquid position.
+
+**Key props:** `title`, `slices` (`DonutSlice { label, value, color }`),
+`valueFormatter`, `emptyMessage`.
 
 ## Gallery
 

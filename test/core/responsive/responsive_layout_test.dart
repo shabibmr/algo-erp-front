@@ -66,33 +66,36 @@ void main() {
   });
 
   group('AdaptiveLayout Widget Tests', () {
-    testWidgets('constrains content width and applies desktop padding on wide screens', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1920, 1080);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'constrains content width and applies desktop padding on wide screens',
+      (tester) async {
+        tester.view.physicalSize = const Size(1920, 1080);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: AdaptiveLayout(
-              maxContentWidth: 1200,
-              child: SizedBox(height: 100, child: Text('Content')),
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: AdaptiveLayout(
+                maxContentWidth: 1200,
+                child: SizedBox(height: 100, child: Text('Content')),
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      final constrainedBox = tester.widget<ConstrainedBox>(
-        find.ancestor(
-          of: find.text('Content'),
-          matching: find.byType(ConstrainedBox),
-        ).first,
-      );
-      expect(constrainedBox.constraints.maxWidth, equals(1200.0));
-      expect(find.text('Content'), findsOneWidget);
-    });
+        final constrainedBox = tester.widget<ConstrainedBox>(
+          find
+              .ancestor(
+                of: find.text('Content'),
+                matching: find.byType(ConstrainedBox),
+              )
+              .first,
+        );
+        expect(constrainedBox.constraints.maxWidth, equals(1200.0));
+        expect(find.text('Content'), findsOneWidget);
+      },
+    );
   });
 
   group('MasterDetailLayout Widget Tests', () {
@@ -119,25 +122,22 @@ void main() {
       expect(find.byType(Row), findsOneWidget);
     });
 
-    testWidgets('renders single list pane on mobile screen width when no detail selected', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'renders single list pane on mobile screen width when no detail selected',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: MasterDetailLayout(
-              list: Text('List Pane'),
-            ),
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(body: MasterDetailLayout(list: Text('List Pane'))),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('List Pane'), findsOneWidget);
-      expect(find.byType(Row), findsNothing);
-    });
+        expect(find.text('List Pane'), findsOneWidget);
+        expect(find.byType(Row), findsNothing);
+      },
+    );
   });
 }

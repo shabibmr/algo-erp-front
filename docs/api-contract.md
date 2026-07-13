@@ -458,3 +458,316 @@ Query params: `start_date`, `end_date`, `prefix`, `financial_year`, `ledger_id`,
 /transactions/SalesInvoice/:id/approve`, `POST /transactions/SalesInvoice/:id/reject` — all
 gated by `Transactions:update`, not `SalesInvoice:update` (the lifecycle routes use the
 coarse `Transactions` module regardless of voucher type).
+
+---
+
+## 11. Desk dashboard (`src/modules/transactions/dashboard.routes.ts`, `dashboard.service.ts`)
+
+Mounted at `/reports`. All three routes gated by `authorize('Transactions', 'read')`.
+
+### 11.1 `GET /reports/dashboard` — single-period snapshot
+
+Query: `start_date`, `end_date` (both `YYYY-MM-DD`, default to the current calendar month),
+optional `company_id`, `branch_id`.
+
+```ts
+// data:
+{
+  period: { start_date: Date; end_date: Date };
+  sales_count: number;      // voucher_headers count, voucher_type='SalesInvoice'
+  purchase_count: number;   // voucher_headers count, voucher_type='PurchaseInvoice'
+  cash_position: number;    // journal_ledger debit-credit net, Ledger_Type='Cash'
+  bank_position: number;    // journal_ledger debit-credit net, Ledger_Type='Bank'
+  top_customers: Array<{ voucher_ledger_id: number; _count: { id: number } }>;  // top 5
+}
+```
+
+### 11.2 `GET /reports/dashboard/trend` — month-over-month trend (added for desk charts)
+
+Query: `months` (default `6`, clamped `[1, 24]`), optional `company_id`, `branch_id`.
+
+```ts
+// data:
+{
+  points: Array<{
+    month: string;           // 'YYYY-MM', oldest first
+    sales_count: number;
+    purchase_count: number;
+    cash_position: number;
+    bank_position: number;
+  }>;
+}
+```
+
+Same aggregations as 11.1, bucketed per calendar month, run in parallel server-side
+(`DashboardService.getTrend`). No `top_customers` per bucket.
+
+### 11.3 `GET /reports/alerts` — action items
+
+No query params.
+
+```ts
+// data:
+{
+  expiring_documents: Array<{ type: 'document_expiry'; employee: {...} | null; doc_type; expiry_date; days_until_expiry: number | null }>;
+  overdue_bills: Array<{ type: 'overdue_bill'; ledger_id: number; ref_no: string; voucher_no: string; due_date: Date | null; amount: number }>;
+}
+```
+
+### 11.4 `GET /reports/search` — global search autocomplete (`GlobalSearchService.search`)
+
+Query: `q` (string, required — returns all-empty result if omitted or `< 2` chars after trim).
+
+```ts
+// data:
+{
+  ledgers: Array<{ id: number; Ledger_Name: string; Ledger_Type: string; ledger_code: string | null }>;    // is_active only, matches Ledger_Name or ledger_code, take 10
+  items: Array<{ id: number; Item_Name: string; Item_Code: string | null }>;                                // is_active only, matches Item_Name or Item_Code, take 10
+  contacts: Array<{ id: number; Name: string; Phone_Number: string | null; Email: string | null; contact_type: string | null }>;  // matches Name/Phone_Number/Email, take 10
+  vouchers: Array<{ id: number; voucher_no: string; voucher_type: string; voucher_prefix: string; voucher_date: Date }>;         // matches voucher_no, take 10, ordered by voucher_date desc
+}
+```
+
+---
+
+## 12. Reports routing map — **three different mount prefixes, easy to get wrong**
+
+There is no single `/reports/*` namespace. `src/app.ts` mounts three separate report-bearing
+routers under overlapping-looking prefixes, and one of them declares its own paths starting
+with `/reports/...` **while being mounted at `/transactions`**, which doubles the prefix. This
+has already caused real 404s (e.g. calling `GET /reports/balance-sheet` instead of the correct
+`GET /transactions/reports/balance-sheet`) — check this table before wiring any report call.
+
+| `app.ts` mount | Router file | Internal route prefix | **Resulting full path** | Reports |
+|---|---|---|---|---|
+| `app.use('/transactions', phase4Routes)` | `phase4.routes.ts` | `/reports/...` | **`/transactions/reports/...`** | ledger-statement, trial-balance, profit-loss, balance-sheet, day-book |
+| `app.use('/transactions/reports', reportsRoutes)` | `reports.routes.ts` | `/...` (no extra prefix) | **`/transactions/reports/...`** | sales-register, purchase-register, stock-summary, stock-valuation, vat-return (+ `/excel` variant of each) |
+| `app.use('/reports', dashboardRoutes)` | `dashboard.routes.ts` | `/dashboard`, `/dashboard/trend`, `/alerts`, `/search` | **`/reports/...`** | see §11 above |
+| `app.use('/reports', analyticsRoutes)` | `analytics.routes.ts` | `/...` (no extra prefix) | **`/reports/...`** | see §15 below |
+
+Net effect: the two router groups mounted at `/transactions/reports` land on the *same* full
+prefix despite being registered differently in `app.ts` (one via a doubled internal path, one
+via the mount path) — that part is a coincidence, not a guarantee for any future report added
+the same way as `phase4Routes`. **Always confirm a report's full path from this table (or by
+grepping `addPath(` in `scripts/generate-openapi.ts`) rather than assuming `/reports/<name>`.**
+
+---
+
+## 13. Financial statement reports (`phase4.routes.ts` §"Journal Ledger reports", `phase4.service.ts`, `phase4.controller.ts`)
+
+Mounted at `/transactions/reports/...` (see §12). All gated by `authorize('JournalLedger', 'read')`.
+None of these validate `company_id`/`branch_id` scoping — they query `journal_ledger`/`ledger_master`
+globally.
+
+### 13.1 `GET /transactions/reports/ledger-statement`
+
+Query (validated by `ledgerStatementQuerySchema`, all **required**): `ledger_id` (numeric
+string), `start_date`, `end_date` (`YYYY-MM-DD`).
+
+```ts
+// data:
+{
+  ledgerId: number;
+  ledgerName: string;
+  ledgerType: string;
+  nature: string;            // 'Assets'|'Liabilities'|'Capital'|'Income'|'Expense' (from account group walk)
+  openingBalance: number;    // master Opening_Balance adjusted for all pre-start_date entries
+  entries: Array<{
+    id: number; postingDate: string; voucherType: string; voucherNo: string;
+    voucherPrefix: string; narration: string | null; debit: number; credit: number;
+    runningBalance: number;
+  }>;
+  closingBalance: number;
+}
+```
+404 `NotFoundError` if `ledger_id` doesn't exist.
+
+### 13.2 `GET /transactions/reports/trial-balance`
+
+Query (validated by `trialBalanceQuerySchema`): `as_of_date` (`YYYY-MM-DD`, optional — defaults
+to today).
+
+```ts
+// data:
+{
+  asOfDate: string;   // YYYY-MM-DD
+  entries: Array<{ ledgerId: number; ledgerName: string; ledgerType: string; nature: string; debit: number; credit: number }>;  // zero-balance ledgers omitted
+  totalDebit: number;
+  totalCredit: number;
+  isBalanced: boolean;
+}
+```
+Iterates **every active ledger** and computes balance-to-date per ledger — O(n) queries, no
+pagination; expect this to be slow on large ledger masters.
+
+### 13.3 `GET /transactions/reports/profit-loss`
+
+Query (validated by `financialReportQuerySchema`, both **required**): `start_date`, `end_date`
+(`YYYY-MM-DD`).
+
+```ts
+// data:
+{
+  period: { start: string; end: string };
+  revenues: Array<{ ledgerId: number; name: string; amount: number }>;   // nature === 'Income', net credit-debit, only if > 0
+  expenses: Array<{ ledgerId: number; name: string; amount: number }>;   // nature === 'Expense', net debit-credit, only if > 0
+  totalRevenue: number;
+  totalExpense: number;
+  netProfit: number;
+}
+```
+
+### 13.4 `GET /transactions/reports/balance-sheet`
+
+Query: `end_date` (`YYYY-MM-DD`) — **read directly off `req.query`, no Zod schema/`validate()`
+applied to this route**, unlike its siblings above. Passing nothing yields `new Date('')` →
+`Invalid Date`; send a valid `end_date` explicitly.
+
+```ts
+// data:
+{
+  asOfDate: string;    // echoes the end_date query param verbatim
+  assets: Array<{ ledgerId: number; name: string; amount: number }>;
+  liabilities: Array<{ ledgerId: number; name: string; amount: number }>;
+  capital: Array<{ ledgerId: number; name: string; amount: number }>;
+  retainedEarnings: number;               // net profit (all-time revenue - expense, up to end_date) folded into capital
+  totalAssets: number;
+  totalLiabilitiesAndCapital: number;     // liabilities + capital (capital already includes retainedEarnings)
+  isBalanced: boolean;                    // totalAssets === totalLiabilitiesAndCapital
+}
+```
+
+### 13.5 `GET /transactions/reports/day-book`
+
+Query: `date` (`YYYY-MM-DD`) — also **no validation schema**; all `journal_ledger` entries for
+that single calendar day, no `company_id`/`branch_id` filter, no pagination.
+
+```ts
+// data: Array<{
+  id: number; ledgerName: string; voucherType: string; voucherNo: string;
+  debit: number; credit: number; narration: string | null;
+}>
+```
+
+---
+
+## 14. Operational reports (`reports.routes.ts`, `reports.service.ts`, `reportsExport.controller.ts`)
+
+Mounted at `/transactions/reports/...` (see §12).
+
+### 14.1 `GET /transactions/reports/sales-register` — `authorize('Transactions', 'read')`
+
+Query: `start_date`, `end_date` (either/both, overridden by `financial_year` if `start_date`/
+`end_date` absent — `financial_year` format `YYYY-YY` e.g. `2024-25`, parsed as Apr 1–Mar 31),
+`prefix`, `customer_ledger_id`, `page` (default 1), `limit` (default 50, **no upper clamp**).
+
+```ts
+// data:
+{
+  items: Array<{ /* voucher_headers row */ id; voucher_type: 'SalesInvoice'; voucher_prefix; voucher_no; voucher_date; sales_invoice_main: {...} | null }>;
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+```
+
+### 14.2 `GET /transactions/reports/purchase-register` — `authorize('Transactions', 'read')`
+
+Same query shape as 14.1 with `vendor_ledger_id` instead of `customer_ledger_id`; `data.items[]`
+carries `voucher_type: 'PurchaseInvoice'` + `purchase_invoice_main` instead.
+
+### 14.3 `GET /transactions/reports/stock-summary` — `authorize('Inventory', 'read')`
+
+Query: `as_of_date`, `godown_id`, `category_id` (all optional).
+
+```ts
+// data: Array<{
+  item_id: number; item_name: string | undefined; godown_id: number;
+  quantity_in: number; quantity_out: number; closing_qty: number;
+}>
+```
+Not paginated, not wrapped in `{ items, meta }` — a bare array, unlike the register reports.
+
+### 14.4 `GET /transactions/reports/stock-valuation` — `authorize('Inventory', 'read')`
+
+Query: `as_of_date`, `godown_id` (optional).
+
+```ts
+// data: Array<{
+  item_id: number; item_name: string | undefined; godown_id: number;
+  closing_qty: number; avg_cost: number; total_value: number;
+}>
+```
+Also a bare array. `avg_cost` divides `total_cost` by `quantity_in` only (not net of
+`quantity_out`) — treat as approximate, not a strict weighted-average-of-remaining-stock figure.
+
+### 14.5 `GET /transactions/reports/vat-return` — `authorize('Transactions', 'read')` (`VatReturnService.getReport`)
+
+Query: `period` — either `YYYY-MM` (month) or `YYYY-QN` (quarter, e.g. `2025-Q2`); defaults to
+the current month if omitted.
+
+```ts
+// data:
+{
+  period: string;
+  start_date: Date; end_date: Date;
+  sales_invoices: number; purchase_invoices: number;      // row counts
+  total_sales_value: number; total_purchase_value: number; // sum of Total
+  output_tax: number; input_tax: number;                   // sum of Vat_Amount
+  net_vat_payable: number;                                 // output_tax - input_tax
+}
+```
+
+### 14.6 Excel variants — `GET .../excel` for each of the above 5 reports
+
+Same query params and RBAC as the JSON endpoint; **not** wrapped in `ApiResponse` — the
+response body is a raw `.xlsx` binary (`ExportService.generateExcel`) with:
+```
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename="<report_name>.xlsx"
+```
+`sales-register/excel` and `purchase-register/excel` force `limit: 100000` server-side
+(ignore any client-supplied `page`/`limit`) to export the full result set in one file.
+
+---
+
+## 15. Analytics endpoints (`src/modules/reports/analytics.routes.ts`, `analytics.controller.ts`, `analytics.service.ts`)
+
+Mounted at `/reports/...` (see §12) — **not** under `/transactions`.
+
+> **⚠️ These 19 endpoints currently return hard-coded static mock data.** `AnalyticsService`'s
+> methods accept `start_date`/`end_date`/`as_of_date` but every one of them ignores those
+> params and returns the same fixed sample rows every call — confirmed by reading
+> `analytics.service.ts` in full. There is also a `analytics.schema.ts` with Zod query schemas
+> (`analyticsDateRangeSchema`, `analyticsAsOfDateSchema`) that is **not wired into
+> `analytics.routes.ts`** via any `validate()` call — query params aren't validated at all.
+> Treat every response below as a fixture, not real data, until the backend replaces these
+> stubs with real queries.
+
+All gated per-route (`JournalLedger`, `Transactions`, `Inventory`, or `Employee` `read`, per
+domain — see table). Query params, where accepted: `start_date`, `end_date` (`YYYY-MM-DD`) or
+`as_of_date` (`YYYY-MM-DD`) — parsed with `new Date(...)`, no format validation.
+
+| Path (under `/reports`) | RBAC module | Query params used | `data` shape (top-level key) |
+|---|---|---|---|
+| `GET /cash-flow-statement` | `JournalLedger` | start/end | `entries[]`: `activity_type, particulars, cash_inflow, cash_outflow, net_cash_flow` |
+| `GET /budget-variance` | `JournalLedger` | start/end | `entries[]`: `account_group, budget_amount, actual_amount, variance` |
+| `GET /bank-reconciliation` | `JournalLedger` | as_of | `entries[]`: `bank_name, book_balance, uncleared_deposits, uncleared_cheques, statement_balance` |
+| `GET /fixed-assets-depreciation` | `JournalLedger` | as_of | `items[]`: `asset_name, asset_category, gross_block, accumulated_depreciation, net_book_value` |
+| `GET /ap-forecast` | `Transactions` | as_of | `items[]`: `vendor_name, due_this_week, due_this_month, total_due` |
+| `GET /sales-analytics` | `Transactions` | start/end | `items[]`: `category, unit_sales, total_revenue` |
+| `GET /sales-margin` | `Transactions` | start/end | `items[]`: `item_name, revenue, cogs, gross_margin` |
+| `GET /quotation-conversion-ratio` | `Transactions` | start/end | `items[]`: `salesrep_name, total_quotations, converted_orders, lost_quotations, conversion_rate` |
+| `GET /salesperson-commission` | `Transactions` | start/end | `items[]`: `salesrep_name, territory, total_sales, commission_rate, earned_commission` |
+| `GET /vendor-expenses` | `Transactions` | start/end | `items[]`: `category_name, vendor_name, total_amount` |
+| `GET /price-variance` | `Transactions` | start/end | `items[]`: `item_name, vendor_name, standard_price, actual_price, variance_percent` |
+| `GET /ppv-audit` | `Transactions` | start/end | `items[]`: `item_name, vendor_name, master_cost, po_unit_price, price_variance_amount` |
+| `GET /vendor-leadtime-compliance` | `Transactions` | start/end | `items[]`: `vendor_name, total_pos, avg_promised_days, avg_actual_days, on_time_delivery_percent` |
+| `GET /stock-movement` | `Inventory` | start/end | `items[]`: `item_name, turnover_ratio, movement_category, days_in_stock` |
+| `GET /bom-production-costing` | `Inventory` | none | `items[]`: `finished_good_name, bom_code, raw_material_cost, overhead_cost, total_unit_cost` |
+| `GET /bin-location-stock` | `Inventory` | none | `items[]`: `godown_name, bin_rack_code, item_name, on_hand_qty` |
+| `GET /dead-stock-analysis` | `Inventory` | as_of | `items[]`: `item_name, last_movement_date, days_idle, closing_qty, total_stock_value` |
+| `GET /collection-efficiency` | `Transactions` | start/end | `items[]`: `customer_name, dso_days, total_billed, total_collected` |
+| `GET /statutory-payroll-compliance` | `Employee` | start/end | `items[]`: `employee_name, gross_pay, employee_pf_deduction, employer_pf_contribution, total_statutory_liability` |
+
+All numeric-looking money fields in this section are returned as **strings** (e.g.
+`"145000.00"`, `"+7.08%"`), not JSON numbers — consistent with these being formatted fixtures
+rather than `Prisma.Decimal`/`Float` passthroughs like the rest of this contract.

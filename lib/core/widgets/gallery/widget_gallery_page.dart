@@ -2,6 +2,9 @@ import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/theme/app_theme.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
+import 'package:algo_erp_front/core/widgets/charts/ranked_bar_chart.dart';
+import 'package:algo_erp_front/core/widgets/charts/share_donut_chart.dart';
+import 'package:algo_erp_front/core/widgets/charts/signed_bar_chart.dart';
 import 'package:algo_erp_front/core/widgets/chips/status_chip.dart';
 import 'package:algo_erp_front/core/widgets/data_display/adaptive_entity_list.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
@@ -364,6 +367,38 @@ class _GalleryBodyState extends State<_GalleryBody> {
             ),
           ],
           onChanged: (updated) => setState(() => _lines = updated),
+        ),
+        SizedBox(height: tokens.spacing.lg),
+
+        const _Section('Charts'),
+        SignedBarChart(
+          title: 'Sales vs purchase invoices',
+          seriesLabels: const ['Sales', 'Purchase'],
+          seriesColors: [tokens.brand.lagoon, tokens.brand.brass],
+          groups: const [
+            BarSeriesGroup(label: 'Apr', values: [4, 2]),
+            BarSeriesGroup(label: 'May', values: [6, 3]),
+            BarSeriesGroup(label: 'Jun', values: [5, 4]),
+          ],
+        ),
+        SizedBox(height: tokens.spacing.sm),
+        ShareDonutChart(
+          title: 'Cash vs bank position',
+          slices: [
+            DonutSlice(label: 'Cash', value: 4200, color: tokens.brand.lagoon),
+            DonutSlice(label: 'Bank', value: 6800, color: tokens.brand.brass),
+          ],
+          valueFormatter: (v) => 'AED ${v.toStringAsFixed(0)}',
+        ),
+        SizedBox(height: tokens.spacing.sm),
+        RankedBarChart(
+          title: 'Top customers (by invoice count)',
+          barColor: tokens.brand.lagoon,
+          entries: const [
+            RankedBarEntry(label: 'Ledger #12', value: 9),
+            RankedBarEntry(label: 'Ledger #4', value: 6),
+            RankedBarEntry(label: 'Ledger #31', value: 3),
+          ],
         ),
       ],
     );

@@ -4,6 +4,10 @@ import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
+import 'package:algo_erp_front/core/widgets/charts/ranked_bar_chart.dart';
+import 'package:algo_erp_front/core/widgets/charts/share_donut_chart.dart';
+import 'package:algo_erp_front/core/widgets/charts/signed_bar_chart.dart';
+import 'package:algo_erp_front/core/widgets/layout/paper_card.dart';
 import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:algo_erp_front/features/desk/data/desk_repository.dart';
 import 'package:algo_erp_front/features/desk/domain/desk_alerts.dart';
@@ -136,30 +140,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _PaperCard extends StatelessWidget {
-  const _PaperCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final brand = tokens.brand;
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(tokens.radii.lg),
-      side: BorderSide(color: brand.mist),
-    );
-
-    return Material(
-      color: brand.paper,
-      elevation: tokens.elevation.level1,
-      shadowColor: brand.ink.withValues(alpha: 0.06),
-      shape: shape,
-      child: Padding(padding: EdgeInsets.all(tokens.spacing.md), child: child),
-    );
-  }
-}
-
 class _NeedsYouSection extends StatelessWidget {
   const _NeedsYouSection({required this.state});
 
@@ -175,7 +155,7 @@ class _NeedsYouSection extends StatelessWidget {
       children: [
         const _SectionTitle('Needs you'),
         if (state.loading)
-          _PaperCard(
+          PaperCard(
             child: Row(
               children: [
                 SizedBox(
@@ -197,14 +177,14 @@ class _NeedsYouSection extends StatelessWidget {
             ),
           )
         else if (state.alertsFailure != null && state.alerts == null)
-          _PaperCard(
+          PaperCard(
             child: _InlineFailure(
               failure: state.alertsFailure!,
               onRetry: () => context.read<DeskCubit>().load(),
             ),
           )
         else if (state.alerts == null || state.alerts!.isEmpty)
-          _PaperCard(
+          PaperCard(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -257,7 +237,7 @@ class _NeedsYouSection extends StatelessWidget {
       cards.add(
         Padding(
           padding: EdgeInsets.only(bottom: tokens.spacing.sm),
-          child: _PaperCard(
+          child: PaperCard(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -297,7 +277,7 @@ class _NeedsYouSection extends StatelessWidget {
       cards.add(
         Padding(
           padding: EdgeInsets.only(bottom: tokens.spacing.sm),
-          child: _PaperCard(
+          child: PaperCard(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -411,7 +391,7 @@ class _QuietPulseSection extends StatelessWidget {
       children: [
         const _SectionTitle('Quiet pulse'),
         if (state.loading)
-          _PaperCard(
+          PaperCard(
             child: Text(
               'Loading period counts…',
               style: Theme.of(
@@ -420,14 +400,14 @@ class _QuietPulseSection extends StatelessWidget {
             ),
           )
         else if (state.dashboardFailure != null && dash == null)
-          _PaperCard(
+          PaperCard(
             child: _InlineFailure(
               failure: state.dashboardFailure!,
               onRetry: () => context.read<DeskCubit>().load(),
             ),
           )
         else if (dash == null)
-          _PaperCard(
+          PaperCard(
             child: Text(
               'No dashboard data for this period.',
               style: Theme.of(
@@ -483,44 +463,75 @@ class _QuietPulseSection extends StatelessWidget {
               );
             },
           ),
-        if (dash != null && dash.topCustomers.isNotEmpty) ...[
+        if (dash != null) ...[
           SizedBox(height: tokens.spacing.sm),
-          _PaperCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Top customers (by invoice count)',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                SizedBox(height: tokens.spacing.sm),
-                for (final c in dash.topCustomers)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: tokens.spacing.xs),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Ledger #${c.voucherLedgerId}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        Text(
-                          '${c.count}',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                                color: brand.inkMuted,
-                              ),
-                        ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 720;
+              final trendChart = SignedBarChart(
+                title: 'Sales vs purchase invoices',
+                seriesLabels: const ['Sales', 'Purchase'],
+                seriesColors: [brand.lagoon, brand.brass],
+                groups: [
+                  for (final p in state.trend)
+                    BarSeriesGroup(
+                      label: p.month,
+                      values: [
+                        p.salesCount.toDouble(),
+                        p.purchaseCount.toDouble(),
                       ],
                     ),
+                ],
+              );
+              final positionDonut = ShareDonutChart(
+                title: 'Cash vs bank position',
+                slices: [
+                  DonutSlice(
+                    label: 'Cash',
+                    value: dash.cashPosition.toDouble(),
+                    color: brand.lagoon,
+                  ),
+                  DonutSlice(
+                    label: 'Bank',
+                    value: dash.bankPosition.toDouble(),
+                    color: brand.brass,
+                  ),
+                ],
+                valueFormatter: _money,
+              );
+              if (wide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 2, child: trendChart),
+                    SizedBox(width: tokens.spacing.sm),
+                    Expanded(child: positionDonut),
+                  ],
+                );
+              }
+              return Column(
+                children: [
+                  trendChart,
+                  SizedBox(height: tokens.spacing.sm),
+                  positionDonut,
+                ],
+              );
+            },
+          ),
+          if (dash.topCustomers.isNotEmpty) ...[
+            SizedBox(height: tokens.spacing.sm),
+            RankedBarChart(
+              title: 'Top customers (by invoice count)',
+              barColor: brand.lagoon,
+              entries: [
+                for (final c in dash.topCustomers)
+                  RankedBarEntry(
+                    label: 'Ledger #${c.voucherLedgerId}',
+                    value: c.count.toDouble(),
                   ),
               ],
             ),
-          ),
+          ],
         ],
       ],
     );
@@ -546,7 +557,7 @@ class _PulseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final brand = context.tokens.brand;
     final tokens = context.tokens;
-    return _PaperCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

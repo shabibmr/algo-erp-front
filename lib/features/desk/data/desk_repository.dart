@@ -2,6 +2,7 @@ import 'package:algo_erp_front/core/error/safe_call.dart';
 import 'package:algo_erp_front/core/network/api_response.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/desk/domain/dashboard_summary.dart';
+import 'package:algo_erp_front/features/desk/domain/dashboard_trend_point.dart';
 import 'package:algo_erp_front/features/desk/domain/desk_alerts.dart';
 
 /// Online desk feeds: dashboard KPIs + action alerts.
@@ -33,6 +34,29 @@ class DeskRepository {
         throw const FormatException('Expected dashboard data');
       }
       return DashboardSummary.fromJson(data);
+    });
+  }
+
+  Future<Result<List<DashboardTrendPoint>>> fetchTrend({int months = 6}) {
+    return safeCall(() async {
+      final res = await _client.dio.get<Object?>(
+        '/reports/dashboard/trend',
+        queryParameters: {'months': months},
+      );
+      final envelope = decodeApiResponse<Map<String, dynamic>>(
+        res.data,
+        (j) => Map<String, dynamic>.from(j! as Map),
+      );
+      final points = envelope.data?['points'];
+      if (points is! List) {
+        throw const FormatException('Expected trend points');
+      }
+      return points
+          .whereType<Map<dynamic, dynamic>>()
+          .map(
+            (e) => DashboardTrendPoint.fromJson(Map<String, dynamic>.from(e)),
+          )
+          .toList(growable: false);
     });
   }
 

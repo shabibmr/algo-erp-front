@@ -121,7 +121,7 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 | Employee masters | **7 / ~14** | + LeaveAllocation (per-employee list/create; BE-009) |
 | Accounts masters | **2 / ~8** | AccountGroup (selfFk parent) + Ledger core |
 | Vouchers / documents | **17 / ~17** | Full Sprint D voucher matrix (SI gold + 16 kinds) |
-| Reports / dashboard data | ~60% | Live desk KPIs/alerts; ReportViewer + 7 defs + CSV |
+| Reports / dashboard data | ~60% | Live desk KPIs/alerts + fl_chart insights; ReportViewer + 7 defs + CSV |
 | Offline / sync | `P` | Scaffold only under `lib/core/database/**` |
 | **ERP end-to-end usability** | **Trading loop closes** | Party + item masters → 17 voucher kinds → reports/CSV. Gaps: billwise/settlement, stock views, attendance/payslip |
 
@@ -282,8 +282,9 @@ All types share **header + main + lines + lifecycle**. DocumentSurface + Line En
 
 | Surface | API | Status | Notes |
 |---------|-----|--------|-------|
-| Today’s desk | — | `[x]` | Live alerts + quiet pulse KPIs; continue chips |
+| Today’s desk | — | `[x]` | Live alerts + quiet pulse KPIs; continue chips; fl_chart insights (trend/donut/ranked bars) |
 | Dashboard summary | `/reports/dashboard` | `[x]` | Desk “Quiet pulse” |
+| Dashboard trend | `/reports/dashboard/trend` | `[x]` | Desk sales/purchase trend chart |
 | Alerts | `/reports/alerts` | `[x]` | Desk “Needs you” |
 | Global search | `/reports/search` | `[ ]` | Palette uses local NavigationRegistry for now |
 | Sales / purchase register | `/transactions/reports/...` | `[x]` | ReportCatalog |
@@ -428,6 +429,7 @@ EmployeeDetails → leave policy/request → shifts shipped. Documents, attendan
 | G2 | `ReportDefinition` + `ReportViewer` + CSV (7 defs) | `[x]` |
 | G3 | Command palette over NavigationRegistry + report/create routes | `[x]` |
 | G4 | Settings + locale; `architecture.md`; responsive QA matrix seed | `[x]` (goldens later) |
+| G5 | Desk chart insights (`fl_chart`) + `/reports/dashboard/trend` endpoint | `[x]` |
 
 ### Explicitly later
 

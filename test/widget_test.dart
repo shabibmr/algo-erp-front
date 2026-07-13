@@ -19,7 +19,9 @@ import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:dio/dio.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+
 class MockDioClient extends Mock implements DioClient {}
+
 class MockDio extends Mock implements Dio {}
 
 class _AllowAll implements PermissionService {
