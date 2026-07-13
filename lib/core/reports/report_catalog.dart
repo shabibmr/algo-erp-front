@@ -61,6 +61,12 @@ abstract final class ReportCatalog {
     return null;
   }
 
+  /// Every statement section (assets, revenues, …) is a list of ledger lines.
+  static const _statementLine = [
+    ReportColumnSpec(key: 'name', label: 'Ledger', primary: true, flex: 2),
+    ReportColumnSpec(key: 'amount', label: 'Amount', mono: true),
+  ];
+
   static const salesRegister = ReportDefinition(
     id: 'sales-register',
     title: 'Sales register',
@@ -276,71 +282,101 @@ abstract final class ReportCatalog {
   static const profitAndLoss = ReportDefinition(
     id: 'profit-loss',
     title: 'Profit & loss',
-    endpoint: '/reports/profit-loss',
+    endpoint: '/transactions/reports/profit-loss',
     requiredModule: 'JournalLedger',
     autoRun: true,
+    shape: ReportShape.sections,
+    sections: [
+      ReportSectionSpec(
+        title: 'Revenues',
+        rowsPath: 'revenues',
+        columns: _statementLine,
+      ),
+      ReportSectionSpec(
+        title: 'Expenses',
+        rowsPath: 'expenses',
+        columns: _statementLine,
+      ),
+    ],
     params: [
       ReportParamSpec(
         key: 'start_date',
         label: 'From',
         type: ReportParamType.date,
+        required: true,
         defaultMonthStart: true,
       ),
       ReportParamSpec(
         key: 'end_date',
         label: 'To',
         type: ReportParamType.date,
+        required: true,
         defaultToday: true,
       ),
     ],
-    rowsPath: 'entries',
     columns: [
-      ReportColumnSpec(
-        key: 'accountGroup',
-        label: 'Group',
-        primary: true,
-        flex: 2,
-      ),
-      ReportColumnSpec(key: 'ledgerName', label: 'Ledger', flex: 2),
-      ReportColumnSpec(key: 'income', label: 'Income', mono: true),
-      ReportColumnSpec(key: 'expense', label: 'Expense', mono: true),
-      ReportColumnSpec(key: 'netAmount', label: 'Net Amount', mono: true),
+      ReportColumnSpec(key: 'period.start', label: 'From', mono: true),
+      ReportColumnSpec(key: 'period.end', label: 'To', mono: true),
+      ReportColumnSpec(key: 'totalRevenue', label: 'Total revenue', mono: true),
+      ReportColumnSpec(key: 'totalExpense', label: 'Total expense', mono: true),
+      ReportColumnSpec(key: 'netProfit', label: 'Net profit', mono: true),
     ],
   );
 
   static const balanceSheet = ReportDefinition(
     id: 'balance-sheet',
     title: 'Balance sheet',
-    endpoint: '/reports/balance-sheet',
+    endpoint: '/transactions/reports/balance-sheet',
     requiredModule: 'JournalLedger',
     autoRun: true,
+    shape: ReportShape.sections,
+    sections: [
+      ReportSectionSpec(
+        title: 'Assets',
+        rowsPath: 'assets',
+        columns: _statementLine,
+      ),
+      ReportSectionSpec(
+        title: 'Liabilities',
+        rowsPath: 'liabilities',
+        columns: _statementLine,
+      ),
+      ReportSectionSpec(
+        title: 'Capital',
+        rowsPath: 'capital',
+        columns: _statementLine,
+      ),
+    ],
     params: [
       ReportParamSpec(
-        key: 'as_of_date',
+        key: 'end_date',
         label: 'As of',
         type: ReportParamType.date,
+        required: true,
         defaultToday: true,
       ),
     ],
-    rowsPath: 'entries',
     columns: [
+      ReportColumnSpec(key: 'asOfDate', label: 'As of', mono: true),
+      ReportColumnSpec(key: 'totalAssets', label: 'Total assets', mono: true),
       ReportColumnSpec(
-        key: 'category',
-        label: 'Category',
-        primary: true,
-        flex: 2,
+        key: 'totalLiabilitiesAndCapital',
+        label: 'Total liabilities & capital',
+        mono: true,
       ),
-      ReportColumnSpec(key: 'ledgerName', label: 'Ledger', flex: 2),
-      ReportColumnSpec(key: 'asset', label: 'Asset', mono: true),
-      ReportColumnSpec(key: 'liability', label: 'Liability', mono: true),
-      ReportColumnSpec(key: 'balance', label: 'Balance', mono: true),
+      ReportColumnSpec(
+        key: 'retainedEarnings',
+        label: 'Retained earnings',
+        mono: true,
+      ),
+      ReportColumnSpec(key: 'isBalanced', label: 'Balanced'),
     ],
   );
 
   static const ledgerStatement = ReportDefinition(
     id: 'ledger-statement',
     title: 'Ledger statement',
-    endpoint: '/reports/ledger-statement',
+    endpoint: '/transactions/reports/ledger-statement',
     requiredModule: 'JournalLedger',
     params: [
       ReportParamSpec(
@@ -353,38 +389,42 @@ abstract final class ReportCatalog {
         key: 'start_date',
         label: 'From',
         type: ReportParamType.date,
+        required: true,
         defaultMonthStart: true,
       ),
       ReportParamSpec(
         key: 'end_date',
         label: 'To',
         type: ReportParamType.date,
+        required: true,
         defaultToday: true,
       ),
     ],
-    rowsPath: 'items',
+    rowsPath: 'entries',
     columns: [
       ReportColumnSpec(
-        key: 'voucher_date',
+        key: 'postingDate',
         label: 'Date',
         primary: true,
         mono: true,
       ),
-      ReportColumnSpec(key: 'voucher_no', label: 'Voucher'),
-      ReportColumnSpec(key: 'voucher_type', label: 'Type'),
-      ReportColumnSpec(key: 'particulars', label: 'Particulars', flex: 2),
+      ReportColumnSpec(key: 'voucherNo', label: 'Voucher'),
+      ReportColumnSpec(key: 'voucherType', label: 'Type'),
+      ReportColumnSpec(key: 'narration', label: 'Narration', flex: 2),
       ReportColumnSpec(key: 'debit', label: 'Debit', mono: true),
       ReportColumnSpec(key: 'credit', label: 'Credit', mono: true),
-      ReportColumnSpec(key: 'running_balance', label: 'Balance', mono: true),
+      ReportColumnSpec(key: 'runningBalance', label: 'Balance', mono: true),
     ],
   );
 
+  // Backend aggregates straight to bucket totals — there are no per-party rows.
   static const accountsAging = ReportDefinition(
     id: 'accounts-aging',
     title: 'Accounts aging',
-    endpoint: '/transactions/reports/aging',
-    requiredModule: 'Transactions',
+    endpoint: '/accounts/aging',
+    requiredModule: 'Accounts',
     autoRun: true,
+    shape: ReportShape.summary,
     params: [
       ReportParamSpec(
         key: 'as_of_date',
@@ -394,69 +434,59 @@ abstract final class ReportCatalog {
       ),
       ReportParamSpec(
         key: 'type',
-        label: 'Type (receivable/payable)',
+        label: 'Type (AR/AP)',
         type: ReportParamType.text,
       ),
     ],
-    rowsPath: 'items',
     columns: [
-      ReportColumnSpec(
-        key: 'party_name',
-        label: 'Party name',
-        primary: true,
-        flex: 2,
-      ),
-      ReportColumnSpec(
-        key: 'total_outstanding',
-        label: 'Total outstanding',
-        mono: true,
-      ),
-      ReportColumnSpec(key: 'current', label: 'Current', mono: true),
-      ReportColumnSpec(key: 'days_31_60', label: '31-60 Days', mono: true),
-      ReportColumnSpec(key: 'days_61_90', label: '61-90 Days', mono: true),
-      ReportColumnSpec(key: 'over_90', label: '> 90 Days', mono: true),
+      ReportColumnSpec(key: 'type', label: 'Type'),
+      ReportColumnSpec(key: 'buckets.0-30', label: '0-30 Days', mono: true),
+      ReportColumnSpec(key: 'buckets.31-60', label: '31-60 Days', mono: true),
+      ReportColumnSpec(key: 'buckets.61-90', label: '61-90 Days', mono: true),
+      ReportColumnSpec(key: 'buckets.91-180', label: '91-180 Days', mono: true),
+      ReportColumnSpec(key: 'buckets.180+', label: '> 180 Days', mono: true),
     ],
   );
 
   static const overtimeSummary = ReportDefinition(
     id: 'overtime-summary',
     title: 'Overtime summary',
-    endpoint: '/reports/overtime',
+    endpoint: '/employee/reports/overtime',
     requiredModule: 'Employee',
     autoRun: true,
     params: [
+      // Left blank, the backend defaults to the current month.
       ReportParamSpec(
-        key: 'start_date',
-        label: 'From',
-        type: ReportParamType.date,
-        defaultMonthStart: true,
+        key: 'month',
+        label: 'Month (YYYY-MM)',
+        type: ReportParamType.text,
       ),
       ReportParamSpec(
-        key: 'end_date',
-        label: 'To',
-        type: ReportParamType.date,
-        defaultToday: true,
+        key: 'department_id',
+        label: 'Department ID',
+        type: ReportParamType.intField,
       ),
     ],
-    rowsPath: 'items',
     columns: [
       ReportColumnSpec(
-        key: 'employee_name',
+        key: 'employee.Name',
         label: 'Employee name',
         primary: true,
         flex: 2,
       ),
-      ReportColumnSpec(key: 'employee_code', label: 'Code', mono: true),
-      ReportColumnSpec(key: 'department_name', label: 'Department'),
       ReportColumnSpec(
-        key: 'overtime_hours',
-        label: 'Overtime hrs',
+        key: 'employee.employee_code',
+        label: 'Code',
         mono: true,
       ),
-      ReportColumnSpec(key: 'overtime_rate', label: 'Hourly rate', mono: true),
       ReportColumnSpec(
-        key: 'total_overtime_pay',
-        label: 'Total pay',
+        key: 'employee.department_id',
+        label: 'Department ID',
+        mono: true,
+      ),
+      ReportColumnSpec(
+        key: 'total_overtime_hours',
+        label: 'Overtime hrs',
         mono: true,
       ),
     ],
@@ -827,51 +857,75 @@ abstract final class ReportCatalog {
   static const itemBatchesReport = ReportDefinition(
     id: 'item-batches-report',
     title: 'Item batches report',
-    endpoint: '/inventory/item-batches',
+    endpoint: '/inventory/batch',
     requiredModule: 'Inventory',
     autoRun: true,
     rowsPath: 'items',
     columns: [
-      ReportColumnSpec(key: 'batch_no', label: 'Batch No', primary: true),
+      ReportColumnSpec(key: 'batch_number', label: 'Batch No', primary: true),
       ReportColumnSpec(key: 'item_id', label: 'Item ID', mono: true),
-      ReportColumnSpec(key: 'mfg_date', label: 'Mfg Date', mono: true),
-      ReportColumnSpec(key: 'exp_date', label: 'Expiry Date', mono: true),
-      ReportColumnSpec(key: 'quantity', label: 'Quantity', mono: true),
+      ReportColumnSpec(
+        key: 'manufacturing_date',
+        label: 'Mfg Date',
+        mono: true,
+      ),
+      ReportColumnSpec(
+        key: 'expiration_date',
+        label: 'Expiry Date',
+        mono: true,
+      ),
+      ReportColumnSpec(key: 'cost_price', label: 'Cost price', mono: true),
+      ReportColumnSpec(
+        key: 'selling_price',
+        label: 'Selling price',
+        mono: true,
+      ),
     ],
   );
 
   static const payrollRegister = ReportDefinition(
     id: 'payroll-register',
     title: 'Payroll register',
-    endpoint: '/payslips',
+    endpoint: '/employee/payslips',
     requiredModule: 'Employee',
     autoRun: true,
     params: [
+      // This endpoint takes camelCase dates; both are required or it 500s.
       ReportParamSpec(
-        key: 'start_date',
+        key: 'startDate',
         label: 'From',
         type: ReportParamType.date,
+        required: true,
         defaultMonthStart: true,
       ),
       ReportParamSpec(
-        key: 'end_date',
+        key: 'endDate',
         label: 'To',
         type: ReportParamType.date,
+        required: true,
         defaultToday: true,
       ),
     ],
     rowsPath: 'items',
     columns: [
       ReportColumnSpec(
-        key: 'employee_id',
+        key: 'Employee_Id',
         label: 'Employee ID',
         primary: true,
         mono: true,
       ),
-      ReportColumnSpec(key: 'period', label: 'Period'),
-      ReportColumnSpec(key: 'gross_salary', label: 'Gross Salary', mono: true),
-      ReportColumnSpec(key: 'deductions', label: 'Deductions', mono: true),
-      ReportColumnSpec(key: 'net_salary', label: 'Net Salary', mono: true),
+      ReportColumnSpec(key: 'Voucher_No', label: 'Voucher'),
+      ReportColumnSpec(
+        key: 'Salary_Period_Start',
+        label: 'Period from',
+        mono: true,
+      ),
+      ReportColumnSpec(
+        key: 'Salary_Period_End',
+        label: 'Period to',
+        mono: true,
+      ),
+      ReportColumnSpec(key: 'Narration', label: 'Narration', flex: 2),
     ],
   );
 

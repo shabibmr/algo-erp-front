@@ -138,6 +138,19 @@ class _ReportViewerState extends State<ReportViewer> {
 
   void _exportCsv() {
     if (_rawData == null) return;
+    if (def.shape == ReportShape.sections) {
+      final table = flattenReportSections(
+        data: _rawData,
+        sections: def.sections,
+        totals: def.columns,
+      );
+      CsvExporter.exportToCsv(
+        filename: '${def.id}.csv',
+        headers: table.headers,
+        rows: table.rows,
+      );
+      return;
+    }
     if (def.shape == ReportShape.summary) {
       final map = _rawData is Map
           ? Map<String, dynamic>.from(_rawData! as Map)
@@ -172,6 +185,26 @@ class _ReportViewerState extends State<ReportViewer> {
     if (_rawData == null) return;
     final headers = def.columns.map((c) => c.label).toList();
     final List<List<String>> rows;
+    if (def.shape == ReportShape.sections) {
+      final table = flattenReportSections(
+        data: _rawData,
+        sections: def.sections,
+        totals: def.columns,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => DocumentPdfPreviewPage(
+            title: def.title,
+            pdfBuilder: () => buildTablePdf(
+              title: def.title,
+              headers: table.headers,
+              rows: table.rows,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
     if (def.shape == ReportShape.summary) {
       final map = _rawData is Map
           ? Map<String, dynamic>.from(_rawData! as Map)
@@ -287,6 +320,10 @@ class _ReportViewerState extends State<ReportViewer> {
       return const WorkSheet(child: EmptyState(message: 'No data returned.'));
     }
 
+    if (def.shape == ReportShape.sections) {
+      return _SectionsSheet(definition: def, data: _rawData!);
+    }
+
     if (def.shape == ReportShape.summary) {
       return _SummarySheet(definition: def, data: _rawData!);
     }
@@ -398,6 +435,127 @@ class _FilterBar extends StatelessWidget {
             onPressed: loading ? null : onRun,
             icon: const Icon(Icons.play_arrow, size: 18),
             label: Text(loading ? 'Running…' : 'Run'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A financial statement: one sheet per row list, then the totals block.
+class _SectionsSheet extends StatelessWidget {
+  const _SectionsSheet({required this.definition, required this.data});
+
+  final ReportDefinition definition;
+  final Object data;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final map = data is Map<dynamic, dynamic>
+        ? Map<String, dynamic>.from(data as Map)
+        : <String, dynamic>{};
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final section in definition.sections) ...[
+            _SectionBlock(section: section, data: data),
+            SizedBox(height: tokens.spacing.md),
+          ],
+          WorkSheet(
+            fill: false,
+            title: 'Totals',
+            padding: EdgeInsets.all(tokens.spacing.md),
+            child: Column(
+              children: [
+                for (final c in definition.columns)
+                  _TotalRow(column: c, value: readJsonPath(map, c.key)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionBlock extends StatelessWidget {
+  const _SectionBlock({required this.section, required this.data});
+
+  final ReportSectionSpec section;
+  final Object? data;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = extractReportRows(data: data, rowsPath: section.rowsPath);
+    if (rows.isEmpty) {
+      return WorkSheet(
+        fill: false,
+        title: section.title,
+        padding: EdgeInsets.all(context.tokens.spacing.md),
+        child: const EmptyState(message: 'No entries.'),
+      );
+    }
+    return WorkSheet(
+      fill: false,
+      title: section.title,
+      child: LedgerTable<Map<String, dynamic>>(
+        items: rows,
+        columns: [
+          for (final c in section.columns)
+            LedgerColumn<Map<String, dynamic>>(
+              label: c.label,
+              flex: c.flex,
+              mono: c.mono,
+              primary: c.primary,
+              align: c.mono ? ColumnAlign.end : ColumnAlign.start,
+              cellBuilder: (context, row) => Text(
+                formatReportCell(readJsonPath(row, c.key)),
+                style: c.primary
+                    ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      )
+                    : Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  const _TotalRow({required this.column, required this.value});
+
+  final ReportColumnSpec column;
+  final Object? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: tokens.spacing.xs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              column.label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: tokens.brand.inkMuted),
+            ),
+          ),
+          Text(
+            formatReportCell(value),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontFeatures: column.mono
+                  ? const [FontFeature.tabularFigures()]
+                  : null,
+              color: tokens.brand.ink,
+            ),
           ),
         ],
       ),

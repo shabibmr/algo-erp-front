@@ -7,6 +7,11 @@ enum ReportShape {
 
   /// `data` is a flat map of label→value fields (e.g. VAT return summary).
   summary,
+
+  /// `data` holds several parallel row lists plus totals — a financial
+  /// statement. [ReportDefinition.sections] names the lists;
+  /// [ReportDefinition.columns] is the totals block rendered beneath them.
+  sections,
 }
 
 enum ReportParamType { date, text, intField }
@@ -52,6 +57,23 @@ class ReportColumnSpec {
   final bool primary;
 }
 
+/// One titled row list inside a [ReportShape.sections] payload, e.g. the
+/// `assets` block of a balance sheet.
+@immutable
+class ReportSectionSpec {
+  const ReportSectionSpec({
+    required this.title,
+    required this.rowsPath,
+    required this.columns,
+  });
+
+  final String title;
+
+  /// Dot-path to this section's list inside `data`, e.g. `assets`.
+  final String rowsPath;
+  final List<ReportColumnSpec> columns;
+}
+
 /// Declarative report: endpoint, params, columns, CSV flag.
 @immutable
 class ReportDefinition {
@@ -65,6 +87,7 @@ class ReportDefinition {
     this.params = const [],
     this.shape = ReportShape.table,
     this.rowsPath,
+    this.sections = const [],
     this.supportsCsv = true,
     this.autoRun = false,
   });
@@ -81,6 +104,9 @@ class ReportDefinition {
   /// Optional path to the list inside `data` (`items`, `entries`, …).
   /// Null means `data` itself is the list (table shape only).
   final String? rowsPath;
+
+  /// The row lists to render, for [ReportShape.sections] only.
+  final List<ReportSectionSpec> sections;
   final bool supportsCsv;
 
   /// Run on open without waiting for the user to press Run.
