@@ -19,6 +19,10 @@ which currently holds the **offline-sync** CRs (deferred while we ship online-on
 | BE-007 | Standardize every list endpoint to the `Paginated<T>` envelope | P2 | Partially Implemented |
 | BE-008 | Lightweight lookup/projection endpoints for FK pickers | P2 | Partially Implemented |
 | BE-009 | Leave allocation create body missing `employee_id` | P1 | Implemented |
+| BE-010 | No list endpoint for attendance summary / salary revisions (per-employee only) | P1 | Open |
+| BE-011 | Two catalogued reports have no backend route at all | P1 | Open |
+| BE-012 | Financial-statement report params are unvalidated and inconsistently named | P2 | Open |
+| BE-013 | The 19 analytics report endpoints return hard-coded mock data | **P0** | Open |
 
 ---
 
@@ -236,6 +240,107 @@ heavy FKs.
 
 **Frontend impact.** `employee_leave_allocation` can POST
 `{ employee_id, leave_policy_id, year, allocated_days, carried_forward }`.
+
+---
+
+## BE-010 — No list endpoint for attendance summary / salary revisions  (P1)  — **Open**
+**Problem.** `ReportCatalog` ships an *Attendance summary* and a *Salary revision history*
+report, but both data sets exist server-side only as **per-employee** routes:
+- `GET /employee/employees/:id/attendance-summary` (`employee.routes.ts:197`)
+- `GET /employee/employees/:id/salary-revisions` (`employee.routes.ts:198`)
+
+A report is a cross-employee list. `ReportDefinition` addresses an endpoint plus **query**
+params — it has no way to express a **path** param, and there is no route that returns these
+rows for all employees. Both reports 404 today (they point at `/employees/attendance-summary`
+and `/employees/salary-revisions`, which do not exist under any mount).
+
+**Proposed change.** Add period-scoped list endpoints alongside the per-employee ones:
+```
+GET /employee/reports/attendance-summary?start_date&end_date[&department_id]
+GET /employee/reports/salary-revisions?start_date&end_date[&department_id]
+```
+returning `Paginated<T>` (or a bare array, like `/employee/reports/overtime` already does),
+one row per employee. This mirrors the overtime report, which is exactly this shape and works.
+
+**Frontend impact.** Blocked. Until these exist the two reports cannot be fixed by editing the
+catalog; the alternative is an employee-picker param on the report, which changes what the
+report *is* (one employee, not a register). Left pointing at the dead paths deliberately, so
+they fail loudly rather than silently rendering an empty table.
+
+---
+
+## BE-011 — Two catalogued reports have no backend route at all  (P1)  — **Open**
+**Problem.** *Inactive customer analysis* and *Leave balance register* are stamped in
+`ReportCatalog` but no route serves them — not under `/reports` (`analytics.routes.ts` has 19
+routes; neither is among them), not under `/transactions/reports`, not anywhere. Both 404.
+
+A third, *Cash flow* (`/reports/cash-flow`), is a **phantom duplicate**: the real route is
+`/reports/cash-flow-statement`, which the catalog already carries as a separate entry. That one
+is a frontend bug, not a backend gap — the catalog entry should simply be deleted.
+
+**Proposed change.** Either implement the two reports, or confirm they were speculative so the
+frontend can drop them from the catalog and the menu. No strong preference from this side — but
+they should not stay as dead menu items.
+
+**Frontend impact.** Two menu entries that 404 on click. Not fixable frontend-side without
+deleting them.
+
+---
+
+## BE-012 — Financial-statement report params are unvalidated and inconsistently named  (P2)  — **Open**
+**Problem.** The five journal-ledger reports (`phase4.routes.ts:123-150`) disagree with each
+other, and two skip validation entirely:
+
+| Report | Param | Validated? |
+|---|---|---|
+| `trial-balance` | `as_of_date` | Zod (`trialBalanceQuerySchema`) |
+| `ledger-statement` | `ledger_id`, `start_date`, `end_date` | Zod |
+| `profit-loss` | `start_date`, `end_date` | Zod |
+| **`balance-sheet`** | **`end_date`** | **none** |
+| **`day-book`** | `date` | **none** |
+
+`balance-sheet` is an as-of-date report that takes `end_date` while its sibling as-of-date
+report (`trial-balance`) takes `as_of_date`. And because it has no `validate()` middleware,
+a missing param reaches `new Date(undefined)` → `Invalid Date` → the service does date math on
+it and returns **500** (`phase4.controller.ts:292` → `phase4.service.ts:1651`). Confirmed live:
+`GET /transactions/reports/balance-sheet` with no param returns 500, not 400.
+
+**Proposed change.** Rename `balance-sheet`'s param to `as_of_date` to match `trial-balance`
+(keep `end_date` as an accepted alias for one release), and put a Zod schema on both
+`balance-sheet` and `day-book` so a bad or missing date is a **400 with a field path**, not a 500.
+
+**Frontend impact — worked around.** The catalog now sends `end_date` and marks it required, so
+the client can't trigger the 500. If the param is renamed, this is a one-line catalog change —
+say so and it'll follow.
+
+---
+
+## BE-013 — The 19 analytics report endpoints return hard-coded mock data  (P0)  — **Open**
+**Problem.** Every route in `src/modules/reports/analytics.routes.ts` (cash-flow-statement,
+budget-variance, bank-reconciliation, fixed-assets-depreciation, ap-forecast, sales-analytics,
+sales-margin, quotation-conversion-ratio, salesperson-commission, vendor-expenses,
+price-variance, ppv-audit, vendor-leadtime-compliance, stock-movement, bom-production-costing,
+bin-location-stock, dead-stock-analysis, collection-efficiency, statutory-payroll-compliance)
+returns **fixed sample rows**. `AnalyticsService` accepts `start_date`/`end_date`/`as_of_date`
+and ignores them — the same fixture comes back for every date range. `analytics.schema.ts`
+defines Zod query schemas that are never wired into the routes, so the params aren't validated
+either.
+
+Money fields come back as **formatted strings** (`"145000.00"`, `"+7.08%"`), unlike the rest of
+the API — another tell that these are fixtures, and a decoding hazard if they're ever made real
+without changing the wire type.
+
+**Why P0.** These 19 reports are shipped in the menu and render cleanly. A user cannot tell
+they're looking at fake numbers — the report *looks* like it worked. That is worse than a 404:
+it's a correctness trap in a financial product. This is the highest-priority item in this doc.
+
+**Proposed change.** Either implement the queries, or gate the routes behind a flag / return
+`501 Not Implemented` until they're real, so the client can show "not available" instead of
+plausible fiction.
+
+**Frontend impact.** 19 of the ~49 catalogued reports are affected. The frontend currently has
+no way to distinguish them from real reports. If a `501` (or an explicit `data.isMock` flag)
+were returned, the report viewer could render an honest "not yet available" state.
 
 ---
 
