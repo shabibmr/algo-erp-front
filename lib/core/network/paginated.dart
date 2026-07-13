@@ -1,3 +1,5 @@
+import 'package:equatable/equatable.dart';
+
 /// Matches the backend's list payload shape exactly:
 /// `{ items: T[], meta: { total, page, limit, totalPages } }`.
 class Paginated<T> {
@@ -18,7 +20,7 @@ class Paginated<T> {
   final PaginationMeta meta;
 }
 
-class PaginationMeta {
+class PaginationMeta extends Equatable {
   const PaginationMeta({
     required this.total,
     required this.page,
@@ -41,4 +43,7 @@ class PaginationMeta {
   final int totalPages;
 
   bool get hasMore => page < totalPages;
+
+  @override
+  List<Object?> get props => [total, page, limit, totalPages];
 }

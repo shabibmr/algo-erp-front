@@ -18,13 +18,17 @@ import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
+import 'package:algo_erp_front/features/transactions_ledger_amount/bloc/ledger_amount_detail_bloc.dart';
+import 'package:algo_erp_front/features/transactions_ledger_amount/bloc/ledger_amount_detail_event.dart';
+import 'package:algo_erp_front/features/transactions_ledger_amount/bloc/ledger_amount_detail_state.dart';
 import 'package:algo_erp_front/features/transactions_ledger_amount/ledger_amount_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Read-only detail for Payment / Receipt with cancel.
-class LedgerAmountDetailPage extends StatefulWidget {
+/// Read-only detail for Payment / Receipt with cancel powered by flutter_bloc.
+class LedgerAmountDetailPage extends StatelessWidget {
   const LedgerAmountDetailPage({
     required this.kind,
     required this.id,
@@ -35,67 +39,35 @@ class LedgerAmountDetailPage extends StatefulWidget {
   final int id;
 
   @override
-  State<LedgerAmountDetailPage> createState() => _LedgerAmountDetailPageState();
+  Widget build(BuildContext context) {
+    final dio = getIt<DioClient>();
+    return BlocProvider<LedgerAmountDetailBloc>(
+      create: (_) => LedgerAmountDetailBloc(
+        repository: createLedgerAmountRepository(dio, kind),
+        ledgerRepository: createLedgerRepository(dio),
+      )..add(LedgerAmountDetailFetchRequested(id)),
+      child: BlocListener<LedgerAmountDetailBloc, LedgerAmountDetailState>(
+        listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
+        listener: (context, state) {
+          if (state.actionMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.actionMessage!)));
+          }
+        },
+        child: _LedgerAmountDetailView(kind: kind, id: id),
+      ),
+    );
+  }
 }
 
-class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
-  late final _repo = createLedgerAmountRepository(
-    getIt<DioClient>(),
-    widget.kind,
-  );
-  late final _ledgerRepo = createLedgerRepository(getIt<DioClient>());
-  Future<LedgerAmountDetail>? _future;
-  bool _busy = false;
+class _LedgerAmountDetailView extends StatelessWidget {
+  const _LedgerAmountDetailView({required this.kind, required this.id});
 
-  LedgerAmountVoucherKind get kind => widget.kind;
+  final LedgerAmountVoucherKind kind;
+  final int id;
 
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<LedgerAmountDetail> _load() async {
-    final result = await _repo.getById(
-      widget.id,
-      resolveLedgerLabel: (ledgerId) async {
-        final r = await _ledgerRepo.getById(ledgerId);
-        return r.fold((_) => null, (l) {
-          final code = l.code;
-          return (code == null || code.isEmpty) ? l.name : '$code — ${l.name}';
-        });
-      },
-    );
-    return result.fold((f) => throw Exception(f.toString()), (d) => d);
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  EntityStatus _entityStatus(String status) => switch (status) {
-    'Draft' => EntityStatus.draft,
-    'Approved' => EntityStatus.approved,
-    'Posted' => EntityStatus.posted,
-    'Cancelled' => EntityStatus.cancelled,
-    'Rejected' => EntityStatus.rejected,
-    _ => EntityStatus.posted,
-  };
-
-  Future<void> _cancel(LedgerAmountDetail doc) async {
+  Future<void> _cancel(BuildContext context, LedgerAmountDetail doc) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Cancel ${kind.blueprint.label}?',
@@ -103,25 +75,11 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
       confirmLabel: 'Cancel voucher',
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
-    final result = await _repo.cancel(doc.id);
-    if (!mounted) return;
-    result.fold(
-      (f) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_messageOf(f))));
-      },
-      (_) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cancelled')));
-        _reload();
-      },
-    );
+    if (ok && context.mounted) {
+      context.read<LedgerAmountDetailBloc>().add(
+        const LedgerAmountDetailCancelled(),
+      );
+    }
   }
 
   Future<Uint8List> _buildPdf(LedgerAmountDetail doc) async {
@@ -160,7 +118,7 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
     );
   }
 
-  void _print(LedgerAmountDetail doc) {
+  void _print(BuildContext context, LedgerAmountDetail doc) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
@@ -175,20 +133,25 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
     return AdaptiveLayout(
-      child: FutureBuilder<LedgerAmountDetail>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
+      child: BlocBuilder<LedgerAmountDetailBloc, LedgerAmountDetailState>(
+        builder: (context, state) {
+          final bloc = context.read<LedgerAmountDetailBloc>();
+
+          if (state.isLoading && state.detail == null) {
             return const LoadingState();
           }
-          if (snap.hasError) {
-            final err = snap.error;
+          if (state.isFailure && state.detail == null) {
             return ErrorState(
-              failure: err is Failure ? err : Failure.unknown(err.toString()),
-              onRetry: _reload,
+              failure:
+                  state.failure ??
+                  const Failure.unknown('Failed to load voucher detail'),
+              onRetry: () => bloc.add(LedgerAmountDetailFetchRequested(id)),
             );
           }
-          final doc = snap.data!;
+
+          final doc = state.detail;
+          if (doc == null) return const LoadingState();
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -205,13 +168,10 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ),
-                  StatusChip(
-                    status: _entityStatus(doc.status),
-                    label: doc.status,
-                  ),
+                  StatusChip(status: state.entityStatus, label: doc.status),
                   IconButton(
                     tooltip: 'Print',
-                    onPressed: () => _print(doc),
+                    onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
@@ -219,7 +179,9 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
                       module: 'Transactions',
                       action: PermissionAction.update,
                       child: TextButton(
-                        onPressed: _busy ? null : () => _cancel(doc),
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _cancel(context, doc),
                         child: const Text('Cancel'),
                       ),
                     ),
@@ -233,10 +195,11 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
                 runSpacing: 8,
                 children: [
                   if (doc.voucherDate != null)
-                    _kv('Date', doc.voucherDate!.toDayString()),
+                    _kv(context, 'Date', doc.voucherDate!.toDayString()),
                   if (doc.cashBankLabel != null)
-                    _kv('Cash/Bank', doc.cashBankLabel!),
-                  if (doc.total != null) _kv('Total', doc.total.toString()),
+                    _kv(context, 'Cash/Bank', doc.cashBankLabel!),
+                  if (doc.total != null)
+                    _kv(context, 'Total', doc.total.toString()),
                 ],
               ),
               if (doc.narration != null && doc.narration!.isNotEmpty) ...[
@@ -249,7 +212,7 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: doc.lines.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, i) {
                     final line = doc.lines[i];
                     return ListTile(
@@ -277,7 +240,7 @@ class _LedgerAmountDetailPageState extends State<LedgerAmountDetailPage> {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

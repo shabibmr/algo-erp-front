@@ -101,22 +101,36 @@ class MasterListSurface<E> extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.download_outlined),
       tooltip: 'Export to CSV',
-      onPressed: items.isEmpty
-          ? null
-          : () => CsvExporter.exportToCsv(
-              filename: '${manifest.id}_export.csv',
-              headers: [
-                for (final column in manifest.listColumns) column.label,
-              ],
-              rows: [
-                for (final item in items)
-                  [
-                    for (final column in manifest.listColumns)
-                      column.cellValue(item),
-                  ],
-              ],
-            ),
+      onPressed: items.isEmpty ? null : () => _export(context, items),
     );
+  }
+
+  /// Off the web the file goes to disk, so the user has to be told where — and
+  /// a denied folder or a full disk has to surface instead of throwing into the
+  /// void from a button callback.
+  Future<void> _export(BuildContext context, List<E> items) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final path = await CsvExporter.exportToCsv(
+        filename: '${manifest.id}_export.csv',
+        headers: [for (final column in manifest.listColumns) column.label],
+        rows: [
+          for (final item in items)
+            [for (final column in manifest.listColumns) column.cellValue(item)],
+        ],
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            path == null
+                ? 'Exported ${items.length} rows'
+                : 'Exported ${items.length} rows to $path',
+          ),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   /// The sheet's contents for whichever state the list is in. Deliberately not

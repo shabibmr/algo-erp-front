@@ -46,7 +46,7 @@ abstract final class FieldRenderer {
         return AppTextField(
           label: field.label,
           labelWidget: label,
-          initialValue: value as String?,
+          value: value as String?,
           helperText: field.helperText,
           hintText: field.hintText,
           enabled: isEnabled,
@@ -57,7 +57,7 @@ abstract final class FieldRenderer {
         return AppNumberField(
           label: field.label,
           labelWidget: label,
-          initialValue: value as int?,
+          value: value as int?,
           helperText: field.helperText,
           hintText: field.hintText,
           enabled: isEnabled,
@@ -68,7 +68,7 @@ abstract final class FieldRenderer {
         return AppDecimalField(
           label: field.label,
           labelWidget: label,
-          initialValue: value as Decimal?,
+          value: value as Decimal?,
           helperText: field.helperText,
           hintText: field.hintText,
           enabled: isEnabled,

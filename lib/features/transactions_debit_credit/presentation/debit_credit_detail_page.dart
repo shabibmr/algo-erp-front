@@ -18,13 +18,17 @@ import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_detail_bloc.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_detail_event.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_detail_state.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/debit_credit_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Read-only detail for Journal / Contra with cancel.
-class DebitCreditDetailPage extends StatefulWidget {
+/// Read-only detail for Journal / Contra powered by flutter_bloc.
+class DebitCreditDetailPage extends StatelessWidget {
   const DebitCreditDetailPage({
     required this.kind,
     required this.id,
@@ -35,67 +39,35 @@ class DebitCreditDetailPage extends StatefulWidget {
   final int id;
 
   @override
-  State<DebitCreditDetailPage> createState() => _DebitCreditDetailPageState();
+  Widget build(BuildContext context) {
+    final dio = getIt<DioClient>();
+    return BlocProvider<DebitCreditDetailBloc>(
+      create: (_) => DebitCreditDetailBloc(
+        repository: createDebitCreditRepository(dio, kind),
+        ledgerRepository: createLedgerRepository(dio),
+      )..add(DebitCreditDetailFetchRequested(id)),
+      child: BlocListener<DebitCreditDetailBloc, DebitCreditDetailState>(
+        listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
+        listener: (context, state) {
+          if (state.actionMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.actionMessage!)));
+          }
+        },
+        child: _DebitCreditDetailView(kind: kind, id: id),
+      ),
+    );
+  }
 }
 
-class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
-  late final _repo = createDebitCreditRepository(
-    getIt<DioClient>(),
-    widget.kind,
-  );
-  late final _ledgerRepo = createLedgerRepository(getIt<DioClient>());
-  Future<DebitCreditDetail>? _future;
-  bool _busy = false;
+class _DebitCreditDetailView extends StatelessWidget {
+  const _DebitCreditDetailView({required this.kind, required this.id});
 
-  DebitCreditVoucherKind get kind => widget.kind;
+  final DebitCreditVoucherKind kind;
+  final int id;
 
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<DebitCreditDetail> _load() async {
-    final result = await _repo.getById(
-      widget.id,
-      resolveLedgerLabel: (ledgerId) async {
-        final r = await _ledgerRepo.getById(ledgerId);
-        return r.fold((_) => null, (l) {
-          final code = l.code;
-          return (code == null || code.isEmpty) ? l.name : '$code — ${l.name}';
-        });
-      },
-    );
-    return result.fold((f) => throw Exception(f.toString()), (d) => d);
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  EntityStatus _entityStatus(String status) => switch (status) {
-    'Draft' => EntityStatus.draft,
-    'Approved' => EntityStatus.approved,
-    'Posted' => EntityStatus.posted,
-    'Cancelled' => EntityStatus.cancelled,
-    'Rejected' => EntityStatus.rejected,
-    _ => EntityStatus.posted,
-  };
-
-  Future<void> _cancel(DebitCreditDetail doc) async {
+  Future<void> _cancel(BuildContext context, DebitCreditDetail doc) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Cancel ${kind.blueprint.label}?',
@@ -103,25 +75,11 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
       confirmLabel: 'Cancel voucher',
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
-    final result = await _repo.cancel(doc.id);
-    if (!mounted) return;
-    result.fold(
-      (f) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_messageOf(f))));
-      },
-      (_) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cancelled')));
-        _reload();
-      },
-    );
+    if (ok && context.mounted) {
+      context.read<DebitCreditDetailBloc>().add(
+        const DebitCreditDetailCancelled(),
+      );
+    }
   }
 
   Future<Uint8List> _buildPdf(DebitCreditDetail doc) async {
@@ -158,7 +116,7 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
     );
   }
 
-  void _print(DebitCreditDetail doc) {
+  void _print(BuildContext context, DebitCreditDetail doc) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
@@ -173,20 +131,25 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
     return AdaptiveLayout(
-      child: FutureBuilder<DebitCreditDetail>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
+      child: BlocBuilder<DebitCreditDetailBloc, DebitCreditDetailState>(
+        builder: (context, state) {
+          final bloc = context.read<DebitCreditDetailBloc>();
+
+          if (state.isLoading && state.detail == null) {
             return const LoadingState();
           }
-          if (snap.hasError) {
-            final err = snap.error;
+          if (state.isFailure && state.detail == null) {
             return ErrorState(
-              failure: err is Failure ? err : Failure.unknown(err.toString()),
-              onRetry: _reload,
+              failure:
+                  state.failure ??
+                  const Failure.unknown('Failed to load voucher detail'),
+              onRetry: () => bloc.add(DebitCreditDetailFetchRequested(id)),
             );
           }
-          final doc = snap.data!;
+
+          final doc = state.detail;
+          if (doc == null) return const LoadingState();
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -203,13 +166,10 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ),
-                  StatusChip(
-                    status: _entityStatus(doc.status),
-                    label: doc.status,
-                  ),
+                  StatusChip(status: state.entityStatus, label: doc.status),
                   IconButton(
                     tooltip: 'Print',
-                    onPressed: () => _print(doc),
+                    onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
@@ -217,7 +177,9 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
                       module: 'Transactions',
                       action: PermissionAction.update,
                       child: TextButton(
-                        onPressed: _busy ? null : () => _cancel(doc),
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _cancel(context, doc),
                         child: const Text('Cancel'),
                       ),
                     ),
@@ -231,8 +193,9 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
                 runSpacing: 8,
                 children: [
                   if (doc.voucherDate != null)
-                    _kv('Date', doc.voucherDate!.toDayString()),
-                  if (doc.total != null) _kv('Total', doc.total.toString()),
+                    _kv(context, 'Date', doc.voucherDate!.toDayString()),
+                  if (doc.total != null)
+                    _kv(context, 'Total', doc.total.toString()),
                 ],
               ),
               if (doc.narration != null && doc.narration!.isNotEmpty) ...[
@@ -245,7 +208,7 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: doc.lines.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, i) {
                     final line = doc.lines[i];
                     return ListTile(
@@ -279,7 +242,7 @@ class _DebitCreditDetailPageState extends State<DebitCreditDetailPage> {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -136,49 +136,65 @@ class _ReportViewerState extends State<ReportViewer> {
     );
   }
 
-  void _exportCsv() {
+  Future<void> _exportCsv() async {
     if (_rawData == null) return;
+
+    final List<String> headers;
+    final List<List<String>> rows;
+
     if (def.shape == ReportShape.sections) {
       final table = flattenReportSections(
         data: _rawData,
         sections: def.sections,
         totals: def.columns,
       );
-      CsvExporter.exportToCsv(
-        filename: '${def.id}.csv',
-        headers: table.headers,
-        rows: table.rows,
-      );
-      return;
-    }
-    if (def.shape == ReportShape.summary) {
+      headers = table.headers;
+      rows = table.rows;
+    } else if (def.shape == ReportShape.summary) {
       final map = _rawData is Map
           ? Map<String, dynamic>.from(_rawData! as Map)
           : <String, dynamic>{};
-      CsvExporter.exportToCsv(
-        filename: '${def.id}.csv',
-        headers: def.columns.map((c) => c.label).toList(),
-        rows: [
-          [
-            for (final c in def.columns)
-              formatReportCell(readJsonPath(map, c.key)),
-          ],
+      headers = def.columns.map((c) => c.label).toList();
+      rows = [
+        [
+          for (final c in def.columns)
+            formatReportCell(readJsonPath(map, c.key)),
         ],
-      );
-      return;
-    }
-    final rows = extractReportRows(data: _rawData, rowsPath: def.rowsPath);
-    CsvExporter.exportToCsv(
-      filename: '${def.id}.csv',
-      headers: def.columns.map((c) => c.label).toList(),
-      rows: [
-        for (final row in rows)
+      ];
+    } else {
+      headers = def.columns.map((c) => c.label).toList();
+      rows = [
+        for (final row in extractReportRows(
+          data: _rawData,
+          rowsPath: def.rowsPath,
+        ))
           [
             for (final c in def.columns)
               formatReportCell(readJsonPath(row, c.key)),
           ],
-      ],
-    );
+      ];
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      // Off the web this writes to disk, so the user needs the path back.
+      final path = await CsvExporter.exportToCsv(
+        filename: '${def.id}.csv',
+        headers: headers,
+        rows: rows,
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            path == null
+                ? 'Exported ${rows.length} rows'
+                : 'Exported ${rows.length} rows to $path',
+          ),
+        ),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   void _print() {
@@ -423,7 +439,7 @@ class _FilterBar extends StatelessWidget {
                 ReportParamType.text ||
                 ReportParamType.intField => AppTextField(
                   label: p.label,
-                  initialValue: textValues[p.key] ?? '',
+                  value: textValues[p.key] ?? '',
                   onChanged: (v) => onTextChanged(p.key, v),
                   keyboardType: p.type == ReportParamType.intField
                       ? TextInputType.number

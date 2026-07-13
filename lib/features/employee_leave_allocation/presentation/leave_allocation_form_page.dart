@@ -203,7 +203,7 @@ class _LeaveAllocationFormPageState extends State<LeaveAllocationFormPage> {
             SizedBox(height: tokens.spacing.sm),
             AppNumberField(
               label: 'Year',
-              initialValue: _year,
+              value: _year,
               enabled: !_submitting,
               validator: (v) {
                 if (v == null) return 'Required';
@@ -217,7 +217,7 @@ class _LeaveAllocationFormPageState extends State<LeaveAllocationFormPage> {
             SizedBox(height: tokens.spacing.sm),
             AppDecimalField(
               label: 'Allocated days',
-              initialValue: _allocated,
+              value: _allocated,
               enabled: !_submitting,
               onChanged: (v) {
                 if (v != null) setState(() => _allocated = v);
@@ -226,7 +226,7 @@ class _LeaveAllocationFormPageState extends State<LeaveAllocationFormPage> {
             SizedBox(height: tokens.spacing.sm),
             AppDecimalField(
               label: 'Carried forward',
-              initialValue: _carried,
+              value: _carried,
               enabled: !_submitting,
               helperText: 'Days brought forward from prior year',
               onChanged: (v) {

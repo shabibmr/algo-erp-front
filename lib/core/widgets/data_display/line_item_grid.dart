@@ -49,6 +49,7 @@ class LineItemGrid<R> extends StatelessWidget {
     required this.onChanged,
     super.key,
     this.newRow,
+    this.keyOf,
     this.addLabel = 'Add line',
     this.enabled = true,
   });
@@ -56,6 +57,13 @@ class LineItemGrid<R> extends StatelessWidget {
   final List<R> rows;
   final List<LineItemColumn<R>> columns;
   final ValueChanged<List<R>> onChanged;
+
+  /// Stable identity for a row, so its field widgets follow the row rather
+  /// than the slot it happens to sit in. Without it rows are keyed by index:
+  /// remove the middle of three and the third row's element — text and all —
+  /// slides up into the vacated position. Supply this whenever `R` carries an
+  /// id; omit it for grids that only ever append.
+  final Object Function(R row, int index)? keyOf;
 
   /// Factory for a fresh row, wired to the add-row button. Omit to hide
   /// the add button (e.g. a read-only/approval view of the same grid).
@@ -98,26 +106,29 @@ class LineItemGrid<R> extends StatelessWidget {
             ),
           ),
         for (var i = 0; i < rows.length; i++)
-          Padding(
-            padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.sm),
-            child: Row(
-              children: [
-                for (final column in columns)
-                  Expanded(
-                    flex: column.flex,
-                    child: Padding(
-                      padding: EdgeInsetsDirectional.only(
-                        end: tokens.spacing.xs,
+          KeyedSubtree(
+            key: ValueKey<Object>(keyOf?.call(rows[i], i) ?? i),
+            child: Padding(
+              padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.sm),
+              child: Row(
+                children: [
+                  for (final column in columns)
+                    Expanded(
+                      flex: column.flex,
+                      child: Padding(
+                        padding: EdgeInsetsDirectional.only(
+                          end: tokens.spacing.xs,
+                        ),
+                        child: column.cellBuilder(context, rows[i], i),
                       ),
-                      child: column.cellBuilder(context, rows[i], i),
                     ),
+                  IconButton(
+                    tooltip: 'Remove row',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: enabled ? () => _removeAt(i) : null,
                   ),
-                IconButton(
-                  tooltip: 'Remove row',
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: enabled ? () => _removeAt(i) : null,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         if (newRow != null)

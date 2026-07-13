@@ -146,7 +146,7 @@ class _LeaveAllocationListPageState extends State<LeaveAllocationListPage> {
               Expanded(
                 child: AppNumberField(
                   label: 'Year',
-                  initialValue: _year,
+                  value: _year,
                   onChanged: (v) {
                     if (v == null) return;
                     setState(() => _year = v);

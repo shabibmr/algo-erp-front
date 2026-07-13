@@ -1,10 +1,14 @@
 import 'dart:convert';
-import 'csv_exporter_stub.dart' if (dart.library.html) 'csv_exporter_web.dart';
+
+import 'csv_exporter_io.dart' if (dart.library.html) 'csv_exporter_web.dart';
 
 class CsvExporter {
   /// Exports a list of items to a CSV file.
   /// Uses '|' as the separator to comply with system-wide rules.
-  static void exportToCsv({
+  ///
+  /// Returns the path the file was written to, or null on web, where the
+  /// browser owns the download and never tells us where it went.
+  static Future<String?> exportToCsv({
     required String filename,
     required List<String> headers,
     required List<List<String>> rows,
@@ -33,6 +37,6 @@ class CsvExporter {
     }
 
     final bytes = utf8.encode(csvBuffer.toString());
-    saveCsvBytes(bytes, filename);
+    return saveCsvBytes(bytes, filename);
   }
 }

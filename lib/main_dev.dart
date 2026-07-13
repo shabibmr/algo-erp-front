@@ -1,10 +1,13 @@
 import 'package:algo_erp_front/app.dart';
+import 'package:algo_erp_front/core/bloc/app_bloc_observer.dart';
 import 'package:algo_erp_front/core/config/app_config.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Bloc.observer = const AppBlocObserver();
   AppConfig.init(
     const AppConfig(
       flavor: Flavor.dev,

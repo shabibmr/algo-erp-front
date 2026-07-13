@@ -14,10 +14,21 @@ class SalesInvoiceLine extends Equatable {
     Decimal? price,
     Decimal? discountPercent,
     Decimal? taxRate,
+    int? uid,
   }) : quantity = quantity ?? Decimal.one,
        price = price ?? Decimal.zero,
        discountPercent = discountPercent ?? Decimal.zero,
-       taxRate = taxRate ?? Decimal.zero;
+       taxRate = taxRate ?? Decimal.zero,
+       uid = uid ?? _nextUid++;
+
+  static int _nextUid = 0;
+
+  /// Client-side row identity, stable across [copyWith], so the line grid can
+  /// key rows by the line rather than by position — otherwise removing a row
+  /// leaves the next row's text field element sitting in the vacated slot.
+  /// Deliberately absent from [props] (identity, not value) and never sent to
+  /// the server.
+  final int uid;
 
   final int? itemId;
 
@@ -53,6 +64,7 @@ class SalesInvoiceLine extends Equatable {
     price: price ?? this.price,
     discountPercent: discountPercent ?? this.discountPercent,
     taxRate: taxRate ?? this.taxRate,
+    uid: uid,
   );
 
   @override

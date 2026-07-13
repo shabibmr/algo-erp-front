@@ -191,7 +191,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Prefix',
-                  initialValue: _draft.voucherPrefix,
+                  value: _draft.voucherPrefix,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(
@@ -208,7 +208,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Financial year',
-                  initialValue: _draft.financialYear,
+                  value: _draft.financialYear,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(financialYear: v),
@@ -272,7 +272,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             const SizedBox(height: 12),
             AppTextField(
               label: 'Requirement voucher no',
-              initialValue: _draft.requirementVoucherNo,
+              value: _draft.requirementVoucherNo,
               enabled: !_posting,
               helperText: 'Optional link to a Requirement voucher_no',
               onChanged: (v) => setState(
@@ -285,7 +285,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
           const SizedBox(height: 12),
           AppTextField(
             label: 'Narration',
-            initialValue: _draft.narration,
+            value: _draft.narration,
             enabled: !_posting,
             onChanged: (v) => setState(
               () => _draft = _draft.copyWith(narration: v.isEmpty ? null : v),
@@ -335,7 +335,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Qty',
-              initialValue: row.quantity,
+              value: row.quantity,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(quantity: v ?? Decimal.one)),
@@ -345,7 +345,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Price',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Price',
-              initialValue: row.price,
+              value: row.price,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
@@ -356,7 +356,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               label: 'Adj',
               cellBuilder: (context, row, i) => AppDecimalField(
                 label: 'Adj value',
-                initialValue: row.adjValue,
+                value: row.adjValue,
                 enabled: !_posting,
                 onChanged: (v) =>
                     _updateLine(i, row.copyWith(adjValue: v ?? Decimal.zero)),
@@ -367,7 +367,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             flex: 2,
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Narration',
-              initialValue: row.narration,
+              value: row.narration,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
@@ -381,7 +381,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Cr qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Cr qty',
-              initialValue: row.crQty,
+              value: row.crQty,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(crQty: v ?? Decimal.zero)),
@@ -391,7 +391,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Dr qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Dr qty',
-              initialValue: row.drQty,
+              value: row.drQty,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(drQty: v ?? Decimal.zero)),
@@ -401,7 +401,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Price',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Price',
-              initialValue: row.price,
+              value: row.price,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
@@ -412,7 +412,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             flex: 2,
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Narration',
-              initialValue: row.narration,
+              value: row.narration,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
@@ -426,7 +426,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             label: 'Request qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Request qty',
-              initialValue: row.requestQty,
+              value: row.requestQty,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(requestQty: v ?? Decimal.one)),
@@ -437,7 +437,7 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             flex: 2,
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Remarks',
-              initialValue: row.narration,
+              value: row.narration,
               enabled: !_posting,
               onChanged: (v) =>
                   _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),

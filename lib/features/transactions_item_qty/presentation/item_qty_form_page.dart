@@ -157,7 +157,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Prefix',
-                  initialValue: _draft.voucherPrefix,
+                  value: _draft.voucherPrefix,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(
@@ -174,7 +174,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Financial year',
-                  initialValue: _draft.financialYear,
+                  value: _draft.financialYear,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(financialYear: v),
@@ -307,7 +307,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
           const SizedBox(height: 12),
           AppTextField(
             label: 'Billing name',
-            initialValue: _draft.billingName,
+            value: _draft.billingName,
             enabled: !_posting,
             onChanged: (v) => setState(
               () => _draft = _draft.copyWith(billingName: v.isEmpty ? null : v),
@@ -317,7 +317,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
             const SizedBox(height: 12),
             AppNumberField(
               label: 'Credit days',
-              initialValue: _draft.creditDays,
+              value: _draft.creditDays,
               enabled: !_posting,
               onChanged: (v) =>
                   setState(() => _draft = _draft.copyWith(creditDays: v ?? 30)),
@@ -326,7 +326,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
           const SizedBox(height: 12),
           AppTextField(
             label: 'Narration',
-            initialValue: _draft.narration,
+            value: _draft.narration,
             enabled: !_posting,
             onChanged: (v) => setState(
               () => _draft = _draft.copyWith(narration: v.isEmpty ? null : v),
@@ -372,7 +372,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
       label: 'Qty',
       cellBuilder: (context, row, i) => AppDecimalField(
         label: 'Qty',
-        initialValue: row.quantity,
+        value: row.quantity,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(quantity: v ?? Decimal.one)),
@@ -382,7 +382,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
       label: 'Price',
       cellBuilder: (context, row, i) => AppDecimalField(
         label: 'Price',
-        initialValue: row.price,
+        value: row.price,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
@@ -392,7 +392,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
       label: 'Disc %',
       cellBuilder: (context, row, i) => AppDecimalField(
         label: 'Disc %',
-        initialValue: row.discountPercent,
+        value: row.discountPercent,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(discountPercent: v ?? Decimal.zero)),
@@ -402,7 +402,7 @@ class _ItemQtyFormPageState extends State<ItemQtyFormPage> {
       label: 'Tax %',
       cellBuilder: (context, row, i) => AppDecimalField(
         label: 'Tax %',
-        initialValue: row.taxRate,
+        value: row.taxRate,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(taxRate: v ?? Decimal.zero)),

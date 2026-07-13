@@ -12,15 +12,15 @@ import 'package:flutter/material.dart';
 /// ```dart
 /// AppCurrencyField(
 ///   label: 'Unit price',
-///   initialValue: line.unitPrice,
-///   onChanged: (v) => setState(() => line.unitPrice = v),
+///   value: line.unitPrice,
+///   onChanged: (v) => context.read<Bloc>().add(PriceChanged(v)),
 /// )
 /// ```
 class AppCurrencyField extends StatelessWidget {
   const AppCurrencyField({
     required this.label,
     super.key,
-    this.initialValue,
+    this.value,
     this.helperText,
     this.validator,
     this.onChanged,
@@ -31,7 +31,7 @@ class AppCurrencyField extends StatelessWidget {
   });
 
   final String label;
-  final Decimal? initialValue;
+  final Decimal? value;
   final String? helperText;
   final FormFieldValidator<Decimal?>? validator;
   final ValueChanged<Decimal?>? onChanged;
@@ -44,7 +44,7 @@ class AppCurrencyField extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppDecimalField(
       label: label,
-      initialValue: initialValue,
+      value: value,
       helperText: helperText,
       validator: validator,
       onChanged: onChanged,

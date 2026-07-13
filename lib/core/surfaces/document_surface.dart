@@ -25,10 +25,12 @@ class DocumentSurface<R> extends StatelessWidget {
     required this.onPost,
     super.key,
     this.newRow,
+    this.keyOf,
     this.enabled = true,
     this.posting = false,
     this.errorText,
     this.onSaveDraft,
+    this.footer,
     this.totalsLabel = 'Totals',
     this.postLabel = 'Post',
     this.saveDraftLabel = 'Save draft',
@@ -40,6 +42,14 @@ class DocumentSurface<R> extends StatelessWidget {
   final List<LineItemColumn<R>> columns;
   final ValueChanged<List<R>> onRowsChanged;
   final R Function()? newRow;
+
+  /// Forwarded to [LineItemGrid.keyOf] — supply it whenever `R` has a stable
+  /// id, so a row's fields survive the row above it being removed.
+  final Object Function(R row, int index)? keyOf;
+
+  /// Optional slot rendered after the line grid and before totals — e.g. a
+  /// narration box. Omit for vouchers that don't need one.
+  final Widget? footer;
 
   /// Map each row to [LineInput] for the engine (ignore incomplete rows
   /// by returning null — they are skipped in totals).
@@ -73,42 +83,67 @@ class DocumentSurface<R> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (errorText != null) ...[
-          Container(
-            padding: EdgeInsets.all(tokens.spacing.sm),
-            decoration: BoxDecoration(
-              color: tokens.semanticColors.danger.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(tokens.radii.sm),
-            ),
-            child: Text(
-              errorText!,
-              style: TextStyle(color: tokens.semanticColors.danger),
-            ),
-          ),
-          SizedBox(height: tokens.spacing.md),
-        ],
-        header,
-        SizedBox(height: tokens.spacing.md),
-        Text('Lines', style: theme.textTheme.titleMedium),
-        SizedBox(height: tokens.spacing.sm),
         Expanded(
           child: SingleChildScrollView(
-            child: LineItemGrid<R>(
-              rows: rows,
-              columns: columns,
-              onChanged: onRowsChanged,
-              newRow: enabled ? newRow : null,
-              enabled: enabled && !posting,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (errorText != null) ...[
+                  Container(
+                    padding: EdgeInsets.all(tokens.spacing.sm),
+                    decoration: BoxDecoration(
+                      color: tokens.semanticColors.danger.withValues(
+                        alpha: 0.1,
+                      ),
+                      borderRadius: BorderRadius.circular(tokens.radii.sm),
+                    ),
+                    child: Text(
+                      errorText!,
+                      style: TextStyle(color: tokens.semanticColors.danger),
+                    ),
+                  ),
+                  SizedBox(height: tokens.spacing.md),
+                ],
+                header,
+                SizedBox(height: tokens.spacing.md),
+                Text('Lines', style: theme.textTheme.titleMedium),
+                SizedBox(height: tokens.spacing.sm),
+                // Fixed height: the grid scrolls internally past this rather
+                // than growing to consume all remaining page height.
+                SizedBox(
+                  height: 420,
+                  child: SingleChildScrollView(
+                    child: LineItemGrid<R>(
+                      rows: rows,
+                      columns: columns,
+                      onChanged: onRowsChanged,
+                      newRow: enabled ? newRow : null,
+                      keyOf: keyOf,
+                      enabled: enabled && !posting,
+                    ),
+                  ),
+                ),
+                if (footer != null) ...[
+                  SizedBox(height: tokens.spacing.md),
+                  footer!,
+                ],
+                SizedBox(height: tokens.spacing.md),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: _TotalsBar(
+                      label: totalsLabel,
+                      subtotal: totals.subtotal,
+                      discount: totals.discount,
+                      tax: totals.tax,
+                      total: totals.total,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        SizedBox(height: tokens.spacing.md),
-        _TotalsBar(
-          label: totalsLabel,
-          subtotal: totals.subtotal,
-          discount: totals.discount,
-          tax: totals.tax,
-          total: totals.total,
         ),
         SizedBox(height: tokens.spacing.md),
         Row(

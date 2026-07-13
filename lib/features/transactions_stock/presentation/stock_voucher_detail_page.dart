@@ -19,12 +19,16 @@ import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
+import 'package:algo_erp_front/features/transactions_stock/bloc/stock_voucher_detail_bloc.dart';
+import 'package:algo_erp_front/features/transactions_stock/bloc/stock_voucher_detail_event.dart';
+import 'package:algo_erp_front/features/transactions_stock/bloc/stock_voucher_detail_state.dart';
 import 'package:algo_erp_front/features/transactions_stock/stock_voucher_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-class StockVoucherDetailPage extends StatefulWidget {
+class StockVoucherDetailPage extends StatelessWidget {
   const StockVoucherDetailPage({
     required this.kind,
     required this.id,
@@ -35,73 +39,36 @@ class StockVoucherDetailPage extends StatefulWidget {
   final int id;
 
   @override
-  State<StockVoucherDetailPage> createState() => _StockVoucherDetailPageState();
+  Widget build(BuildContext context) {
+    final dio = getIt<DioClient>();
+    return BlocProvider<StockVoucherDetailBloc>(
+      create: (_) => StockVoucherDetailBloc(
+        repository: createStockVoucherRepository(dio, kind),
+        itemRepository: createInventoryItemRepository(dio),
+        godownRepository: createGodownRepository(dio),
+      )..add(StockVoucherDetailFetchRequested(id)),
+      child: BlocListener<StockVoucherDetailBloc, StockVoucherDetailState>(
+        listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
+        listener: (context, state) {
+          if (state.actionMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.actionMessage!)));
+          }
+        },
+        child: _StockVoucherDetailView(kind: kind, id: id),
+      ),
+    );
+  }
 }
 
-class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
-  late final _repo = createStockVoucherRepository(
-    getIt<DioClient>(),
-    widget.kind,
-  );
-  late final _itemRepo = createInventoryItemRepository(getIt<DioClient>());
-  late final _godownRepo = createGodownRepository(getIt<DioClient>());
-  Future<StockVoucherDetail>? _future;
-  bool _busy = false;
+class _StockVoucherDetailView extends StatelessWidget {
+  const _StockVoucherDetailView({required this.kind, required this.id});
 
-  StockVoucherKind get kind => widget.kind;
+  final StockVoucherKind kind;
+  final int id;
 
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<StockVoucherDetail> _load() async {
-    final result = await _repo.getById(
-      widget.id,
-      resolveItemLabel: (itemId) async {
-        final r = await _itemRepo.getById(itemId);
-        return r.fold(
-          (_) => null,
-          (item) =>
-              item.code.isEmpty ? item.name : '${item.code} — ${item.name}',
-        );
-      },
-      resolveGodownLabel: (godownId) async {
-        final r = await _godownRepo.getById(godownId);
-        return r.fold((_) => null, (g) => g.name);
-      },
-    );
-    return result.fold((f) => throw Exception(f.toString()), (d) => d);
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  EntityStatus _entityStatus(String status) => switch (status) {
-    'Draft' => EntityStatus.draft,
-    'Approved' => EntityStatus.approved,
-    'Posted' => EntityStatus.posted,
-    'Cancelled' => EntityStatus.cancelled,
-    'Rejected' => EntityStatus.rejected,
-    _ => EntityStatus.posted,
-  };
-
-  Future<void> _cancel(StockVoucherDetail doc) async {
+  Future<void> _cancel(BuildContext context, StockVoucherDetail doc) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Cancel ${kind.blueprint.label}?',
@@ -109,25 +76,11 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
       confirmLabel: 'Cancel voucher',
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
-    final result = await _repo.cancel(doc.id);
-    if (!mounted) return;
-    result.fold(
-      (f) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_messageOf(f))));
-      },
-      (_) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cancelled')));
-        _reload();
-      },
-    );
+    if (ok && context.mounted) {
+      context.read<StockVoucherDetailBloc>().add(
+        const StockVoucherDetailCancelled(),
+      );
+    }
   }
 
   Future<Uint8List> _buildPdf(StockVoucherDetail doc) async {
@@ -166,7 +119,7 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
     );
   }
 
-  void _print(StockVoucherDetail doc) {
+  void _print(BuildContext context, StockVoucherDetail doc) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
@@ -181,20 +134,25 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
     return AdaptiveLayout(
-      child: FutureBuilder<StockVoucherDetail>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
+      child: BlocBuilder<StockVoucherDetailBloc, StockVoucherDetailState>(
+        builder: (context, state) {
+          final bloc = context.read<StockVoucherDetailBloc>();
+
+          if (state.isLoading && state.detail == null) {
             return const LoadingState();
           }
-          if (snap.hasError) {
-            final err = snap.error;
+          if (state.isFailure && state.detail == null) {
             return ErrorState(
-              failure: err is Failure ? err : Failure.unknown(err.toString()),
-              onRetry: _reload,
+              failure:
+                  state.failure ??
+                  const Failure.unknown('Failed to load voucher detail'),
+              onRetry: () => bloc.add(StockVoucherDetailFetchRequested(id)),
             );
           }
-          final doc = snap.data!;
+
+          final doc = state.detail;
+          if (doc == null) return const LoadingState();
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -211,13 +169,10 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ),
-                  StatusChip(
-                    status: _entityStatus(doc.status),
-                    label: doc.status,
-                  ),
+                  StatusChip(status: state.entityStatus, label: doc.status),
                   IconButton(
                     tooltip: 'Print',
-                    onPressed: () => _print(doc),
+                    onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
@@ -225,7 +180,9 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
                       module: 'Transactions',
                       action: PermissionAction.update,
                       child: TextButton(
-                        onPressed: _busy ? null : () => _cancel(doc),
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _cancel(context, doc),
                         child: const Text('Cancel'),
                       ),
                     ),
@@ -239,15 +196,19 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
                 runSpacing: 8,
                 children: [
                   if (doc.voucherDate != null)
-                    _kv('Date', doc.voucherDate!.toDayString()),
+                    _kv(context, 'Date', doc.voucherDate!.toDayString()),
                   if (doc.fromGodownLabel != null)
-                    _kv('From', doc.fromGodownLabel!),
-                  if (doc.toGodownLabel != null) _kv('To', doc.toGodownLabel!),
-                  if (doc.godownLabel != null) _kv('Godown', doc.godownLabel!),
-                  if (doc.billingName != null) _kv('Billing', doc.billingName!),
+                    _kv(context, 'From', doc.fromGodownLabel!),
+                  if (doc.toGodownLabel != null)
+                    _kv(context, 'To', doc.toGodownLabel!),
+                  if (doc.godownLabel != null)
+                    _kv(context, 'Godown', doc.godownLabel!),
+                  if (doc.billingName != null)
+                    _kv(context, 'Billing', doc.billingName!),
                   if (doc.requirementVoucherNo != null)
-                    _kv('Requirement', doc.requirementVoucherNo!),
-                  if (doc.total != null) _kv('Total', doc.total.toString()),
+                    _kv(context, 'Requirement', doc.requirementVoucherNo!),
+                  if (doc.total != null)
+                    _kv(context, 'Total', doc.total.toString()),
                 ],
               ),
               if (doc.narration != null && doc.narration!.isNotEmpty) ...[
@@ -260,7 +221,7 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: doc.lines.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, i) {
                     final line = doc.lines[i];
                     return ListTile(
@@ -296,7 +257,7 @@ class _StockVoucherDetailPageState extends State<StockVoucherDetailPage> {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

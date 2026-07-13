@@ -8,18 +8,23 @@ import 'package:flutter/services.dart';
 /// parsed straight to `package:decimal` `Decimal` per the house rule in
 /// `docs/feature-contract.md`.
 ///
+/// [value] is *controlled*: a value written back by a bloc after the field is
+/// on screen (picking an item that carries a price, converting a source
+/// document) reaches the visible text. Pass a [controller] instead to own the
+/// text yourself, in which case [value] is ignored.
+///
 /// ```dart
 /// AppDecimalField(
 ///   label: 'Quantity',
-///   initialValue: line.quantity,
-///   onChanged: (v) => setState(() => line.quantity = v),
+///   value: line.quantity,
+///   onChanged: (v) => context.read<Bloc>().add(QtyChanged(v)),
 /// )
 /// ```
-class AppDecimalField extends StatelessWidget {
+class AppDecimalField extends StatefulWidget {
   const AppDecimalField({
     required this.label,
     super.key,
-    this.initialValue,
+    this.value,
     this.helperText,
     this.hintText,
     this.validator,
@@ -37,7 +42,7 @@ class AppDecimalField extends StatelessWidget {
   /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
   /// required marker.
   final Widget? labelWidget;
-  final Decimal? initialValue;
+  final Decimal? value;
   final String? helperText;
   final String? hintText;
 
@@ -52,33 +57,76 @@ class AppDecimalField extends StatelessWidget {
   /// e.g. `'AED'` — used by `AppCurrencyField` to show a currency prefix.
   final String? prefixText;
 
-  Decimal? _parse(String? text) =>
+  @override
+  State<AppDecimalField> createState() => _AppDecimalFieldState();
+}
+
+class _AppDecimalFieldState extends State<AppDecimalField> {
+  late final TextEditingController _controller;
+  late final bool _ownsController;
+
+  static Decimal? _parse(String? text) =>
       (text == null || text.isEmpty) ? null : Decimal.tryParse(text);
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _controller =
+        widget.controller ??
+        TextEditingController(text: widget.value?.toString() ?? '');
+  }
+
+  @override
+  void didUpdateWidget(AppDecimalField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_ownsController || widget.value == oldWidget.value) return;
+    // Compare the *parsed* value, not the raw text: `1.50` in the box and
+    // `1.5` in state are the same number, and rewriting the text would drive
+    // the caret to the end while the user is still typing.
+    if (widget.value == _parse(_controller.text)) return;
+    final next = widget.value?.toString() ?? '';
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController) _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      initialValue: controller == null ? initialValue?.toString() : null,
-      enabled: enabled,
+      controller: _controller,
+      enabled: widget.enabled,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(
           RegExp(
             r'^\d*\.?\d{0,'
-            '$maxDecimals}',
+            '${widget.maxDecimals}}',
           ),
         ),
       ],
-      validator: validator == null ? null : (text) => validator!(_parse(text)),
-      onChanged: onChanged == null ? null : (text) => onChanged!(_parse(text)),
-      onSaved: onSaved == null ? null : (text) => onSaved!(_parse(text)),
+      validator: widget.validator == null
+          ? null
+          : (text) => widget.validator!(_parse(text)),
+      onChanged: widget.onChanged == null
+          ? null
+          : (text) => widget.onChanged!(_parse(text)),
+      onSaved: widget.onSaved == null
+          ? null
+          : (text) => widget.onSaved!(_parse(text)),
       decoration: InputDecoration(
-        label: labelWidget,
-        labelText: labelWidget == null ? label : null,
-        hintText: hintText,
-        helperText: helperText,
-        prefixText: prefixText == null ? null : '$prefixText ',
+        label: widget.labelWidget,
+        labelText: widget.labelWidget == null ? widget.label : null,
+        hintText: widget.hintText,
+        helperText: widget.helperText,
+        prefixText: widget.prefixText == null ? null : '${widget.prefixText} ',
       ),
     );
   }

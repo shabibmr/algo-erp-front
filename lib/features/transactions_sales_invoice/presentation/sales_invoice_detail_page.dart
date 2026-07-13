@@ -4,7 +4,6 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
-import 'package:algo_erp_front/core/error/safe_call.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/network/tenant_context.dart';
 import 'package:algo_erp_front/core/printing/company_header_provider.dart';
@@ -21,135 +20,65 @@ import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
-import 'package:algo_erp_front/features/transactions_sales_invoice/data/sales_invoice_dto.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_detail_bloc.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_detail_event.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_detail_state.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_invoice.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/sales_invoice_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Read-only SI detail with approve / reject / cancel / post-and-book.
-///
-/// Lifecycle RBAC uses coarse `Transactions:update` (backend routes).
-class SalesInvoiceDetailPage extends StatefulWidget {
+// Built once per module, not per build (see CLAUDE.md).
+final DioClient _dio = getIt<DioClient>();
+final _invoiceRepo = createSalesInvoiceRepository(_dio);
+final _itemRepo = createInventoryItemRepository(_dio);
+final _ledgerRepo = createLedgerRepository(_dio);
+final _godownRepo = createGodownRepository(_dio);
+
+/// Read-only SI detail with approve / reject / cancel / post-and-book using
+/// flutter_bloc.
+class SalesInvoiceDetailPage extends StatelessWidget {
   const SalesInvoiceDetailPage({required this.id, super.key});
 
   final int id;
 
   @override
-  State<SalesInvoiceDetailPage> createState() => _SalesInvoiceDetailPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<SalesInvoiceDetailBloc>(
+      create: (_) => SalesInvoiceDetailBloc(
+        repository: _invoiceRepo,
+        itemRepository: _itemRepo,
+        ledgerRepository: _ledgerRepo,
+        godownRepository: _godownRepo,
+      )..add(SalesInvoiceDetailFetchRequested(id)),
+      child: BlocListener<SalesInvoiceDetailBloc, SalesInvoiceDetailState>(
+        listenWhen: (prev, curr) =>
+            prev.actionMessage != curr.actionMessage ||
+            prev.postedInvoiceId != curr.postedInvoiceId,
+        listener: (context, state) {
+          if (state.actionMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.actionMessage!)));
+          }
+          if (state.postedInvoiceId != null) {
+            context.go('/transactions/sales-invoices/${state.postedInvoiceId}');
+          }
+        },
+        child: const _SalesInvoiceDetailView(),
+      ),
+    );
+  }
 }
 
-class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
+class _SalesInvoiceDetailView extends StatelessWidget {
+  const _SalesInvoiceDetailView();
+
   static const _bp = VoucherBlueprints.salesInvoice;
 
-  late final _repo = createSalesInvoiceRepository(getIt<DioClient>());
-  late final _itemRepo = createInventoryItemRepository(getIt<DioClient>());
-  late final _ledgerRepo = createLedgerRepository(getIt<DioClient>());
-  late final _godownRepo = createGodownRepository(getIt<DioClient>());
-  Future<SalesInvoiceDetail>? _future;
-  bool _busy = false;
-  bool? _seriesRequiresApproval;
-
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<SalesInvoiceDetail> _load() async {
-    final result = await _repo.getById(
-      widget.id,
-      resolveItemLabel: (itemId) async {
-        final r = await _itemRepo.getById(itemId);
-        return r.fold(
-          (_) => null,
-          (item) =>
-              item.code.isEmpty ? item.name : '${item.code} — ${item.name}',
-        );
-      },
-      resolveCustomerLabel: (ledgerId) async {
-        final r = await _ledgerRepo.getById(ledgerId);
-        return r.fold((_) => null, (l) {
-          final code = l.code;
-          return (code == null || code.isEmpty) ? l.name : '$code — ${l.name}';
-        });
-      },
-      resolveGodownLabel: (godownId) async {
-        final r = await _godownRepo.getById(godownId);
-        return r.fold((_) => null, (g) => g.name);
-      },
-      resolveSalespersonLabel: (employeeId) async {
-        final r = await _repo.getEmployee(employeeId);
-        return r.fold((_) => null, (e) => e?.label);
-      },
-      resolveProjectLabel: (projectId) async {
-        final r = await _repo.getProject(projectId);
-        return r.fold((_) => null, (p) => p?.label);
-      },
-    );
-    final detail = result.fold((f) => throw Exception(f.toString()), (d) => d);
-    final series = await _repo.seriesRequiresApproval(
-      voucherType: 'SalesInvoice',
-      prefix: detail.voucherPrefix.isEmpty ? 'SI' : detail.voucherPrefix,
-    );
-    series.fold((_) {}, (flag) {
-      if (mounted) setState(() => _seriesRequiresApproval = flag);
-    });
-    return detail;
-  }
-
-  EntityStatus _entityStatus(String status) => switch (status) {
-    'Draft' => EntityStatus.draft,
-    'Approved' => EntityStatus.approved,
-    'Posted' => EntityStatus.posted,
-    'Cancelled' => EntityStatus.cancelled,
-    'Rejected' => EntityStatus.rejected,
-    _ => EntityStatus.draft,
-  };
-
-  String _msg(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  Future<void> _runLifecycle(
-    Future<Result<VoucherLifecycleResult>> Function() action,
-    String successHint,
-  ) async {
-    setState(() => _busy = true);
-    final result = await action();
-    if (!mounted) return;
-    result.fold(
-      (failure) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_msg(failure))));
-      },
-      (ok) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ok.message ?? '$successHint → ${ok.status}')),
-        );
-        _reload();
-      },
-    );
-  }
-
-  Future<void> _approve() async {
+  Future<void> _approve(BuildContext context) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Approve sales invoice?',
@@ -159,11 +88,14 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
           'billwise if not already posted (idempotent).',
       confirmLabel: 'Approve',
     );
-    if (!ok || !mounted) return;
-    await _runLifecycle(() => _repo.approve(widget.id), 'Approved');
+    if (ok && context.mounted) {
+      context.read<SalesInvoiceDetailBloc>().add(
+        const SalesInvoiceDetailApproved(),
+      );
+    }
   }
 
-  Future<void> _reject() async {
+  Future<void> _reject(BuildContext context) async {
     final reasonController = TextEditingController();
     final reason = await showDialog<String>(
       context: context,
@@ -191,17 +123,19 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
       ),
     );
     reasonController.dispose();
-    if (reason == null || !mounted) return;
+    if (reason == null || !context.mounted) return;
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Rejection reason is required')),
       );
       return;
     }
-    await _runLifecycle(() => _repo.reject(widget.id, reason), 'Rejected');
+    context.read<SalesInvoiceDetailBloc>().add(
+      SalesInvoiceDetailRejected(reason),
+    );
   }
 
-  Future<void> _cancel() async {
+  Future<void> _cancel(BuildContext context) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Cancel sales invoice?',
@@ -211,13 +145,17 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
       confirmLabel: 'Cancel voucher',
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    await _runLifecycle(() => _repo.cancel(widget.id), 'Cancelled');
+    if (ok && context.mounted) {
+      context.read<SalesInvoiceDetailBloc>().add(
+        const SalesInvoiceDetailCancelled(),
+      );
+    }
   }
 
-  /// Legacy fallback: books GL/stock by creating a **new** Posted invoice.
-  /// Prefer Approve (server now books on Draft/Approved → Posted).
-  Future<void> _postAndBook(SalesInvoiceDetail doc) async {
+  Future<void> _postAndBook(
+    BuildContext context,
+    SalesInvoiceDetail doc,
+  ) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Post & book as new invoice?',
@@ -227,30 +165,11 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
           'should advance this voucher to Posted.',
       confirmLabel: 'Post & book',
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
-    final draft = SalesInvoiceDto.detailToDraft(doc, saveStatus: 'Posted');
-    final result = await _repo.post(draft);
-    if (!mounted) return;
-    result.fold(
-      (failure) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_msg(failure))));
-      },
-      (posted) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Booked ${posted.voucherNo} · original #${doc.id} unchanged',
-            ),
-          ),
-        );
-        context.go('/transactions/sales-invoices/${posted.id}');
-      },
-    );
+    if (ok && context.mounted) {
+      context.read<SalesInvoiceDetailBloc>().add(
+        const SalesInvoiceDetailPostAndBooked(),
+      );
+    }
   }
 
   Future<Uint8List> _buildPdf(SalesInvoiceDetail doc) async {
@@ -293,7 +212,7 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
     );
   }
 
-  void _print(SalesInvoiceDetail doc) {
+  void _print(BuildContext context, SalesInvoiceDetail doc) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
@@ -328,41 +247,41 @@ class _SalesInvoiceDetailPageState extends State<SalesInvoiceDetailPage> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: FutureBuilder<SalesInvoiceDetail>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData) {
+            child: BlocBuilder<SalesInvoiceDetailBloc, SalesInvoiceDetailState>(
+              builder: (context, state) {
+                if (state.isLoading && state.detail == null) {
                   return const LoadingState();
                 }
-                if (snapshot.hasError) {
-                  final err = snapshot.error;
+                if (state.isFailure && state.detail == null) {
                   return ErrorState(
-                    failure: err is Failure
-                        ? err
-                        : Failure.unknown(err.toString()),
-                    onRetry: _reload,
+                    failure:
+                        state.failure ??
+                        const Failure.unknown('Failed to load invoice detail'),
+                    onRetry: () => context.read<SalesInvoiceDetailBloc>().add(
+                      const SalesInvoiceDetailRefreshed(),
+                    ),
                   );
                 }
-                final doc = snapshot.data;
+                final doc = state.detail;
                 if (doc == null) return const LoadingState();
+
                 return _DetailBody(
                   doc: doc,
-                  busy: _busy,
-                  entityStatus: _entityStatus(doc.status),
-                  seriesRequiresApproval: _seriesRequiresApproval,
+                  busy: state.isBusy,
+                  entityStatus: state.entityStatus,
+                  seriesRequiresApproval: state.seriesRequiresApproval,
                   onEdit: doc.canEditDraft
                       ? () => context.push(
                           '/transactions/sales-invoices/${doc.id}/edit',
                         )
                       : null,
                   onPostAndBook: doc.canPostAndBook
-                      ? () => _postAndBook(doc)
+                      ? () => _postAndBook(context, doc)
                       : null,
-                  onApprove: doc.canApprove ? _approve : null,
-                  onReject: doc.canReject ? _reject : null,
-                  onCancel: doc.canCancel ? _cancel : null,
-                  onPrint: () => _print(doc),
+                  onApprove: doc.canApprove ? () => _approve(context) : null,
+                  onReject: doc.canReject ? () => _reject(context) : null,
+                  onCancel: doc.canCancel ? () => _cancel(context) : null,
+                  onPrint: () => _print(context, doc),
                   spacing: tokens.spacing.md,
                 );
               },

@@ -223,14 +223,11 @@ class _GalleryBodyState extends State<_GalleryBody> {
         const _Section('Form fields'),
         const AppTextField(label: 'Brand name'),
         SizedBox(height: tokens.spacing.sm),
-        const AppNumberField(label: 'Reorder level', initialValue: 10),
+        const AppNumberField(label: 'Reorder level', value: 10),
         SizedBox(height: tokens.spacing.sm),
-        AppDecimalField(label: 'Quantity', initialValue: Decimal.fromInt(5)),
+        AppDecimalField(label: 'Quantity', value: Decimal.fromInt(5)),
         SizedBox(height: tokens.spacing.sm),
-        AppCurrencyField(
-          label: 'Unit price',
-          initialValue: Decimal.parse('19.99'),
-        ),
+        AppCurrencyField(label: 'Unit price', value: Decimal.parse('19.99')),
         SizedBox(height: tokens.spacing.sm),
         AppDateField(
           label: 'Voucher date',
@@ -353,7 +350,7 @@ class _GalleryBodyState extends State<_GalleryBody> {
               label: 'Item',
               cellBuilder: (context, row, i) => AppTextField(
                 label: 'Item',
-                initialValue: row.item,
+                value: row.item,
                 onChanged: (v) => row.item = v,
               ),
             ),
@@ -361,7 +358,7 @@ class _GalleryBodyState extends State<_GalleryBody> {
               label: 'Qty',
               cellBuilder: (context, row, i) => AppDecimalField(
                 label: 'Qty',
-                initialValue: row.qty,
+                value: row.qty,
                 onChanged: (v) => row.qty = v ?? Decimal.zero,
               ),
             ),

@@ -1,34 +1,46 @@
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
-import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_kind.dart';
-import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_models.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_list_bloc.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_list_event.dart';
+import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_list_state.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/debit_credit_di.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Paginated list for Journal / Contra.
-class DebitCreditListPage extends StatefulWidget {
+/// Paginated list for Journal / Contra powered by flutter_bloc.
+class DebitCreditListPage extends StatelessWidget {
   const DebitCreditListPage({required this.kind, super.key});
 
   final DebitCreditVoucherKind kind;
 
   @override
-  State<DebitCreditListPage> createState() => _DebitCreditListPageState();
+  Widget build(BuildContext context) {
+    final dio = getIt<DioClient>();
+    return BlocProvider<DebitCreditListBloc>(
+      create: (_) => DebitCreditListBloc(
+        repository: createDebitCreditRepository(dio, kind),
+        kind: kind,
+      )..add(const DebitCreditListFetchRequested()),
+      child: const _DebitCreditListView(),
+    );
+  }
 }
 
-class _DebitCreditListPageState extends State<DebitCreditListPage> {
+class _DebitCreditListView extends StatelessWidget {
+  const _DebitCreditListView();
+
   static const _statuses = [
     'Draft',
     'Approved',
@@ -37,231 +49,165 @@ class _DebitCreditListPageState extends State<DebitCreditListPage> {
     'Rejected',
   ];
 
-  late final _repo = createDebitCreditRepository(
-    getIt<DioClient>(),
-    widget.kind,
-  );
-  Future<Paginated<DebitCreditListItem>>? _future;
-
-  DateTime? _startDate;
-  DateTime? _endDate;
-  String? _status;
-  String _prefix = '';
-  String _search = '';
-  bool _filtersExpanded = false;
-
-  DebitCreditVoucherKind get kind => widget.kind;
-
   @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
+  Widget build(BuildContext context) {
+    return AdaptiveLayout(
+      child: BlocBuilder<DebitCreditListBloc, DebitCreditListState>(
+        builder: (context, state) {
+          final bloc = context.read<DebitCreditListBloc>();
+          final bp = state.kind.blueprint;
 
-  String? _ymd(DateTime? d) {
-    if (d == null) return null;
-    final y = d.year.toString().padLeft(4, '0');
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '$y-$m-$day';
-  }
-
-  PageQuery get _query => PageQuery(
-    search: _search.isEmpty ? null : _search,
-    filters: {
-      if (_ymd(_startDate) != null) 'start_date': _ymd(_startDate),
-      if (_ymd(_endDate) != null) 'end_date': _ymd(_endDate),
-      if (_status != null) 'status': _status,
-      if (_prefix.trim().isNotEmpty) 'prefix': _prefix.trim(),
-    },
-  );
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<Paginated<DebitCreditListItem>> _load() async {
-    final result = await _repo.list(_query);
-    return result.fold(
-      (failure) => throw Exception(failure.toString()),
-      (page) => page,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      bp.label,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Filters',
+                    onPressed: () =>
+                        bloc.add(const DebitCreditListFilterToggled()),
+                    icon: Icon(
+                      state.filtersExpanded
+                          ? Icons.filter_alt
+                          : Icons.filter_alt_outlined,
+                    ),
+                  ),
+                  PermissionGate(
+                    module: bp.rbacModule,
+                    action: PermissionAction.create,
+                    child: FilledButton.icon(
+                      onPressed: () => context.go(state.kind.newRoute),
+                      icon: const Icon(Icons.add),
+                      label: const Text('New'),
+                    ),
+                  ),
+                ],
+              ),
+              if (state.filtersExpanded) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.end,
+                  children: [
+                    SizedBox(
+                      width: 160,
+                      child: AppDateField(
+                        label: 'From',
+                        value: state.startDate,
+                        onChanged: (d) =>
+                            bloc.add(DebitCreditListStartDateChanged(d)),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 160,
+                      child: AppDateField(
+                        label: 'To',
+                        value: state.endDate,
+                        onChanged: (d) =>
+                            bloc.add(DebitCreditListEndDateChanged(d)),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 140,
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: state.selectedStatus,
+                        decoration: const InputDecoration(labelText: 'Status'),
+                        items: [
+                          const DropdownMenuItem(child: Text('Any')),
+                          for (final s in _statuses)
+                            DropdownMenuItem(value: s, child: Text(s)),
+                        ],
+                        onChanged: (v) =>
+                            bloc.add(DebitCreditListStatusChanged(v)),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 100,
+                      child: AppTextField(
+                        label: 'Prefix',
+                        value: state.prefix,
+                        onChanged: (v) =>
+                            bloc.add(DebitCreditListPrefixChanged(v)),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 180,
+                      child: AppTextField(
+                        label: 'Search',
+                        value: state.search,
+                        onChanged: (v) =>
+                            bloc.add(DebitCreditListSearchChanged(v)),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          bloc.add(const DebitCreditListFiltersCleared()),
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              Expanded(child: _buildListContent(context, state, bloc)),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  void _clearFilters() {
-    setState(() {
-      _startDate = null;
-      _endDate = null;
-      _status = null;
-      _prefix = '';
-      _search = '';
-    });
-    _reload();
-  }
+  Widget _buildListContent(
+    BuildContext context,
+    DebitCreditListState state,
+    DebitCreditListBloc bloc,
+  ) {
+    final bp = state.kind.blueprint;
 
-  @override
-  Widget build(BuildContext context) {
-    final bp = kind.blueprint;
-    return AdaptiveLayout(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  bp.label,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Filters',
-                onPressed: () =>
-                    setState(() => _filtersExpanded = !_filtersExpanded),
-                icon: Icon(
-                  _filtersExpanded
-                      ? Icons.filter_alt
-                      : Icons.filter_alt_outlined,
-                ),
-              ),
-              PermissionGate(
-                module: bp.rbacModule,
-                action: PermissionAction.create,
-                child: FilledButton.icon(
-                  onPressed: () => context.go(kind.newRoute),
-                  icon: const Icon(Icons.add),
-                  label: const Text('New'),
-                ),
-              ),
-            ],
-          ),
-          if (_filtersExpanded) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.end,
-              children: [
-                SizedBox(
-                  width: 160,
-                  child: AppDateField(
-                    label: 'From',
-                    value: _startDate,
-                    onChanged: (d) {
-                      setState(() => _startDate = d);
-                      _reload();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 160,
-                  child: AppDateField(
-                    label: 'To',
-                    value: _endDate,
-                    onChanged: (d) {
-                      setState(() => _endDate = d);
-                      _reload();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 140,
-                  child: DropdownButtonFormField<String?>(
-                    initialValue: _status,
-                    decoration: const InputDecoration(labelText: 'Status'),
-                    items: [
-                      const DropdownMenuItem(child: Text('Any')),
-                      for (final s in _statuses)
-                        DropdownMenuItem(value: s, child: Text(s)),
-                    ],
-                    onChanged: (v) {
-                      setState(() => _status = v);
-                      _reload();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 100,
-                  child: AppTextField(
-                    label: 'Prefix',
-                    initialValue: _prefix,
-                    onChanged: (v) {
-                      _prefix = v;
-                      _reload();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 180,
-                  child: AppTextField(
-                    label: 'Search',
-                    initialValue: _search,
-                    onChanged: (v) {
-                      _search = v;
-                      _reload();
-                    },
-                  ),
-                ),
-                TextButton(
-                  onPressed: _clearFilters,
-                  child: const Text('Clear'),
-                ),
-              ],
+    if (state.isLoading) {
+      return const LoadingState();
+    }
+    if (state.isFailure) {
+      return ErrorState(
+        failure: state.failure ?? const Failure.unknown('Failed to load list'),
+        onRetry: () => bloc.add(const DebitCreditListFetchRequested()),
+      );
+    }
+    if (state.items.isEmpty) {
+      return EmptyState(
+        message: 'No ${bp.label.toLowerCase()}s match filters',
+        actionLabel: 'New',
+        onAction: () => context.go(state.kind.newRoute),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async => bloc.add(const DebitCreditListRefreshed()),
+      child: ListView.separated(
+        itemCount: state.items.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, i) {
+          final row = state.items[i];
+          return ListTile(
+            title: Text(row.displayNo),
+            subtitle: Text(
+              [
+                if (row.status != null) row.status!,
+                if (row.voucherDate != null) row.voucherDate!.toDayString(),
+                if (row.narration != null && row.narration!.isNotEmpty)
+                  row.narration!,
+              ].join(' · '),
             ),
-          ],
-          const SizedBox(height: 16),
-          Expanded(
-            child: FutureBuilder<Paginated<DebitCreditListItem>>(
-              future: _future,
-              builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
-                  return const LoadingState();
-                }
-                if (snap.hasError) {
-                  final err = snap.error;
-                  return ErrorState(
-                    failure: err is Failure
-                        ? err
-                        : Failure.unknown(err.toString()),
-                    onRetry: _reload,
-                  );
-                }
-                final page = snap.data!;
-                if (page.items.isEmpty) {
-                  return EmptyState(
-                    message: 'No ${bp.label.toLowerCase()}s match filters',
-                    actionLabel: 'New',
-                    onAction: () => context.go(kind.newRoute),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: page.items.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final row = page.items[i];
-                    return ListTile(
-                      title: Text(row.displayNo),
-                      subtitle: Text(
-                        [
-                          if (row.status != null) row.status!,
-                          if (row.voucherDate != null)
-                            row.voucherDate!.toDayString(),
-                          if (row.narration != null &&
-                              row.narration!.isNotEmpty)
-                            row.narration!,
-                        ].join(' · '),
-                      ),
-                      trailing: row.total == null
-                          ? null
-                          : Text(row.total!.toString()),
-                      onTap: () => context.go(kind.detailRoute(row.id)),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+            trailing: row.total == null ? null : Text(row.total!.toString()),
+            onTap: () => context.go(state.kind.detailRoute(row.id)),
+          );
+        },
       ),
     );
   }

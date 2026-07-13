@@ -1,5 +1,39 @@
 import 'package:flutter/foundation.dart';
 
+/// Categorization head for grouping reports in catalog and hub views.
+enum ReportCategory {
+  sales(
+    displayName: 'Sales',
+    description: 'Sales, Invoices, Orders, Quotes & Commissions',
+  ),
+  purchase(
+    displayName: 'Purchase',
+    description: 'Purchases, POs, Vendor Expenses & Lead-times',
+  ),
+  inventory(
+    displayName: 'Inventory',
+    description: 'Stock, Valuations, Transfers, Batches & Warehouse',
+  ),
+  financial(
+    displayName: 'Financial & Books',
+    description:
+        'Trial Balance, Ledger, Day Book, Profit & Loss, VAT & Statements',
+  ),
+  payroll(
+    displayName: 'HR & Payroll',
+    description: 'Attendance, Overtime, Payroll, Salary Revisions & Compliance',
+  ),
+  manufacturing(
+    displayName: 'Manufacturing',
+    description: 'BOM & Production Costing Analysis',
+  );
+
+  const ReportCategory({required this.displayName, required this.description});
+
+  final String displayName;
+  final String description;
+}
+
 /// How the report viewer interprets the envelope `data` payload.
 enum ReportShape {
   /// `data` is a list of row maps, or a map with [ReportDefinition.rowsPath].
@@ -80,6 +114,7 @@ class ReportDefinition {
   const ReportDefinition({
     required this.id,
     required this.title,
+    required this.category,
     required this.endpoint,
     required this.columns,
     this.eyebrow = 'Reports',
@@ -95,6 +130,7 @@ class ReportDefinition {
   final String id;
   final String title;
   final String eyebrow;
+  final ReportCategory category;
   final String endpoint;
   final String? requiredModule;
   final List<ReportParamSpec> params;

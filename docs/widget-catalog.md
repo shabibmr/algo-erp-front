@@ -82,6 +82,14 @@ All fields share the same shape: `label`, an optional `validator`, an
 `AppTheme.inputDecorationTheme` for borders/padding — they only set
 `labelText`/`hintText`/`helperText`/`errorText`.
 
+The text-backed fields (`AppTextField`, `AppNumberField`, `AppDecimalField`,
+`AppCurrencyField`) take a **controlled** `value`: a value the owning bloc
+writes back after the field is on screen — an FK selection that autofills a
+price, a source-document conversion that replaces every line — reaches the
+visible text. Pass a `controller` instead to own the text yourself, in which
+case `value` is ignored. There is deliberately no `initialValue`: a
+seed-once parameter is what let bloc-driven writes silently fail to render.
+
 | Widget | Wraps | Notes |
 |---|---|---|
 | `AppTextField` | `TextFormField` | Plain string field; `maxLines`, `prefixIcon`/`suffixIcon`. |
@@ -95,8 +103,8 @@ All fields share the same shape: `label`, an optional `validator`, an
 ```dart
 AppDecimalField(
   label: 'Quantity',
-  initialValue: line.quantity,
-  onChanged: (v) => setState(() => line.quantity = v),
+  value: line.quantity,
+  onChanged: (v) => context.read<Bloc>().add(QtyChanged(index: i, qty: v)),
 )
 ```
 

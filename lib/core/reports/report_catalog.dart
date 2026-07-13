@@ -70,6 +70,7 @@ abstract final class ReportCatalog {
   static const salesRegister = ReportDefinition(
     id: 'sales-register',
     title: 'Sales register',
+    category: ReportCategory.sales,
     endpoint: '/transactions/reports/sales-register',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -113,6 +114,7 @@ abstract final class ReportCatalog {
   static const purchaseRegister = ReportDefinition(
     id: 'purchase-register',
     title: 'Purchase register',
+    category: ReportCategory.purchase,
     endpoint: '/transactions/reports/purchase-register',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -151,6 +153,7 @@ abstract final class ReportCatalog {
   static const stockSummary = ReportDefinition(
     id: 'stock-summary',
     title: 'Stock summary',
+    category: ReportCategory.inventory,
     endpoint: '/transactions/reports/stock-summary',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -167,6 +170,7 @@ abstract final class ReportCatalog {
   static const stockValuation = ReportDefinition(
     id: 'stock-valuation',
     title: 'Stock valuation',
+    category: ReportCategory.inventory,
     endpoint: '/transactions/reports/stock-valuation',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -182,6 +186,7 @@ abstract final class ReportCatalog {
   static const vatReturn = ReportDefinition(
     id: 'vat-return',
     title: 'VAT return',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/vat-return',
     requiredModule: 'Transactions',
     shape: ReportShape.summary,
@@ -228,6 +233,7 @@ abstract final class ReportCatalog {
   static const trialBalance = ReportDefinition(
     id: 'trial-balance',
     title: 'Trial balance',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/trial-balance',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -257,6 +263,7 @@ abstract final class ReportCatalog {
   static const dayBook = ReportDefinition(
     id: 'day-book',
     title: 'Day book',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/day-book',
     requiredModule: 'JournalLedger',
     params: [
@@ -282,6 +289,7 @@ abstract final class ReportCatalog {
   static const profitAndLoss = ReportDefinition(
     id: 'profit-loss',
     title: 'Profit & loss',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/profit-loss',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -326,6 +334,7 @@ abstract final class ReportCatalog {
   static const balanceSheet = ReportDefinition(
     id: 'balance-sheet',
     title: 'Balance sheet',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/balance-sheet',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -376,6 +385,7 @@ abstract final class ReportCatalog {
   static const ledgerStatement = ReportDefinition(
     id: 'ledger-statement',
     title: 'Ledger statement',
+    category: ReportCategory.financial,
     endpoint: '/transactions/reports/ledger-statement',
     requiredModule: 'JournalLedger',
     params: [
@@ -421,6 +431,7 @@ abstract final class ReportCatalog {
   static const accountsAging = ReportDefinition(
     id: 'accounts-aging',
     title: 'Accounts aging',
+    category: ReportCategory.financial,
     endpoint: '/accounts/aging',
     requiredModule: 'Accounts',
     autoRun: true,
@@ -451,6 +462,7 @@ abstract final class ReportCatalog {
   static const overtimeSummary = ReportDefinition(
     id: 'overtime-summary',
     title: 'Overtime summary',
+    category: ReportCategory.payroll,
     endpoint: '/employee/reports/overtime',
     requiredModule: 'Employee',
     autoRun: true,
@@ -495,6 +507,7 @@ abstract final class ReportCatalog {
   static const creditNoteRegister = ReportDefinition(
     id: 'credit-note-register',
     title: 'Credit note register',
+    category: ReportCategory.sales,
     endpoint: '/transactions/credit-notes',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -533,6 +546,7 @@ abstract final class ReportCatalog {
   static const debitNoteRegister = ReportDefinition(
     id: 'debit-note-register',
     title: 'Debit note register',
+    category: ReportCategory.purchase,
     endpoint: '/transactions/debit-notes',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -571,6 +585,7 @@ abstract final class ReportCatalog {
   static const quotationRegister = ReportDefinition(
     id: 'quotation-register',
     title: 'Quotation register',
+    category: ReportCategory.sales,
     endpoint: '/transactions/quotations',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -601,6 +616,7 @@ abstract final class ReportCatalog {
   static const salesOrderRegister = ReportDefinition(
     id: 'sales-order-register',
     title: 'Sales order register',
+    category: ReportCategory.sales,
     endpoint: '/transactions/sales-orders',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -635,6 +651,7 @@ abstract final class ReportCatalog {
   static const purchaseOrderRegister = ReportDefinition(
     id: 'purchase-order-register',
     title: 'Purchase order register',
+    category: ReportCategory.purchase,
     endpoint: '/transactions/purchase-orders',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -672,6 +689,7 @@ abstract final class ReportCatalog {
   static const deliveryNoteRegister = ReportDefinition(
     id: 'delivery-note-register',
     title: 'Delivery note register',
+    category: ReportCategory.sales,
     endpoint: '/transactions/delivery-notes',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -704,6 +722,7 @@ abstract final class ReportCatalog {
   static const receiptNoteRegister = ReportDefinition(
     id: 'receipt-note-register',
     title: 'Receipt note register',
+    category: ReportCategory.purchase,
     endpoint: '/transactions/receipt-notes',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -733,6 +752,7 @@ abstract final class ReportCatalog {
   static const godownTransferRegister = ReportDefinition(
     id: 'godown-transfer-register',
     title: 'Godown transfer register',
+    category: ReportCategory.inventory,
     endpoint: '/transactions/godown-transfers',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -765,6 +785,7 @@ abstract final class ReportCatalog {
   static const receiptsSummary = ReportDefinition(
     id: 'receipts-summary',
     title: 'Customer receipts summary',
+    category: ReportCategory.sales,
     endpoint: '/transactions/receipts',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -797,6 +818,7 @@ abstract final class ReportCatalog {
   static const paymentsSummary = ReportDefinition(
     id: 'payments-summary',
     title: 'Supplier payments summary',
+    category: ReportCategory.purchase,
     endpoint: '/transactions/payments',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -829,6 +851,7 @@ abstract final class ReportCatalog {
   static const materialRequirements = ReportDefinition(
     id: 'material-requirements',
     title: 'Material requirements log',
+    category: ReportCategory.inventory,
     endpoint: '/transactions/requirements',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -857,6 +880,7 @@ abstract final class ReportCatalog {
   static const itemBatchesReport = ReportDefinition(
     id: 'item-batches-report',
     title: 'Item batches report',
+    category: ReportCategory.inventory,
     endpoint: '/inventory/batch',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -886,6 +910,7 @@ abstract final class ReportCatalog {
   static const payrollRegister = ReportDefinition(
     id: 'payroll-register',
     title: 'Payroll register',
+    category: ReportCategory.payroll,
     endpoint: '/employee/payslips',
     requiredModule: 'Employee',
     autoRun: true,
@@ -932,6 +957,7 @@ abstract final class ReportCatalog {
   static const attendanceSummaryReport = ReportDefinition(
     id: 'attendance-summary-report',
     title: 'Attendance summary',
+    category: ReportCategory.payroll,
     endpoint: '/employees/attendance-summary',
     requiredModule: 'Employee',
     autoRun: true,
@@ -971,6 +997,7 @@ abstract final class ReportCatalog {
   static const salaryRevisionHistory = ReportDefinition(
     id: 'salary-revision-history',
     title: 'Salary revision history',
+    category: ReportCategory.payroll,
     endpoint: '/employees/salary-revisions',
     requiredModule: 'Employee',
     autoRun: true,
@@ -1000,6 +1027,7 @@ abstract final class ReportCatalog {
   static const cashFlowStatement = ReportDefinition(
     id: 'cash-flow',
     title: 'Cash flow statement',
+    category: ReportCategory.financial,
     endpoint: '/reports/cash-flow',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -1034,6 +1062,7 @@ abstract final class ReportCatalog {
   static const budgetVariance = ReportDefinition(
     id: 'budget-variance',
     title: 'Budget vs actual variance',
+    category: ReportCategory.financial,
     endpoint: '/reports/budget-variance',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -1068,6 +1097,7 @@ abstract final class ReportCatalog {
   static const collectionEfficiency = ReportDefinition(
     id: 'collection-efficiency',
     title: 'Collection efficiency',
+    category: ReportCategory.sales,
     endpoint: '/reports/collection-efficiency',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1106,6 +1136,7 @@ abstract final class ReportCatalog {
   static const apCashForecast = ReportDefinition(
     id: 'ap-forecast',
     title: 'AP cash forecast',
+    category: ReportCategory.purchase,
     endpoint: '/reports/ap-forecast',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1142,6 +1173,7 @@ abstract final class ReportCatalog {
   static const vendorExpenses = ReportDefinition(
     id: 'vendor-expenses',
     title: 'Vendor expense breakdown',
+    category: ReportCategory.purchase,
     endpoint: '/reports/vendor-expenses',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1175,6 +1207,7 @@ abstract final class ReportCatalog {
   static const salesAnalytics = ReportDefinition(
     id: 'sales-analytics',
     title: 'Sales analytics',
+    category: ReportCategory.sales,
     endpoint: '/reports/sales-analytics',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1212,6 +1245,7 @@ abstract final class ReportCatalog {
   static const salesMargin = ReportDefinition(
     id: 'sales-margin',
     title: 'Sales margin report',
+    category: ReportCategory.sales,
     endpoint: '/reports/sales-margin',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1246,6 +1280,7 @@ abstract final class ReportCatalog {
   static const priceVariance = ReportDefinition(
     id: 'price-variance',
     title: 'Vendor price variance',
+    category: ReportCategory.purchase,
     endpoint: '/reports/price-variance',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1289,6 +1324,7 @@ abstract final class ReportCatalog {
   static const stockMovement = ReportDefinition(
     id: 'stock-movement',
     title: 'Stock movement analysis',
+    category: ReportCategory.inventory,
     endpoint: '/reports/stock-movement',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -1331,6 +1367,7 @@ abstract final class ReportCatalog {
   static const bankReconciliation = ReportDefinition(
     id: 'bank-reconciliation',
     title: 'Bank reconciliation statement',
+    category: ReportCategory.financial,
     endpoint: '/reports/bank-reconciliation',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -1372,6 +1409,7 @@ abstract final class ReportCatalog {
   static const cashFlowStatementDetailed = ReportDefinition(
     id: 'cash-flow-statement',
     title: 'Cash flow statement (Direct/Indirect)',
+    category: ReportCategory.financial,
     endpoint: '/reports/cash-flow-statement',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -1411,6 +1449,7 @@ abstract final class ReportCatalog {
   static const fixedAssetsDepreciation = ReportDefinition(
     id: 'fixed-assets-depreciation',
     title: 'Fixed assets & depreciation',
+    category: ReportCategory.financial,
     endpoint: '/reports/fixed-assets-depreciation',
     requiredModule: 'JournalLedger',
     autoRun: true,
@@ -1448,6 +1487,7 @@ abstract final class ReportCatalog {
   static const quotationConversionRatio = ReportDefinition(
     id: 'quotation-conversion-ratio',
     title: 'Quotation conversion ratio',
+    category: ReportCategory.sales,
     endpoint: '/reports/quotation-conversion-ratio',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1499,6 +1539,7 @@ abstract final class ReportCatalog {
   static const salespersonCommission = ReportDefinition(
     id: 'salesperson-commission',
     title: 'Salesperson commission & territory',
+    category: ReportCategory.sales,
     endpoint: '/reports/salesperson-commission',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1542,6 +1583,7 @@ abstract final class ReportCatalog {
   static const inactiveCustomerAnalysis = ReportDefinition(
     id: 'inactive-customer-analysis',
     title: 'Inactive customer analysis',
+    category: ReportCategory.sales,
     endpoint: '/reports/inactive-customer-analysis',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1592,6 +1634,7 @@ abstract final class ReportCatalog {
   static const vendorLeadtimeCompliance = ReportDefinition(
     id: 'vendor-leadtime-compliance',
     title: 'Vendor lead-time compliance',
+    category: ReportCategory.purchase,
     endpoint: '/reports/vendor-leadtime-compliance',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1639,6 +1682,7 @@ abstract final class ReportCatalog {
   static const ppvAudit = ReportDefinition(
     id: 'ppv-audit',
     title: 'Purchase price variance audit',
+    category: ReportCategory.purchase,
     endpoint: '/reports/ppv-audit',
     requiredModule: 'Transactions',
     autoRun: true,
@@ -1682,6 +1726,7 @@ abstract final class ReportCatalog {
   static const bomProductionCosting = ReportDefinition(
     id: 'bom-production-costing',
     title: 'BOM & production costing',
+    category: ReportCategory.manufacturing,
     endpoint: '/reports/bom-production-costing',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -1715,6 +1760,7 @@ abstract final class ReportCatalog {
   static const binLocationStock = ReportDefinition(
     id: 'bin-location-stock',
     title: 'Bin & shelf location stock',
+    category: ReportCategory.inventory,
     endpoint: '/reports/bin-location-stock',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -1739,6 +1785,7 @@ abstract final class ReportCatalog {
   static const deadStockAnalysis = ReportDefinition(
     id: 'dead-stock-analysis',
     title: 'Dead stock & obsolescence analysis',
+    category: ReportCategory.inventory,
     endpoint: '/reports/dead-stock-analysis',
     requiredModule: 'Inventory',
     autoRun: true,
@@ -1776,6 +1823,7 @@ abstract final class ReportCatalog {
   static const statutoryPayrollCompliance = ReportDefinition(
     id: 'statutory-payroll-compliance',
     title: 'Statutory payroll compliance',
+    category: ReportCategory.payroll,
     endpoint: '/reports/statutory-payroll-compliance',
     requiredModule: 'Employee',
     autoRun: true,
@@ -1823,6 +1871,7 @@ abstract final class ReportCatalog {
   static const leaveBalanceRegister = ReportDefinition(
     id: 'leave-balance-register',
     title: 'Employee leave balance & accruals',
+    category: ReportCategory.payroll,
     endpoint: '/reports/leave-balance-register',
     requiredModule: 'Employee',
     autoRun: true,

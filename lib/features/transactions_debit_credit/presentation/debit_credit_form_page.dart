@@ -147,7 +147,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Prefix',
-                  initialValue: _draft.voucherPrefix,
+                  value: _draft.voucherPrefix,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(
@@ -164,7 +164,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Financial year',
-                  initialValue: _draft.financialYear,
+                  value: _draft.financialYear,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(financialYear: v),
@@ -189,7 +189,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
           const SizedBox(height: 12),
           AppTextField(
             label: 'Narration',
-            initialValue: _draft.narration,
+            value: _draft.narration,
             enabled: !_posting,
             onChanged: (v) => setState(
               () => _draft = _draft.copyWith(narration: v.isEmpty ? null : v),
@@ -239,7 +239,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
           label: 'Debit',
           cellBuilder: (context, row, i) => AppDecimalField(
             label: 'Debit',
-            initialValue: row.debit,
+            value: row.debit,
             enabled: !_posting,
             onChanged: (v) =>
                 _updateLine(i, row.copyWith(debit: v ?? Decimal.zero)),
@@ -249,7 +249,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
           label: 'Credit',
           cellBuilder: (context, row, i) => AppDecimalField(
             label: 'Credit',
-            initialValue: row.credit,
+            value: row.credit,
             enabled: !_posting,
             onChanged: (v) =>
                 _updateLine(i, row.copyWith(credit: v ?? Decimal.zero)),
@@ -260,7 +260,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
           flex: 2,
           cellBuilder: (context, row, i) => AppTextField(
             label: 'Narration',
-            initialValue: row.narration,
+            value: row.narration,
             enabled: !_posting,
             onChanged: (v) =>
                 _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
@@ -298,7 +298,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
         label: 'Amount',
         cellBuilder: (context, row, i) => AppDecimalField(
           label: 'Amount',
-          initialValue: row.amount,
+          value: row.amount,
           enabled: !_posting,
           onChanged: (v) =>
               _updateLine(i, row.copyWith(amount: v ?? Decimal.zero)),
@@ -309,7 +309,7 @@ class _DebitCreditFormPageState extends State<DebitCreditFormPage> {
         flex: 2,
         cellBuilder: (context, row, i) => AppTextField(
           label: 'Narration',
-          initialValue: row.narration,
+          value: row.narration,
           enabled: !_posting,
           onChanged: (v) =>
               _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),

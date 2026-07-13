@@ -20,91 +20,54 @@ import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
+import 'package:algo_erp_front/features/transactions_item_qty/bloc/item_qty_detail_bloc.dart';
+import 'package:algo_erp_front/features/transactions_item_qty/bloc/item_qty_detail_event.dart';
+import 'package:algo_erp_front/features/transactions_item_qty/bloc/item_qty_detail_state.dart';
 import 'package:algo_erp_front/features/transactions_item_qty/item_qty_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-/// Read-only detail for an [ItemQtyVoucherKind] with cancel lifecycle.
-class ItemQtyDetailPage extends StatefulWidget {
+/// Read-only detail for an [ItemQtyVoucherKind] with cancel lifecycle powered by flutter_bloc.
+class ItemQtyDetailPage extends StatelessWidget {
   const ItemQtyDetailPage({required this.kind, required this.id, super.key});
 
   final ItemQtyVoucherKind kind;
   final int id;
 
   @override
-  State<ItemQtyDetailPage> createState() => _ItemQtyDetailPageState();
+  Widget build(BuildContext context) {
+    final dio = getIt<DioClient>();
+    return BlocProvider<ItemQtyDetailBloc>(
+      create: (_) => ItemQtyDetailBloc(
+        repository: createItemQtyRepository(dio, kind),
+        itemRepository: createInventoryItemRepository(dio),
+        ledgerRepository: createLedgerRepository(dio),
+        godownRepository: createGodownRepository(dio),
+      )..add(ItemQtyDetailFetchRequested(id)),
+      child: BlocListener<ItemQtyDetailBloc, ItemQtyDetailState>(
+        listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
+        listener: (context, state) {
+          if (state.actionMessage != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.actionMessage!)));
+          }
+        },
+        child: _ItemQtyDetailView(kind: kind, id: id),
+      ),
+    );
+  }
 }
 
-class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
-  late final _repo = createItemQtyRepository(getIt<DioClient>(), widget.kind);
-  late final _itemRepo = createInventoryItemRepository(getIt<DioClient>());
-  late final _ledgerRepo = createLedgerRepository(getIt<DioClient>());
-  late final _godownRepo = createGodownRepository(getIt<DioClient>());
-  Future<ItemQtyDetail>? _future;
-  bool _busy = false;
+class _ItemQtyDetailView extends StatelessWidget {
+  const _ItemQtyDetailView({required this.kind, required this.id});
 
-  ItemQtyVoucherKind get kind => widget.kind;
+  final ItemQtyVoucherKind kind;
+  final int id;
 
-  @override
-  void initState() {
-    super.initState();
-    _reload();
-  }
-
-  void _reload() {
-    setState(() => _future = _load());
-  }
-
-  Future<ItemQtyDetail> _load() async {
-    final result = await _repo.getById(
-      widget.id,
-      resolveItemLabel: (itemId) async {
-        final r = await _itemRepo.getById(itemId);
-        return r.fold(
-          (_) => null,
-          (item) =>
-              item.code.isEmpty ? item.name : '${item.code} — ${item.name}',
-        );
-      },
-      resolvePartyLabel: (ledgerId) async {
-        final r = await _ledgerRepo.getById(ledgerId);
-        return r.fold((_) => null, (l) {
-          final code = l.code;
-          return (code == null || code.isEmpty) ? l.name : '$code — ${l.name}';
-        });
-      },
-      resolveGodownLabel: (godownId) async {
-        final r = await _godownRepo.getById(godownId);
-        return r.fold((_) => null, (g) => g.name);
-      },
-    );
-    return result.fold((f) => throw Exception(f.toString()), (d) => d);
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  EntityStatus _entityStatus(String status) => switch (status) {
-    'Draft' => EntityStatus.draft,
-    'Approved' => EntityStatus.approved,
-    'Posted' => EntityStatus.posted,
-    'Cancelled' => EntityStatus.cancelled,
-    'Rejected' => EntityStatus.rejected,
-    _ => EntityStatus.draft,
-  };
-
-  Future<void> _cancel(ItemQtyDetail doc) async {
+  Future<void> _cancel(BuildContext context, ItemQtyDetail doc) async {
     final ok = await showConfirmDialog(
       context,
       title: 'Cancel ${kind.blueprint.label}?',
@@ -112,25 +75,9 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
       confirmLabel: 'Cancel voucher',
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    setState(() => _busy = true);
-    final result = await _repo.cancel(doc.id);
-    if (!mounted) return;
-    result.fold(
-      (f) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_messageOf(f))));
-      },
-      (_) {
-        setState(() => _busy = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cancelled')));
-        _reload();
-      },
-    );
+    if (ok && context.mounted) {
+      context.read<ItemQtyDetailBloc>().add(const ItemQtyDetailCancelled());
+    }
   }
 
   Future<Uint8List> _buildPdf(ItemQtyDetail doc) async {
@@ -165,15 +112,15 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
           ),
       ],
       totals: PdfDocTotals(
+        total: doc.total ?? Decimal.zero,
         subtotal: doc.total ?? Decimal.zero,
         discount: doc.discount,
         vat: doc.vat,
-        total: doc.grossTotal ?? doc.total ?? Decimal.zero,
       ),
     );
   }
 
-  void _print(ItemQtyDetail doc) {
+  void _print(BuildContext context, ItemQtyDetail doc) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
@@ -188,20 +135,25 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
     return AdaptiveLayout(
-      child: FutureBuilder<ItemQtyDetail>(
-        future: _future,
-        builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
+      child: BlocBuilder<ItemQtyDetailBloc, ItemQtyDetailState>(
+        builder: (context, state) {
+          final bloc = context.read<ItemQtyDetailBloc>();
+
+          if (state.isLoading && state.detail == null) {
             return const LoadingState();
           }
-          if (snap.hasError) {
-            final err = snap.error;
+          if (state.isFailure && state.detail == null) {
             return ErrorState(
-              failure: err is Failure ? err : Failure.unknown(err.toString()),
-              onRetry: _reload,
+              failure:
+                  state.failure ??
+                  const Failure.unknown('Failed to load voucher detail'),
+              onRetry: () => bloc.add(ItemQtyDetailFetchRequested(id)),
             );
           }
-          final doc = snap.data!;
+
+          final doc = state.detail;
+          if (doc == null) return const LoadingState();
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -218,13 +170,10 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ),
-                  StatusChip(
-                    status: _entityStatus(doc.status),
-                    label: doc.status,
-                  ),
+                  StatusChip(status: state.entityStatus, label: doc.status),
                   IconButton(
                     tooltip: 'Print',
-                    onPressed: () => _print(doc),
+                    onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
                   if (doc.canCancel && doc.status != 'Cancelled')
@@ -232,7 +181,9 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
                       module: 'Transactions',
                       action: PermissionAction.update,
                       child: TextButton(
-                        onPressed: _busy ? null : () => _cancel(doc),
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _cancel(context, doc),
                         child: const Text('Cancel'),
                       ),
                     ),
@@ -246,17 +197,20 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
                 runSpacing: 8,
                 children: [
                   if (doc.voucherDate != null)
-                    _kv('Date', doc.voucherDate!.toDayString()),
+                    _kv(context, 'Date', doc.voucherDate!.toDayString()),
                   if (doc.partyLabel != null || doc.billingName != null)
                     _kv(
+                      context,
                       kind.partyLabel,
                       doc.partyLabel ?? doc.billingName ?? '',
                     ),
-                  if (doc.godownLabel != null) _kv('Godown', doc.godownLabel!),
-                  if (doc.total != null) _kv('Total', doc.total.toString()),
+                  if (doc.godownLabel != null)
+                    _kv(context, 'Godown', doc.godownLabel!),
+                  if (doc.total != null)
+                    _kv(context, 'Total', doc.total.toString()),
                   if (doc.discount != null)
-                    _kv('Discount', doc.discount.toString()),
-                  if (doc.vat != null) _kv('VAT', doc.vat.toString()),
+                    _kv(context, 'Discount', doc.discount.toString()),
+                  if (doc.vat != null) _kv(context, 'VAT', doc.vat.toString()),
                 ],
               ),
               if (doc.narration != null && doc.narration!.isNotEmpty) ...[
@@ -269,7 +223,7 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: doc.lines.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, i) {
                     final line = doc.lines[i];
                     return ListTile(
@@ -302,7 +256,7 @@ class _ItemQtyDetailPageState extends State<ItemQtyDetailPage> {
     );
   }
 
-  Widget _kv(String k, String v) {
+  Widget _kv(BuildContext context, String k, String v) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

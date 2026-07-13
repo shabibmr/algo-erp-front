@@ -138,7 +138,7 @@ class _LedgerAmountFormPageState extends State<LedgerAmountFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Prefix',
-                  initialValue: _draft.voucherPrefix,
+                  value: _draft.voucherPrefix,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(
@@ -155,7 +155,7 @@ class _LedgerAmountFormPageState extends State<LedgerAmountFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Financial year',
-                  initialValue: _draft.financialYear,
+                  value: _draft.financialYear,
                   enabled: !_posting,
                   onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(financialYear: v),
@@ -201,7 +201,7 @@ class _LedgerAmountFormPageState extends State<LedgerAmountFormPage> {
           const SizedBox(height: 12),
           AppTextField(
             label: 'Narration',
-            initialValue: _draft.narration,
+            value: _draft.narration,
             enabled: !_posting,
             onChanged: (v) => setState(
               () => _draft = _draft.copyWith(narration: v.isEmpty ? null : v),
@@ -247,7 +247,7 @@ class _LedgerAmountFormPageState extends State<LedgerAmountFormPage> {
       label: 'Amount',
       cellBuilder: (context, row, i) => AppDecimalField(
         label: 'Amount',
-        initialValue: row.amount,
+        value: row.amount,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(amount: v ?? Decimal.zero)),
@@ -258,7 +258,7 @@ class _LedgerAmountFormPageState extends State<LedgerAmountFormPage> {
       flex: 2,
       cellBuilder: (context, row, i) => AppTextField(
         label: 'Narration',
-        initialValue: row.narration,
+        value: row.narration,
         enabled: !_posting,
         onChanged: (v) =>
             _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),

@@ -7,19 +7,24 @@ import 'package:flutter/services.dart';
 /// one consistent system — style tweaks belong in
 /// `AppTheme.inputDecorationTheme`, not here.
 ///
+/// [value] is *controlled*: a value written back by a bloc after the field is
+/// on screen (an FK selection that autofills a name, a source-document
+/// conversion) reaches the visible text. Pass a [controller] instead to own
+/// the text yourself, in which case [value] is ignored.
+///
 /// ```dart
 /// AppTextField(
 ///   label: 'Brand name',
-///   controller: _nameController,
-///   validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+///   value: state.brandName,
+///   onChanged: (v) => context.read<Bloc>().add(NameChanged(v)),
 /// )
 /// ```
-class AppTextField extends StatelessWidget {
+class AppTextField extends StatefulWidget {
   const AppTextField({
     required this.label,
     super.key,
     this.controller,
-    this.initialValue,
+    this.value,
     this.hintText,
     this.helperText,
     this.validator,
@@ -42,7 +47,7 @@ class AppTextField extends StatelessWidget {
   /// required marker.
   final Widget? labelWidget;
   final TextEditingController? controller;
-  final String? initialValue;
+  final String? value;
   final String? hintText;
   final String? helperText;
   final FormFieldValidator<String>? validator;
@@ -58,26 +63,62 @@ class AppTextField extends StatelessWidget {
   final AutovalidateMode? autovalidateMode;
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  late final TextEditingController _controller;
+  late final bool _ownsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _controller =
+        widget.controller ?? TextEditingController(text: widget.value ?? '');
+  }
+
+  @override
+  void didUpdateWidget(AppTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_ownsController || widget.value == oldWidget.value) return;
+    final next = widget.value ?? '';
+    // The text already matching means the user typed this themselves and the
+    // value is echoing back — reassigning would drive the caret to the end on
+    // every keystroke.
+    if (next == _controller.text) return;
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (_ownsController) _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      initialValue: controller == null ? initialValue : null,
-      enabled: enabled,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      onChanged: onChanged,
-      onSaved: onSaved,
-      autovalidateMode: autovalidateMode,
+      controller: _controller,
+      enabled: widget.enabled,
+      maxLines: widget.maxLines,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      inputFormatters: widget.inputFormatters,
+      validator: widget.validator,
+      onChanged: widget.onChanged,
+      onSaved: widget.onSaved,
+      autovalidateMode: widget.autovalidateMode,
       decoration: InputDecoration(
-        label: labelWidget,
-        labelText: labelWidget == null ? label : null,
-        hintText: hintText,
-        helperText: helperText,
-        prefixIcon: prefixIcon,
-        suffixIcon: suffixIcon,
+        label: widget.labelWidget,
+        labelText: widget.labelWidget == null ? widget.label : null,
+        hintText: widget.hintText,
+        helperText: widget.helperText,
+        prefixIcon: widget.prefixIcon,
+        suffixIcon: widget.suffixIcon,
       ),
     );
   }
