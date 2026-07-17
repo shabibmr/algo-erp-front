@@ -63,6 +63,7 @@ class FieldSpec<E> {
     ColumnAlign? align,
     bool? mono,
     this.primary = false,
+    this.exportValue,
   }) : align =
            align ??
            (type == FieldType.int || type == FieldType.decimal
@@ -96,4 +97,18 @@ class FieldSpec<E> {
 
   /// Renders this field's value for `entity` as display text.
   final String Function(E entity) cellValue;
+
+  /// The *untyped* value for a spreadsheet export, when [cellValue]'s display
+  /// string cannot be reliably read back into one.
+  ///
+  /// Export normally derives the cell's type from [type] and recovers the value
+  /// by parsing [cellValue] — `AED 1,234.50` back to `1234.5`, `07/11/2026`
+  /// back to a date. That covers the manifests we have. This is the escape
+  /// hatch for a column whose display string is genuinely lossy (a computed
+  /// summary, a joined list, a value rendered through a lookup), where the
+  /// parse would either fail or, worse, quietly produce the wrong number.
+  ///
+  /// Return a `num`, `Decimal`, `DateTime`, `bool`, `String`, or null for
+  /// blank. Wins over [cellValue] when present.
+  final Object? Function(E entity)? exportValue;
 }

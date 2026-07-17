@@ -6,6 +6,8 @@ import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/responsive/breakpoints.dart';
 import 'package:algo_erp_front/core/surfaces/document_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
+import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
@@ -130,6 +132,7 @@ class _SalesInvoiceFormView extends StatelessWidget {
         flex: 3,
         cellBuilder: (cellCtx, row, i) => FkLookupField<InventoryItem>(
           label: 'Item',
+          hideLabel: true,
           value: row.itemId == null
               ? null
               : InventoryItem(
@@ -166,64 +169,12 @@ class _SalesInvoiceFormView extends StatelessWidget {
           },
         ),
       ),
-      LineItemColumn(
-        label: 'SKU id',
-        cellBuilder: (cellCtx, row, i) => AppNumberField(
-          label: 'SKU',
-          value: row.skuId,
-          enabled: !isPosting,
-          helperText: 'Optional',
-          onChanged: (v) => cellCtx.read<SalesInvoiceFormBloc>().add(
-            LineItemUpdated(
-              index: i,
-              line: row.copyWith(skuId: v),
-            ),
-          ),
-        ),
-      ),
-      LineItemColumn(
-        label: 'Batch',
-        flex: 2,
-        cellBuilder: (cellCtx, row, i) => FkLookupField<ItemBatch>(
-          label: 'Batch',
-          value: row.batchId == null
-              ? null
-              : ItemBatch(
-                  id: row.batchId!,
-                  itemId: row.itemId ?? 0,
-                  batchNumber: '#${row.batchId}',
-                  costPrice: Decimal.zero,
-                  sellingPrice: Decimal.zero,
-                ),
-          enabled: !isPosting && row.itemId != null,
-          helperText: row.itemId == null
-              ? 'Pick item first'
-              : 'Optional — filters by item',
-          displayOf: (b) => b.batchNumber,
-          loader: (q) async {
-            if (row.itemId == null) return const [];
-            final r = await _batchRepo.list(
-              PageQuery(search: q, filters: {'item_id': row.itemId}),
-            );
-            return r.fold(
-              (_) => const [],
-              (p) => p.items
-                  .where((b) => b.itemId == row.itemId)
-                  .toList(growable: false),
-            );
-          },
-          onSelected: (b) => cellCtx.read<SalesInvoiceFormBloc>().add(
-            LineItemUpdated(
-              index: i,
-              line: row.copyWith(batchId: b?.id),
-            ),
-          ),
-        ),
-      ),
+
       LineItemColumn(
         label: 'Qty',
         cellBuilder: (cellCtx, row, i) => AppDecimalField(
           label: 'Qty',
+          hideLabel: true,
           value: row.quantity,
           enabled: !isPosting,
           onChanged: (v) => cellCtx.read<SalesInvoiceFormBloc>().add(
@@ -235,9 +186,10 @@ class _SalesInvoiceFormView extends StatelessWidget {
         ),
       ),
       LineItemColumn(
-        label: 'Price',
+        label: 'Rate',
         cellBuilder: (cellCtx, row, i) => AppDecimalField(
-          label: 'Price',
+          label: 'Rate',
+          hideLabel: true,
           value: row.price,
           enabled: !isPosting,
           onChanged: (v) => cellCtx.read<SalesInvoiceFormBloc>().add(
@@ -252,6 +204,7 @@ class _SalesInvoiceFormView extends StatelessWidget {
         label: 'Disc %',
         cellBuilder: (cellCtx, row, i) => AppDecimalField(
           label: 'Disc %',
+          hideLabel: true,
           value: row.discountPercent,
           enabled: !isPosting,
           onChanged: (v) => cellCtx.read<SalesInvoiceFormBloc>().add(
@@ -266,6 +219,7 @@ class _SalesInvoiceFormView extends StatelessWidget {
         label: 'Tax %',
         cellBuilder: (cellCtx, row, i) => AppDecimalField(
           label: 'Tax %',
+          hideLabel: true,
           value: row.taxRate,
           enabled: !isPosting,
           onChanged: (v) => cellCtx.read<SalesInvoiceFormBloc>().add(
@@ -276,17 +230,35 @@ class _SalesInvoiceFormView extends StatelessWidget {
           ),
         ),
       ),
+      LineItemColumn(
+        label: 'Amount',
+        cellBuilder: (cellCtx, row, i) {
+          final amount = row.isComplete
+              ? LineEngine.computeLine(
+                  LineInput(
+                    quantity: row.quantity,
+                    price: row.price,
+                    discountPercent: row.discountPercent,
+                    taxRate: row.taxRate,
+                  ),
+                ).lineTotal
+              : Decimal.zero;
+          return AppTextField(
+            label: 'Amount',
+            hideLabel: true,
+            value: amount.toMoney(),
+            enabled: false,
+          );
+        },
+      ),
     ];
 
     return AdaptiveLayout(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isEdit ? 'Edit draft ${_bp.label}' : 'New ${_bp.label}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 16),
+          const _TopHeaderBlock(),
+          const SizedBox(height: 12),
           if (isLoading)
             const Expanded(child: LoadingState())
           else if (isFailure)
@@ -307,6 +279,7 @@ class _SalesInvoiceFormView extends StatelessWidget {
               child: DocumentSurface<SalesInvoiceLine>(
                 blueprint: _bp,
                 header: const _FormHeader(),
+                topBar: const _DocumentTopStrip(),
                 rows: rows,
                 columns: columns,
                 onRowsChanged: (newRows) => context
@@ -315,7 +288,17 @@ class _SalesInvoiceFormView extends StatelessWidget {
                 newRow: SalesInvoiceLine.new,
                 keyOf: (row, _) => row.uid,
                 lineInputsOf: _lineInput,
-                footer: const _NarrationField(),
+                rowSearchFilter: (row, query) =>
+                    (row.itemLabel ?? '').toLowerCase().contains(query),
+                linesViewportHeight: 240,
+                totalsLabel: 'Summary (AED)',
+                postLabel: isEdit ? 'Save draft' : 'Post invoice',
+                saveDraftCaption: isEdit
+                    ? null
+                    : 'Save as draft and continue later',
+                postCaption: isEdit
+                    ? 'Update this draft'
+                    : 'Post and update inventory',
                 onPost: isEdit
                     ? () => context.read<SalesInvoiceFormBloc>().add(
                         const FormSubmitted(saveStatus: 'Draft'),
@@ -328,7 +311,6 @@ class _SalesInvoiceFormView extends StatelessWidget {
                     : () => context.read<SalesInvoiceFormBloc>().add(
                         const FormSubmitted(saveStatus: 'Draft'),
                       ),
-                postLabel: isEdit ? 'Save draft' : 'Post',
                 posting: isPosting,
                 enabled: !isPosting,
                 errorText: errorText,
@@ -345,65 +327,14 @@ class _FormHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEdit = context.select((SalesInvoiceFormBloc b) => b.state.isEdit);
-    final sourceType = context.select(
-      (SalesInvoiceFormBloc b) => b.state.sourceType,
-    );
-
-    return Column(
-      children: [
-        if (Breakpoints.isDesktop(context)) ...[
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 3, child: _CustomerField()),
-                    SizedBox(width: 12),
-                    Expanded(flex: 2, child: _GodownField()),
-                    SizedBox(width: 12),
-                    Expanded(flex: 2, child: _SalesmanField()),
-                  ],
-                ),
-              ),
-              SizedBox(width: 24),
-              _VoucherIdentityBlock(),
-            ],
-          ),
-        ] else ...[
-          const _VoucherDateField(),
-          const SizedBox(height: 12),
-          const _VoucherNoField(),
-          const SizedBox(height: 12),
-          const _CustomerField(),
-          const SizedBox(height: 12),
-          const _GodownField(),
-          const SizedBox(height: 12),
-          const _SalesmanField(),
-        ],
-        const SizedBox(height: 12),
-        const _ProjectField(),
-        if (!isEdit) ...[
-          const SizedBox(height: 12),
-          const _SourceTypeDropdown(),
-          if (sourceType.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const _SourceVoucherField(),
-          ],
-        ],
-        const SizedBox(height: 12),
-        const _BillingNameField(),
-        const SizedBox(height: 12),
-        const _CreditDaysField(),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 }
 
 class _CustomerField extends StatelessWidget {
-  const _CustomerField();
+  const _CustomerField({this.hideLabel = false});
+
+  final bool hideLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -416,6 +347,7 @@ class _CustomerField extends StatelessWidget {
 
     return FkLookupField<Ledger>(
       label: 'Customer',
+      hideLabel: hideLabel,
       value: customer,
       enabled: !isPosting,
       displayOf: (l) {
@@ -433,6 +365,195 @@ class _CustomerField extends StatelessWidget {
   }
 }
 
+class _TopHeaderBlock extends StatelessWidget {
+  const _TopHeaderBlock();
+
+  static const _bp = VoucherBlueprints.salesInvoice;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = context.tokens;
+    final isEdit = context.select((SalesInvoiceFormBloc b) => b.state.isEdit);
+    final badgeColor = tokens.semanticColors.warning;
+
+    return Container(
+      padding: EdgeInsets.all(tokens.spacing.sm),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(tokens.radii.sm),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          IconButton(
+            tooltip: 'Back',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(_bp.listPath);
+              }
+            },
+          ),
+          SizedBox(width: tokens.spacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: tokens.spacing.sm,
+                  runSpacing: tokens.spacing.xs,
+                  children: [
+                    Text(
+                      _bp.label,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: tokens.brand.ink,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.sm,
+                        vertical: tokens.spacing.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(tokens.radii.full),
+                        border: Border.all(
+                          color: badgeColor.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle, size: 8, color: badgeColor),
+                          SizedBox(width: tokens.spacing.xs),
+                          Text(
+                            isEdit ? 'Draft' : 'New draft',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: badgeColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: tokens.spacing.xs),
+                Text(
+                  isEdit
+                      ? 'Home › Sales › Invoices › Edit draft'
+                      : 'Home › Sales › Invoices › New sales invoice',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: tokens.brand.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (Breakpoints.isDesktop(context))
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: null,
+                  child: Row(
+                    children: [
+                      Text('More actions', style: theme.textTheme.labelLarge),
+                      SizedBox(width: tokens.spacing.xs),
+                      const Icon(Icons.keyboard_arrow_down, size: 16),
+                    ],
+                  ),
+                ),
+                SizedBox(width: tokens.spacing.sm),
+                OutlinedButton(
+                  onPressed: null,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.help_outline, size: 16),
+                      SizedBox(width: tokens.spacing.xs),
+                      Text('Help', style: theme.textTheme.labelLarge),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dual top strip: customer AR metrics + invoice metadata card.
+class _DocumentTopStrip extends StatelessWidget {
+  const _DocumentTopStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    if (!Breakpoints.isDesktop(context)) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _CustomerMetricsBar(),
+          SizedBox(height: 12),
+          _InvoiceDetailsCard(),
+        ],
+      );
+    }
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Expanded(flex: 3, child: _CustomerMetricsBar()),
+          SizedBox(width: tokens.spacing.sm),
+          const Expanded(flex: 2, child: _InvoiceDetailsCard()),
+        ],
+      ),
+    );
+  }
+}
+
+class _InvoiceDetailsCard extends StatelessWidget {
+  const _InvoiceDetailsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Card(
+      color: Colors.amber.shade50,
+      child: Padding(
+        padding: EdgeInsets.all(tokens.spacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(child: _GodownField()),
+                SizedBox(width: tokens.spacing.md),
+                const Expanded(child: _VoucherDateField()),
+              ],
+            ),
+            SizedBox(height: tokens.spacing.md),
+            Row(
+              children: [
+                const Expanded(child: _SalesmanField()),
+                SizedBox(width: tokens.spacing.md),
+                const Expanded(child: _VoucherNoField()),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GodownField extends StatelessWidget {
   const _GodownField();
 
@@ -444,7 +565,7 @@ class _GodownField extends StatelessWidget {
     );
 
     return FkLookupField<Godown>(
-      label: 'Godown',
+      label: 'Godown / warehouse',
       value: godown,
       enabled: !isPosting,
       displayOf: (g) => g.name,
@@ -486,31 +607,6 @@ class _SalesmanField extends StatelessWidget {
   }
 }
 
-class _ProjectField extends StatelessWidget {
-  const _ProjectField();
-
-  @override
-  Widget build(BuildContext context) {
-    final project = context.select((SalesInvoiceFormBloc b) => b.state.project);
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return FkLookupField<ProjectLite>(
-      label: 'Project',
-      value: project,
-      enabled: !isPosting,
-      displayOf: (p) => p.label,
-      loader: (q) async {
-        final r = await _invoiceRepo.searchProjects(q);
-        return r.fold((_) => const [], (list) => list);
-      },
-      onSelected: (p) =>
-          context.read<SalesInvoiceFormBloc>().add(ProjectSelected(p)),
-    );
-  }
-}
-
 class _VoucherDateField extends StatelessWidget {
   const _VoucherDateField();
 
@@ -546,186 +642,150 @@ class _VoucherNoField extends StatelessWidget {
     );
 
     return AppTextField(
-      label: 'Voucher No.',
-      value: prefix,
+      label: 'Voucher no.',
+      value: prefix.isEmpty ? '—' : prefix,
       enabled: false,
-      helperText: 'Auto-numbered on post',
     );
   }
 }
 
-class _IdentityRow extends StatelessWidget {
-  const _IdentityRow({required this.label, required this.value});
-
-  final String label;
-  final Widget value;
+class _CustomerMetricsBar extends StatelessWidget {
+  const _CustomerMetricsBar();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 260,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(label),
+    final tokens = context.tokens;
+    final theme = Theme.of(context);
+    final customer = context.select(
+      (SalesInvoiceFormBloc b) => b.state.customer,
+    );
+
+    final hasCustomer = customer != null;
+    // Demo AR figures until a customer balance API exists — labeled below.
+    final outstanding = hasCustomer ? Decimal.fromInt(25450) : Decimal.zero;
+    final creditLimit =
+        customer?.credit.creditLimit ??
+        (hasCustomer ? Decimal.fromInt(100000) : Decimal.zero);
+    final availableCredit = creditLimit - outstanding;
+
+    Widget metricColumn(
+      String label,
+      String value, {
+      Color? valueColor,
+      String? subValue,
+    }) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: tokens.spacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: tokens.brand.inkMuted,
+              ),
             ),
-          ),
-          Expanded(child: value),
-        ],
-      ),
-    );
-  }
-}
-
-class _VoucherIdentityBlock extends StatelessWidget {
-  const _VoucherIdentityBlock();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _IdentityRow(label: 'Voucher date', value: _VoucherDateField()),
-        SizedBox(height: 12),
-        _IdentityRow(label: 'Voucher No.', value: _VoucherNoField()),
-      ],
-    );
-  }
-}
-
-class _SourceTypeDropdown extends StatelessWidget {
-  const _SourceTypeDropdown();
-
-  @override
-  Widget build(BuildContext context) {
-    final sourceType = context.select(
-      (SalesInvoiceFormBloc b) => b.state.sourceType,
-    );
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return DropdownButtonFormField<String>(
-      initialValue: sourceType,
-      decoration: const InputDecoration(
-        labelText: 'Convert from',
-        helperText: 'Optional Quotation / Sales Order conversion',
-      ),
-      items: const [
-        DropdownMenuItem(value: '', child: Text('None')),
-        DropdownMenuItem(value: 'SalesOrder', child: Text('Sales order')),
-        DropdownMenuItem(value: 'Quotation', child: Text('Quotation')),
-      ],
-      onChanged: isPosting
-          ? null
-          : (v) => context.read<SalesInvoiceFormBloc>().add(
-              SourceTypeChanged(v ?? ''),
+            SizedBox(height: tokens.spacing.xxs),
+            Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: valueColor ?? tokens.brand.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
-    );
-  }
-}
+            if (subValue != null) ...[
+              SizedBox(height: tokens.spacing.xxs),
+              Text(
+                subValue,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: tokens.brand.inkMuted,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
 
-class _SourceVoucherField extends StatelessWidget {
-  const _SourceVoucherField();
-
-  @override
-  Widget build(BuildContext context) {
-    final sourceType = context.select(
-      (SalesInvoiceFormBloc b) => b.state.sourceType,
-    );
-    final source = context.select((SalesInvoiceFormBloc b) => b.state.source);
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return FkLookupField<SourceVoucherLite>(
-      label: 'Source $sourceType',
-      value: source,
-      enabled: !isPosting,
-      helperText: 'Loads customer, godown, and lines',
-      displayOf: (s) => '${s.type} ${s.displayNo}',
-      loader: (q) async {
-        final r = await _invoiceRepo.searchSourceVouchers(
-          type: sourceType,
-          query: q,
-        );
-        return r.fold((_) => const [], (list) => list);
-      },
-      onSelected: (s) =>
-          context.read<SalesInvoiceFormBloc>().add(SourceVoucherSelected(s)),
-    );
-  }
-}
-
-class _BillingNameField extends StatelessWidget {
-  const _BillingNameField();
-
-  @override
-  Widget build(BuildContext context) {
-    final billingName = context.select(
-      (SalesInvoiceFormBloc b) => b.state.draft.billingName,
-    );
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return AppTextField(
-      label: 'Billing name',
-      value: billingName,
-      enabled: !isPosting,
-      onChanged: (v) =>
-          context.read<SalesInvoiceFormBloc>().add(BillingNameChanged(v)),
-    );
-  }
-}
-
-class _CreditDaysField extends StatelessWidget {
-  const _CreditDaysField();
-
-  @override
-  Widget build(BuildContext context) {
-    final creditDays = context.select(
-      (SalesInvoiceFormBloc b) => b.state.draft.creditDays,
-    );
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return AppNumberField(
-      label: 'Credit days',
-      value: creditDays,
-      enabled: !isPosting,
-      onChanged: (v) =>
-          context.read<SalesInvoiceFormBloc>().add(CreditDaysChanged(v)),
-    );
-  }
-}
-
-class _NarrationField extends StatelessWidget {
-  const _NarrationField();
-
-  @override
-  Widget build(BuildContext context) {
-    final narration = context.select(
-      (SalesInvoiceFormBloc b) => b.state.draft.narration,
-    );
-    final isPosting = context.select(
-      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
-    );
-
-    return SizedBox(
-      width: MediaQuery.sizeOf(context).width * 0.5,
-      child: AppTextField(
-        label: 'Narration',
-        value: narration,
-        enabled: !isPosting,
-        maxLines: 4,
-        onChanged: (v) =>
-            context.read<SalesInvoiceFormBloc>().add(NarrationChanged(v)),
+    return Card(
+      color: Colors.teal.shade50,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: tokens.spacing.sm,
+          horizontal: tokens.spacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.person_outline, color: tokens.brand.inkMuted),
+                SizedBox(width: tokens.spacing.sm),
+                const Expanded(child: _CustomerField(hideLabel: true)),
+              ],
+            ),
+            if (Breakpoints.isDesktop(context)) ...[
+              SizedBox(height: tokens.spacing.sm),
+              Divider(height: 1, color: tokens.brand.mist),
+              SizedBox(height: tokens.spacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: metricColumn(
+                      'Outstanding',
+                      hasCustomer ? 'AED ${outstanding.toMoney()}' : '—',
+                      valueColor: hasCustomer
+                          ? tokens.semanticColors.danger
+                          : null,
+                    ),
+                  ),
+                  Expanded(
+                    child: metricColumn(
+                      'Credit limit',
+                      hasCustomer ? 'AED ${creditLimit.toMoney()}' : '—',
+                    ),
+                  ),
+                  Expanded(
+                    child: metricColumn(
+                      'Available credit',
+                      hasCustomer ? 'AED ${availableCredit.toMoney()}' : '—',
+                      valueColor: hasCustomer
+                          ? tokens.semanticColors.success
+                          : null,
+                    ),
+                  ),
+                  Expanded(
+                    child: metricColumn(
+                      'Last invoice',
+                      hasCustomer ? 'INV-0478' : '—',
+                      subValue: hasCustomer ? 'Demo · 12/07/2026' : null,
+                    ),
+                  ),
+                  Expanded(
+                    child: metricColumn(
+                      'Last payment',
+                      hasCustomer ? 'AED 5,000.00' : '—',
+                      subValue: hasCustomer ? 'Demo · 10/07/2026' : null,
+                    ),
+                  ),
+                ],
+              ),
+              if (hasCustomer) ...[
+                SizedBox(height: tokens.spacing.xs),
+                Text(
+                  'AR figures marked Demo until balance API is wired',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: tokens.brand.inkMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
       ),
     );
   }

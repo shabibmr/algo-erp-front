@@ -55,9 +55,21 @@ class CrudBloc<E, ID, F> extends Bloc<CrudEvent<E, F>, CrudState<E>> {
 
   final Repository<E, ID> _repo;
   final ID Function(E entity) _idOf;
+
+  /// The repository this bloc reads through. Exposed so export can walk the
+  /// same source with the same [query] without a second binding being wired up
+  /// alongside the one the list already owns.
+  Repository<E, ID> get repository => _repo;
   final FilterBuilder<F>? _filterBuilder;
 
   late PageQuery _query;
+
+  /// The search, filters and sort currently narrowing the list.
+  ///
+  /// Exposed read-only for export, which has to re-run *this* query against the
+  /// server to gather every matching row — the state carries only the pages
+  /// scrolled into view, and a file built from those is a silently partial one.
+  PageQuery get query => _query;
 
   final _failures = StreamController<Failure>.broadcast();
 

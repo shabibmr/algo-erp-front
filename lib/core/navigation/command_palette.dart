@@ -1,11 +1,13 @@
+import 'package:algo_erp_front/core/navigation/command_palette_cubit.dart';
 import 'package:algo_erp_front/core/navigation/navigation_registry.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Centered Paper drawer: fuzzy jump to menu, reports, and create actions.
-class CommandPalette extends StatefulWidget {
+class CommandPalette extends StatelessWidget {
   const CommandPalette({super.key});
 
   /// Shows the palette as a dialog. Safe to call from shortcuts or header.
@@ -13,25 +15,36 @@ class CommandPalette extends StatefulWidget {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (_) => const CommandPalette(),
+      builder: (_) => BlocProvider(
+        create: (_) => CommandPaletteCubit(),
+        child: const CommandPalette(),
+      ),
     );
   }
 
   @override
-  State<CommandPalette> createState() => _CommandPaletteState();
+  Widget build(BuildContext context) {
+    return const _CommandPaletteBody();
+  }
 }
 
-class _CommandPaletteState extends State<CommandPalette> {
+class _CommandPaletteBody extends StatefulWidget {
+  const _CommandPaletteBody();
+
+  @override
+  State<_CommandPaletteBody> createState() => _CommandPaletteBodyState();
+}
+
+class _CommandPaletteBodyState extends State<_CommandPaletteBody> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
-  late List<NavDestination> _results;
-  int _highlight = 0;
 
   @override
   void initState() {
     super.initState();
-    _results = NavigationRegistry.search('');
-    _controller.addListener(_onQuery);
+    _controller.addListener(() {
+      context.read<CommandPaletteCubit>().search(_controller.text);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -39,18 +52,9 @@ class _CommandPaletteState extends State<CommandPalette> {
 
   @override
   void dispose() {
-    _controller
-      ..removeListener(_onQuery)
-      ..dispose();
+    _controller.dispose();
     _focusNode.dispose();
     super.dispose();
-  }
-
-  void _onQuery() {
-    setState(() {
-      _results = NavigationRegistry.search(_controller.text);
-      _highlight = 0;
-    });
   }
 
   void _go(NavDestination dest) {
@@ -59,21 +63,19 @@ class _CommandPaletteState extends State<CommandPalette> {
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    final cubit = context.read<CommandPaletteCubit>();
+    final results = cubit.state.results;
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      if (_results.isEmpty) return KeyEventResult.handled;
-      setState(() => _highlight = (_highlight + 1) % _results.length);
+      cubit.highlightNext();
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      if (_results.isEmpty) return KeyEventResult.handled;
-      setState(
-        () => _highlight = (_highlight - 1 + _results.length) % _results.length,
-      );
+      cubit.highlightPrevious();
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.enter) {
-      if (_results.isNotEmpty) _go(_results[_highlight]);
+      if (results.isNotEmpty) _go(results[cubit.state.highlight]);
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -89,114 +91,123 @@ class _CommandPaletteState extends State<CommandPalette> {
     final brand = tokens.brand;
     final maxWidth = context.isMobile ? double.infinity : 560.0;
 
-    // Group results preserving order.
-    final groups = <String, List<NavDestination>>{};
-    for (final d in _results) {
-      groups.putIfAbsent(d.group, () => []).add(d);
-    }
+    return BlocBuilder<CommandPaletteCubit, CommandPaletteState>(
+      builder: (context, state) {
+        final results = state.results;
+        final highlight = state.highlight;
 
-    return Dialog(
-      backgroundColor: brand.paper,
-      elevation: tokens.elevation.level3,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: context.isMobile ? tokens.spacing.md : 40,
-        vertical: tokens.spacing.xl,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(tokens.radii.lg),
-        side: BorderSide(color: brand.mist),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 480),
-        child: Focus(
-          onKeyEvent: _onKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  tokens.spacing.md,
-                  tokens.spacing.md,
-                  tokens.spacing.md,
-                  tokens.spacing.sm,
-                ),
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Jump to a page, report, or action…',
-                    prefixIcon: Icon(Icons.search, color: brand.inkMuted),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(tokens.radii.md),
-                      borderSide: BorderSide(color: brand.mist),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(tokens.radii.md),
-                      borderSide: BorderSide(color: brand.mist),
-                    ),
-                    filled: true,
-                    fillColor: brand.linen,
-                    isDense: true,
-                  ),
-                ),
-              ),
-              Divider(height: 1, color: brand.mist),
-              Flexible(
-                child: _results.isEmpty
-                    ? Padding(
-                        padding: EdgeInsets.all(tokens.spacing.lg),
-                        child: Text(
-                          'No matches',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: brand.inkMuted),
-                        ),
-                      )
-                    : ListView(
-                        padding: EdgeInsets.symmetric(
-                          vertical: tokens.spacing.sm,
-                        ),
-                        children: [
-                          for (final entry in groups.entries) ...[
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                tokens.spacing.md,
-                                tokens.spacing.sm,
-                                tokens.spacing.md,
-                                tokens.spacing.xs,
-                              ),
-                              child: Text(
-                                entry.key.toUpperCase(),
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: brand.inkMuted,
-                                      letterSpacing: 0.8,
-                                    ),
-                              ),
-                            ),
-                            for (final d in entry.value)
-                              _PaletteTile(
-                                destination: d,
-                                selected: _results.indexOf(d) == _highlight,
-                                onTap: () => _go(d),
-                              ),
-                          ],
-                        ],
-                      ),
-              ),
-              Divider(height: 1, color: brand.mist),
-              Padding(
-                padding: EdgeInsets.all(tokens.spacing.sm),
-                child: Text(
-                  '↑↓ navigate · Enter open · Esc close',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelSmall?.copyWith(color: brand.inkMuted),
-                ),
-              ),
-            ],
+        // Group results preserving order.
+        final groups = <String, List<NavDestination>>{};
+        for (final d in results) {
+          groups.putIfAbsent(d.group, () => []).add(d);
+        }
+
+        return Dialog(
+          backgroundColor: brand.paper,
+          elevation: tokens.elevation.level3,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: context.isMobile ? tokens.spacing.md : 40,
+            vertical: tokens.spacing.xl,
           ),
-        ),
-      ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
+            side: BorderSide(color: brand.mist),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 480),
+            child: Focus(
+              onKeyEvent: _onKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      tokens.spacing.md,
+                      tokens.spacing.md,
+                      tokens.spacing.md,
+                      tokens.spacing.sm,
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Jump to a page, report, or action…',
+                        prefixIcon: Icon(Icons.search, color: brand.inkMuted),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(tokens.radii.md),
+                          borderSide: BorderSide(color: brand.mist),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(tokens.radii.md),
+                          borderSide: BorderSide(color: brand.mist),
+                        ),
+                        filled: true,
+                        fillColor: brand.linen,
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: brand.mist),
+                  Flexible(
+                    child: results.isEmpty
+                        ? Padding(
+                            padding: EdgeInsets.all(tokens.spacing.lg),
+                            child: Text(
+                              'No matches',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: brand.inkMuted),
+                            ),
+                          )
+                        : ListView(
+                            padding: EdgeInsets.symmetric(
+                              vertical: tokens.spacing.sm,
+                            ),
+                            children: [
+                              for (final entry in groups.entries) ...[
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    tokens.spacing.md,
+                                    tokens.spacing.sm,
+                                    tokens.spacing.md,
+                                    tokens.spacing.xs,
+                                  ),
+                                  child: Text(
+                                    entry.key.toUpperCase(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: brand.inkMuted,
+                                          letterSpacing: 0.8,
+                                        ),
+                                  ),
+                                ),
+                                for (final d in entry.value)
+                                  _PaletteTile(
+                                    destination: d,
+                                    selected: results.indexOf(d) == highlight,
+                                    onTap: () => _go(d),
+                                  ),
+                              ],
+                            ],
+                          ),
+                  ),
+                  Divider(height: 1, color: brand.mist),
+                  Padding(
+                    padding: EdgeInsets.all(tokens.spacing.sm),
+                    child: Text(
+                      '↑↓ navigate · Enter open · Esc close',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(color: brand.inkMuted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

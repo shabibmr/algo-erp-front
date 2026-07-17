@@ -1,7 +1,6 @@
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/line_engine/line_engine.dart';
 import 'package:algo_erp_front/core/domain/page_query.dart';
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/document_surface.dart';
@@ -17,47 +16,46 @@ import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
+import 'package:algo_erp_front/features/transactions_stock/cubit/stock_voucher_form_cubit.dart';
 import 'package:algo_erp_front/features/transactions_stock/stock_voucher_di.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Create form for stock vouchers (GT / MI / Requirement / SR).
-class StockVoucherFormPage extends StatefulWidget {
+class StockVoucherFormPage extends StatelessWidget {
   const StockVoucherFormPage({required this.kind, super.key});
 
   final StockVoucherKind kind;
 
   @override
-  State<StockVoucherFormPage> createState() => _StockVoucherFormPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => StockVoucherFormCubit(
+        kind: kind,
+        repository: createStockVoucherRepository(getIt<DioClient>(), kind),
+      ),
+      child: _StockVoucherFormView(kind: kind),
+    );
+  }
 }
 
-class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
+class _StockVoucherFormView extends StatefulWidget {
+  const _StockVoucherFormView({required this.kind});
+
+  final StockVoucherKind kind;
+
+  @override
+  State<_StockVoucherFormView> createState() => _StockVoucherFormViewState();
+}
+
+class _StockVoucherFormViewState extends State<_StockVoucherFormView> {
   final _formKey = GlobalKey<FormState>();
-  late final _repo = createStockVoucherRepository(
-    getIt<DioClient>(),
-    widget.kind,
-  );
   late final _godownRepo = createGodownRepository(getIt<DioClient>());
   late final _itemRepo = createInventoryItemRepository(getIt<DioClient>());
 
-  late StockVoucherDraft _draft;
-  Godown? _fromGodown;
-  Godown? _toGodown;
-  Godown? _godown;
-  bool _posting = false;
-  String? _error;
-
   StockVoucherKind get kind => widget.kind;
-
-  @override
-  void initState() {
-    super.initState();
-    _draft = StockVoucherDraft(
-      voucherPrefix: kind.blueprint.defaultPrefix ?? '',
-      financialYear: DateTime.now().year.toString(),
-    );
-  }
 
   InventoryItem _stubItem(StockVoucherLine row) => InventoryItem(
     id: row.itemId!,
@@ -86,89 +84,17 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
     }
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_draft.financialYear.trim().isEmpty) {
-      setState(() => _error = 'Financial year is required');
-      return;
-    }
-    if (kind.headerMode == StockHeaderMode.fromToGodown) {
-      if (_draft.fromGodownId == null || _draft.toGodownId == null) {
-        setState(() => _error = 'From and To godowns are required');
-        return;
-      }
-      if (_draft.fromGodownId == _draft.toGodownId) {
-        setState(() => _error = 'From and To godowns must differ');
-        return;
-      }
-    }
-
-    final complete = switch (kind.lineMode) {
-      StockLineMode.itemQtyPrice =>
-        _draft.lines.where((l) => l.isCompleteQtyPrice()).toList(),
-      StockLineMode.itemCrDr =>
-        _draft.lines.where((l) => l.isCompleteCrDr()).toList(),
-      StockLineMode.itemRequestQty =>
-        _draft.lines.where((l) => l.isCompleteRequest()).toList(),
-    };
-    if (complete.isEmpty) {
-      setState(() => _error = 'Add at least one complete line');
-      return;
-    }
-
-    setState(() {
-      _posting = true;
-      _error = null;
-    });
-
-    final result = await _repo.post(_draft.copyWith(lines: complete));
-    if (!mounted) return;
-    result.fold(
-      (failure) {
-        setState(() {
-          _posting = false;
-          _error = _messageOf(failure);
-        });
-      },
-      (posted) {
-        final totalBit = posted.total == null ? '' : ' · ${posted.total}';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Created ${posted.voucherNo}$totalBit')),
-        );
-        context.go(kind.detailRoute(posted.id));
-      },
-    );
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
-
-  void _updateLine(int index, StockVoucherLine line) {
-    final lines = List<StockVoucherLine>.of(_draft.lines);
-    lines[index] = line;
-    setState(() => _draft = _draft.copyWith(lines: lines));
-  }
-
   Widget _godownField({
     required String label,
     required Godown? value,
     required void Function(Godown?) onSelected,
+    required bool posting,
     bool required = true,
   }) {
     return FkLookupField<Godown>(
       label: label,
       value: value,
-      enabled: !_posting,
+      enabled: !posting,
       displayOf: (g) => g.name,
       loader: (q) async {
         final r = await _godownRepo.list(PageQuery(search: q));
@@ -181,7 +107,9 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
     );
   }
 
-  Widget _header() {
+  Widget _header(StockVoucherFormCubit cubit, StockVoucherFormState state) {
+    final draft = state.draft;
+    final posting = state.posting;
     return Form(
       key: _formKey,
       child: Column(
@@ -191,10 +119,10 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Prefix',
-                  value: _draft.voucherPrefix,
-                  enabled: !_posting,
-                  onChanged: (v) => setState(
-                    () => _draft = _draft.copyWith(
+                  value: draft.voucherPrefix,
+                  enabled: !posting,
+                  onChanged: (v) => cubit.updateDraft(
+                    draft.copyWith(
                       voucherPrefix: v.isEmpty
                           ? (kind.blueprint.defaultPrefix ?? '')
                           : v,
@@ -208,11 +136,10 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               Expanded(
                 child: AppTextField(
                   label: 'Financial year',
-                  value: _draft.financialYear,
-                  enabled: !_posting,
-                  onChanged: (v) => setState(
-                    () => _draft = _draft.copyWith(financialYear: v),
-                  ),
+                  value: draft.financialYear,
+                  enabled: !posting,
+                  onChanged: (v) =>
+                      cubit.updateDraft(draft.copyWith(financialYear: v)),
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
@@ -222,11 +149,11 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
           const SizedBox(height: 12),
           AppDateField(
             label: 'Voucher date',
-            value: _draft.voucherDate,
-            enabled: !_posting,
+            value: draft.voucherDate,
+            enabled: !posting,
             onChanged: (d) {
               if (d != null) {
-                setState(() => _draft = _draft.copyWith(voucherDate: d));
+                cubit.updateDraft(draft.copyWith(voucherDate: d));
               }
             },
           ),
@@ -234,61 +161,47 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             const SizedBox(height: 12),
             _godownField(
               label: 'From godown',
-              value: _fromGodown,
-              onSelected: (g) => setState(() {
-                _fromGodown = g;
-                _draft = _draft.copyWith(
-                  fromGodownId: g?.id,
-                  fromGodownLabel: g?.name,
-                );
-              }),
+              value: state.fromGodown,
+              posting: posting,
+              onSelected: cubit.setFromGodown,
             ),
             const SizedBox(height: 12),
             _godownField(
               label: 'To godown',
-              value: _toGodown,
-              onSelected: (g) => setState(() {
-                _toGodown = g;
-                _draft = _draft.copyWith(
-                  toGodownId: g?.id,
-                  toGodownLabel: g?.name,
-                );
-              }),
+              value: state.toGodown,
+              posting: posting,
+              onSelected: cubit.setToGodown,
             ),
           ],
           if (kind.headerMode == StockHeaderMode.optionalGodown) ...[
             const SizedBox(height: 12),
             _godownField(
               label: 'Godown',
-              value: _godown,
+              value: state.godown,
               required: false,
-              onSelected: (g) => setState(() {
-                _godown = g;
-                _draft = _draft.copyWith(godownId: g?.id, godownLabel: g?.name);
-              }),
+              posting: posting,
+              onSelected: cubit.setGodown,
             ),
           ],
           if (kind.supportsRequirementRef) ...[
             const SizedBox(height: 12),
             AppTextField(
               label: 'Requirement voucher no',
-              value: _draft.requirementVoucherNo,
-              enabled: !_posting,
+              value: draft.requirementVoucherNo,
+              enabled: !posting,
               helperText: 'Optional link to a Requirement voucher_no',
-              onChanged: (v) => setState(
-                () => _draft = _draft.copyWith(
-                  requirementVoucherNo: v.isEmpty ? null : v,
-                ),
+              onChanged: (v) => cubit.updateDraft(
+                draft.copyWith(requirementVoucherNo: v.isEmpty ? null : v),
               ),
             ),
           ],
           const SizedBox(height: 12),
           AppTextField(
             label: 'Narration',
-            value: _draft.narration,
-            enabled: !_posting,
-            onChanged: (v) => setState(
-              () => _draft = _draft.copyWith(narration: v.isEmpty ? null : v),
+            value: draft.narration,
+            enabled: !posting,
+            onChanged: (v) => cubit.updateDraft(
+              draft.copyWith(narration: v.isEmpty ? null : v),
             ),
           ),
         ],
@@ -296,13 +209,16 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
     );
   }
 
-  LineItemColumn<StockVoucherLine> get _itemCol => LineItemColumn(
+  LineItemColumn<StockVoucherLine> _itemCol(
+    StockVoucherFormCubit cubit,
+    bool posting,
+  ) => LineItemColumn(
     label: 'Item',
     flex: 3,
     cellBuilder: (context, row, i) => FkLookupField<InventoryItem>(
       label: 'Item',
       value: row.itemId == null ? null : _stubItem(row),
-      enabled: !_posting,
+      enabled: !posting,
       displayOf: (item) =>
           item.code.isEmpty ? item.name : '${item.code} — ${item.name}',
       loader: (q) async {
@@ -311,10 +227,10 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
       },
       onSelected: (item) {
         if (item == null) {
-          _updateLine(i, row.copyWith(itemId: null, itemLabel: null));
+          cubit.updateLine(i, row.copyWith(itemId: null, itemLabel: null));
           return;
         }
-        _updateLine(
+        cubit.updateLine(
           i,
           row.copyWith(
             itemId: item.id,
@@ -326,19 +242,23 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
     ),
   );
 
-  List<LineItemColumn<StockVoucherLine>> get _columns {
+  List<LineItemColumn<StockVoucherLine>> _columns(
+    StockVoucherFormCubit cubit,
+    StockVoucherFormState state,
+  ) {
+    final posting = state.posting;
     switch (kind.lineMode) {
       case StockLineMode.itemQtyPrice:
         return [
-          _itemCol,
+          _itemCol(cubit, posting),
           LineItemColumn(
             label: 'Qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Qty',
               value: row.quantity,
-              enabled: !_posting,
+              enabled: !posting,
               onChanged: (v) =>
-                  _updateLine(i, row.copyWith(quantity: v ?? Decimal.one)),
+                  cubit.updateLine(i, row.copyWith(quantity: v ?? Decimal.one)),
             ),
           ),
           LineItemColumn(
@@ -346,9 +266,9 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Price',
               value: row.price,
-              enabled: !_posting,
+              enabled: !posting,
               onChanged: (v) =>
-                  _updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
+                  cubit.updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
             ),
           ),
           if (kind.supportsAdjValue)
@@ -357,9 +277,11 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
               cellBuilder: (context, row, i) => AppDecimalField(
                 label: 'Adj value',
                 value: row.adjValue,
-                enabled: !_posting,
-                onChanged: (v) =>
-                    _updateLine(i, row.copyWith(adjValue: v ?? Decimal.zero)),
+                enabled: !posting,
+                onChanged: (v) => cubit.updateLine(
+                  i,
+                  row.copyWith(adjValue: v ?? Decimal.zero),
+                ),
               ),
             ),
           LineItemColumn(
@@ -368,23 +290,25 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Narration',
               value: row.narration,
-              enabled: !_posting,
-              onChanged: (v) =>
-                  _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
+              enabled: !posting,
+              onChanged: (v) => cubit.updateLine(
+                i,
+                row.copyWith(narration: v.isEmpty ? null : v),
+              ),
             ),
           ),
         ];
       case StockLineMode.itemCrDr:
         return [
-          _itemCol,
+          _itemCol(cubit, posting),
           LineItemColumn(
             label: 'Cr qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Cr qty',
               value: row.crQty,
-              enabled: !_posting,
+              enabled: !posting,
               onChanged: (v) =>
-                  _updateLine(i, row.copyWith(crQty: v ?? Decimal.zero)),
+                  cubit.updateLine(i, row.copyWith(crQty: v ?? Decimal.zero)),
             ),
           ),
           LineItemColumn(
@@ -392,9 +316,9 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Dr qty',
               value: row.drQty,
-              enabled: !_posting,
+              enabled: !posting,
               onChanged: (v) =>
-                  _updateLine(i, row.copyWith(drQty: v ?? Decimal.zero)),
+                  cubit.updateLine(i, row.copyWith(drQty: v ?? Decimal.zero)),
             ),
           ),
           LineItemColumn(
@@ -402,9 +326,9 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Price',
               value: row.price,
-              enabled: !_posting,
+              enabled: !posting,
               onChanged: (v) =>
-                  _updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
+                  cubit.updateLine(i, row.copyWith(price: v ?? Decimal.zero)),
             ),
           ),
           LineItemColumn(
@@ -413,23 +337,27 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Narration',
               value: row.narration,
-              enabled: !_posting,
-              onChanged: (v) =>
-                  _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
+              enabled: !posting,
+              onChanged: (v) => cubit.updateLine(
+                i,
+                row.copyWith(narration: v.isEmpty ? null : v),
+              ),
             ),
           ),
         ];
       case StockLineMode.itemRequestQty:
         return [
-          _itemCol,
+          _itemCol(cubit, posting),
           LineItemColumn(
             label: 'Request qty',
             cellBuilder: (context, row, i) => AppDecimalField(
               label: 'Request qty',
               value: row.requestQty,
-              enabled: !_posting,
-              onChanged: (v) =>
-                  _updateLine(i, row.copyWith(requestQty: v ?? Decimal.one)),
+              enabled: !posting,
+              onChanged: (v) => cubit.updateLine(
+                i,
+                row.copyWith(requestQty: v ?? Decimal.one),
+              ),
             ),
           ),
           LineItemColumn(
@@ -438,9 +366,11 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
             cellBuilder: (context, row, i) => AppTextField(
               label: 'Remarks',
               value: row.narration,
-              enabled: !_posting,
-              onChanged: (v) =>
-                  _updateLine(i, row.copyWith(narration: v.isEmpty ? null : v)),
+              enabled: !posting,
+              onChanged: (v) => cubit.updateLine(
+                i,
+                row.copyWith(narration: v.isEmpty ? null : v),
+              ),
             ),
           ),
         ];
@@ -451,37 +381,54 @@ class _StockVoucherFormPageState extends State<StockVoucherFormPage> {
   Widget build(BuildContext context) {
     final bp = kind.blueprint;
     final tokens = context.tokens;
-    // DocumentSurface fits qty×price; request-qty totals as qty×0 price.
-    return AdaptiveLayout(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'New ${bp.label}',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          SizedBox(height: tokens.spacing.md),
-          Expanded(
-            child: DocumentSurface<StockVoucherLine>(
-              blueprint: bp,
-              header: _header(),
-              rows: _draft.lines,
-              columns: _columns,
-              onRowsChanged: (rows) =>
-                  setState(() => _draft = _draft.copyWith(lines: rows)),
-              newRow: StockVoucherLine.new,
-              lineInputsOf: _lineInput,
-              onPost: _submit,
-              postLabel: kind.createLabel,
-              posting: _posting,
-              enabled: !_posting,
-              errorText: _error,
-              totalsLabel: kind.lineMode == StockLineMode.itemRequestQty
-                  ? 'Requested qty total'
-                  : 'Totals',
+    return BlocListener<StockVoucherFormCubit, StockVoucherFormState>(
+      listenWhen: (p, c) => p.posted != c.posted && c.posted != null,
+      listener: (context, state) {
+        final posted = state.posted!;
+        final totalBit = posted.total == null ? '' : ' · ${posted.total}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Created ${posted.voucherNo}$totalBit')),
+        );
+        context.go(kind.detailRoute(posted.id));
+      },
+      child: BlocBuilder<StockVoucherFormCubit, StockVoucherFormState>(
+        builder: (context, state) {
+          final cubit = context.read<StockVoucherFormCubit>();
+          return AdaptiveLayout(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'New ${bp.label}',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                SizedBox(height: tokens.spacing.md),
+                Expanded(
+                  child: DocumentSurface<StockVoucherLine>(
+                    blueprint: bp,
+                    header: _header(cubit, state),
+                    rows: state.draft.lines,
+                    columns: _columns(cubit, state),
+                    onRowsChanged: cubit.setLines,
+                    newRow: StockVoucherLine.new,
+                    lineInputsOf: _lineInput,
+                    onPost: () => cubit.submit(
+                      formIsValid: () =>
+                          _formKey.currentState?.validate() ?? false,
+                    ),
+                    postLabel: kind.createLabel,
+                    posting: state.posting,
+                    enabled: !state.posting,
+                    errorText: state.error,
+                    totalsLabel: kind.lineMode == StockLineMode.itemRequestQty
+                        ? 'Requested qty total'
+                        : 'Totals',
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

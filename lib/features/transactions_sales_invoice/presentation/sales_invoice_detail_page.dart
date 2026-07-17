@@ -270,11 +270,9 @@ class _SalesInvoiceDetailView extends StatelessWidget {
                   busy: state.isBusy,
                   entityStatus: state.entityStatus,
                   seriesRequiresApproval: state.seriesRequiresApproval,
-                  onEdit: doc.canEditDraft
-                      ? () => context.push(
-                          '/transactions/sales-invoices/${doc.id}/edit',
-                        )
-                      : null,
+                  onEdit: () => context.push(
+                    '/transactions/sales-invoices/${doc.id}/edit',
+                  ),
                   onPostAndBook: doc.canPostAndBook
                       ? () => _postAndBook(context, doc)
                       : null,
@@ -455,7 +453,7 @@ class _DetailBody extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: busy ? null : onEdit,
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit draft'),
+                    label: const Text('Edit'),
                   ),
                 ),
               if (onPostAndBook != null)

@@ -39,6 +39,9 @@ class AppTextField extends StatefulWidget {
     this.suffixIcon,
     this.autovalidateMode,
     this.labelWidget,
+    this.hideLabel = false,
+    this.isBorderless = false,
+    this.textAlign,
   });
 
   final String label;
@@ -46,6 +49,9 @@ class AppTextField extends StatefulWidget {
   /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
   /// required marker.
   final Widget? labelWidget;
+  final bool hideLabel;
+  final bool isBorderless;
+  final TextAlign? textAlign;
   final TextEditingController? controller;
   final String? value;
   final String? hintText;
@@ -103,6 +109,8 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
+      style: Theme.of(context).textTheme.bodyMedium,
+      textAlign: widget.textAlign ?? TextAlign.start,
       enabled: widget.enabled,
       maxLines: widget.maxLines,
       keyboardType: widget.keyboardType,
@@ -113,12 +121,25 @@ class _AppTextFieldState extends State<AppTextField> {
       onSaved: widget.onSaved,
       autovalidateMode: widget.autovalidateMode,
       decoration: InputDecoration(
-        label: widget.labelWidget,
-        labelText: widget.labelWidget == null ? widget.label : null,
+        label: widget.hideLabel ? null : widget.labelWidget,
+        labelText: widget.hideLabel
+            ? null
+            : (widget.labelWidget == null ? widget.label : null),
         hintText: widget.hintText,
         helperText: widget.helperText,
         prefixIcon: widget.prefixIcon,
         suffixIcon: widget.suffixIcon,
+        filled: !widget.isBorderless,
+        border: widget.isBorderless ? InputBorder.none : null,
+        enabledBorder: widget.isBorderless ? InputBorder.none : null,
+        focusedBorder: widget.isBorderless
+            ? UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              )
+            : null,
       ),
     );
   }

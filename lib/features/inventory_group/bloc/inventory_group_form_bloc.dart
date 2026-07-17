@@ -130,7 +130,9 @@ class InventoryGroupFormBloc
 
     final group = InventoryGroup(
       id: state.entityId ?? 0,
-      groupId: state.code.trim().isNotEmpty ? state.code.trim() : '0',
+      groupId: state.code.trim().isNotEmpty
+          ? state.code.trim()
+          : 'GRP-${DateTime.now().millisecondsSinceEpoch}',
       name: state.name.trim(),
       code: state.code.trim().isEmpty ? null : state.code.trim(),
       nameArabic: state.nameArabic.trim().isEmpty

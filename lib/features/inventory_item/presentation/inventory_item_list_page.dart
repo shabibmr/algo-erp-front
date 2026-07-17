@@ -2,10 +2,13 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -24,11 +27,20 @@ class InventoryItemListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dio = getIt<DioClient>();
-    return BlocProvider<InventoryItemListBloc>(
-      create: (_) =>
-          InventoryItemListBloc(repository: createInventoryItemRepository(dio))
-            ..add(const InventoryItemListFetchRequested()),
+    // One repository, two blocs: the list reads pages through it, and export
+    // walks every page of the same query through it.
+    final repository = createInventoryItemRepository(getIt<DioClient>());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<InventoryItemListBloc>(
+          create: (_) =>
+              InventoryItemListBloc(repository: repository)
+                ..add(const InventoryItemListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<InventoryItem>>(
+          create: (_) => ExportCubit<InventoryItem>(source: repository.list),
+        ),
+      ],
       child: BlocListener<InventoryItemListBloc, InventoryItemListState>(
         listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
         listener: (context, state) {
@@ -69,40 +81,50 @@ class _InventoryItemListView extends StatelessWidget {
         builder: (context, state) {
           final bloc = context.read<InventoryItemListBloc>();
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      inventoryItemManifest.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
+          return CreateNewShortcuts(
+            module: inventoryItemManifest.rbacModule,
+            onCreate: () => context.push('/inventory/item/new'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        inventoryItemManifest.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ),
-                  ),
-                  PermissionGate(
-                    module: inventoryItemManifest.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
-                      onPressed: () => context.push('/inventory/item/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New Item'),
+                    if (inventoryItemManifest.supportsExport)
+                      ExportButton<InventoryItem>.fromManifest(
+                        manifest: inventoryItemManifest,
+                        query: () => state.query,
+                      ),
+                    PermissionGate(
+                      module: inventoryItemManifest.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () => context.push('/inventory/item/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Item'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 300,
-                child: AppTextField(
-                  label: 'Search Item',
-                  value: state.search,
-                  onChanged: (v) => bloc.add(InventoryItemListSearchChanged(v)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 300,
+                  child: AppTextField(
+                    label: 'Search Item',
+                    value: state.search,
+                    onChanged: (v) =>
+                        bloc.add(InventoryItemListSearchChanged(v)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
+              ],
+            ),
           );
         },
       ),

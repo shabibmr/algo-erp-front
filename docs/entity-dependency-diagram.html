@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>algoERP — Entity dependency map</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      flowchart: {
+        curve: 'basis',
+        htmlLabels: true,
+        nodeSpacing: 28,
+        rankSpacing: 48,
+        padding: 12,
+      },
+      themeVariables: {
+        darkMode: true,
+        background: '#0f1419',
+        primaryColor: '#1a3a42',
+        primaryTextColor: '#e8eef0',
+        primaryBorderColor: '#2d8a9a',
+        lineColor: '#6b8a94',
+        secondaryColor: '#1e2830',
+        tertiaryColor: '#152028',
+        fontFamily: 'Segoe UI, system-ui, sans-serif',
+        fontSize: '13px',
+      },
+    });
+
+    const graphs = {
+      overview: `flowchart TB
+  subgraph Platform["Platform"]
+    Auth["Auth / Session"]
+    RBAC["Permission matrix"]
+    Shell["App shell · Hubs"]
+    Desk["Today's Desk"]
+    Settings["Settings"]
+  end
+
+  subgraph Org["Organization"]
+    Company["CompanyProfile"]
+    Branch["Branch"]
+    FY["FinancialYear"]
+    Currency["Currency"]
+    CRate["CurrencyRate"]
+    VSeries["VoucherSeries"]
+    Contact["AddressBook"]
+    Role["UserRole"]
+    User["UserCredentials"]
+    Project["ProjectMaster"]
+    Config["ConfigSetting"]
+    Audit["AuditLog"]
+    ErrRpt["ErrorReport"]
+  end
+
+  subgraph Acct["Accounts"]
+    AccGroup["AccountGroup"]
+    Ledger["Ledger"]
+  end
+
+  subgraph Inv["Inventory"]
+    UOM["UOM"]
+    UOMConv["UOMConversion"]
+    Brand["Brand"]
+    Category["Category"]
+    TaxCat["TaxCategory"]
+    InvGroup["InventoryGroup"]
+    Item["InventoryItem"]
+    SKU["SKU"]
+    Batch["ItemBatch"]
+    Godown["Godown"]
+    ItemProp["ItemProperty"]
+    PriceList["PriceList"]
+    Route["RouteMaster"]
+  end
+
+  subgraph HR["Employee / HR"]
+    Dept["Department"]
+    Desig["Designation"]
+    Emp["Employee"]
+    Shift["Shift"]
+    LPol["LeavePolicy"]
+    LAlloc["LeaveAllocation"]
+    LReq["LeaveRequest"]
+  end
+
+  subgraph Tx["Transactions"]
+    SI["Sales Invoice"]
+    ItemQty["Item-qty family\\nQ · SO · DN · PO · RN · PI · CN · DbN"]
+    PayRct["Payment · Receipt"]
+    Jrnl["Journal · Contra"]
+    Stock["Stock family\\nGT · MI · RQ · SR"]
+  end
+
+  subgraph Rpt["Reports"]
+    Hub["Reports hub"]
+    Viewer["ReportViewer"]
+  end
+
+  Auth --> RBAC
+  Auth --> Shell
+  RBAC --> Shell
+  Shell --> Desk
+  Shell --> Settings
+  Role --> RBAC
+  User --> Auth
+
+  Company --> Branch
+  Company --> FY
+  Company --> VSeries
+  Branch --> VSeries
+  FY --> VSeries
+  FY --> CRate
+  Currency --> CRate
+  Contact --> User
+  Role --> User
+  Branch --> User
+  Contact --> Project
+  Ledger --> Project
+  Godown --> Project
+  Emp --> Project
+  Project --> Project
+
+  AccGroup --> AccGroup
+  AccGroup --> Ledger
+  Currency --> Ledger
+
+  InvGroup --> InvGroup
+  InvGroup --> Item
+  Brand --> Item
+  Category --> Item
+  TaxCat --> Item
+  UOM --> Item
+  UOM --> UOMConv
+  Ledger --> Item
+  Item --> SKU
+  Item --> Batch
+
+  Dept --> Desig
+  Dept --> Emp
+  Desig --> Emp
+  Emp --> LAlloc
+  LPol --> LAlloc
+  Emp --> LReq
+  LPol --> LReq
+
+  Ledger --> SI
+  Godown --> SI
+  Item --> SI
+  SKU --> SI
+  Batch --> SI
+  Project --> SI
+  Emp --> SI
+  FY --> SI
+  ItemQty -.->|convert| SI
+
+  Ledger --> ItemQty
+  Godown --> ItemQty
+  Item --> ItemQty
+  FY --> ItemQty
+
+  Ledger --> PayRct
+  FY --> PayRct
+
+  Ledger --> Jrnl
+  FY --> Jrnl
+
+  Godown --> Stock
+  Item --> Stock
+  FY --> Stock
+
+  SI --> Viewer
+  ItemQty --> Viewer
+  PayRct --> Viewer
+  Jrnl --> Viewer
+  Stock --> Viewer
+  Ledger --> Viewer
+  Item --> Viewer
+  Viewer --> Hub
+  Desk --> Hub
+`,
+
+      organization: `flowchart LR
+  Company["CompanyProfile"]
+  Branch["Branch"]
+  FY["FinancialYear"]
+  Currency["Currency"]
+  CRate["CurrencyRate"]
+  VSeries["VoucherSeries"]
+  Contact["AddressBook / Contact"]
+  Role["UserRole"]
+  Perm["UserAccessPermission"]
+  User["UserCredentials"]
+  Project["ProjectMaster"]
+  Config["ConfigSetting"]
+  Audit["AuditLog ro"]
+  Err["ErrorReport"]
+
+  Company -->|company_id| Branch
+  Company -->|company_id| FY
+  Company -->|company_id| VSeries
+  Branch -->|branch_id| VSeries
+  FY -->|financial_year_id| VSeries
+  Currency -->|currency_id| CRate
+  FY -->|financial_year_id| CRate
+  Role -->|role_id| Perm
+  Role -->|role_id| User
+  Contact -->|contact_id| User
+  Branch -->|branch_id| User
+  Project -->|parent selfFk| Project
+  Contact -.->|owner contact| Project
+  LedgerExt["Ledger (Accounts)"] -.->|associated_ledger| Project
+  GodownExt["Godown (Inventory)"] -.->|godown| Project
+  EmpExt["Employee (HR)"] -.->|coordinator| Project
+
+  classDef external fill:#243040,stroke:#5a7a8a,color:#c8d8e0
+  class LedgerExt,GodownExt,EmpExt external
+`,
+
+      accounts: `flowchart TB
+  AccGroup["AccountGroup"]
+  Ledger["LedgerMaster"]
+  Bank["LedgerBankDetails nested"]
+  Credit["LedgerCreditSettings nested"]
+  Tax["LedgerTaxSettings nested"]
+  Currency["Currency"]
+  AccGroup -->|parent selfFk| AccGroup
+  AccGroup -->|account_group_id| Ledger
+  Currency -.->|optional display| Ledger
+  Ledger --> Bank
+  Ledger --> Credit
+  Ledger --> Tax
+`,
+
+      inventory: `flowchart TB
+  UOM["UOM"]
+  Brand["Brand"]
+  Category["Category"]
+  TaxCat["TaxCategory"]
+  InvGroup["InventoryGroup"]
+  Item["InventoryItem"]
+  SKU["SKUMaster"]
+  Batch["ItemBatch"]
+  Godown["Godown"]
+  ItemProp["ItemProperty"]
+  UOMConv["UOMConversion"]
+  PriceList["PriceList"]
+  Route["RouteMaster"]
+  Ledger["Ledger (GL FKs)"]
+
+  InvGroup -->|parent selfFk| InvGroup
+  InvGroup -->|group_id| Item
+  Brand -->|brand_id| Item
+  Category -->|category_id| Item
+  TaxCat -->|tax_category_id| Item
+  UOM -->|uom_id| Item
+  Ledger -.->|sales/purchase/stock GL| Item
+  Item -->|item_id| SKU
+  Item -->|item_id| Batch
+  UOM -->|from/to| UOMConv
+
+  classDef external fill:#243040,stroke:#5a7a8a,color:#c8d8e0
+  class Ledger external
+`,
+
+      employee: `flowchart TB
+  Dept["Department"]
+  Desig["Designation"]
+  Emp["Employee"]
+  Bank["Employee bank tab"]
+  Sal["Employee salary tab"]
+  Shift["ShiftMaster"]
+  LPol["LeavePolicy"]
+  LAlloc["LeaveAllocation"]
+  LReq["LeaveRequest"]
+
+  Dept -->|department_id| Desig
+  Dept -->|department_id| Emp
+  Desig -->|designation_id| Emp
+  Emp --> Bank
+  Emp --> Sal
+  Emp -->|employee_id| LAlloc
+  LPol -->|leave_policy_id| LAlloc
+  Emp -->|employee_id| LReq
+  LPol -->|leave_policy_id| LReq
+`,
+
+      transactions: `flowchart TB
+  subgraph Masters["Required masters"]
+    Ledger["Ledger"]
+    Godown["Godown"]
+    Item["Item"]
+    SKU["SKU"]
+    Batch["Batch"]
+    Project["Project"]
+    Emp["Employee / Salesman"]
+    FY["FinancialYear"]
+  end
+
+  subgraph Sales["Sales chain"]
+    Q["Quotation"]
+    SO["SalesOrder"]
+    DN["DeliveryNote"]
+    SI["SalesInvoice"]
+    CN["CreditNote"]
+  end
+
+  subgraph Purchase["Purchase chain"]
+    PO["PurchaseOrder"]
+    RN["ReceiptNote"]
+    PI["PurchaseInvoice"]
+    DN2["DebitNote"]
+  end
+
+  subgraph Money["Money & books"]
+    Pay["Payment"]
+    Rct["Receipt"]
+    Jrn["Journal"]
+    Ctr["Contra"]
+  end
+
+  subgraph StockV["Stock"]
+    GT["GodownTransfer"]
+    MI["MaterialIn"]
+    RQ["Requirement"]
+    SR["StockRequest"]
+  end
+
+  Ledger --> SI
+  Godown --> SI
+  Item --> SI
+  SKU --> SI
+  Batch --> SI
+  Project --> SI
+  Emp --> SI
+  FY --> SI
+
+  Q -->|convert| SO
+  SO -->|convert| DN
+  SO -->|convert| SI
+  Q -->|convert| SI
+
+  Ledger --> Q & SO & DN & CN
+  Godown --> DN & SI
+  Item --> Q & SO & DN & SI & CN
+
+  Ledger --> PO & RN & PI & DN2
+  Godown --> RN & PI
+  Item --> PO & RN & PI & DN2
+  PO -->|convert| RN
+  PO -->|convert| PI
+
+  Ledger --> Pay & Rct & Jrn & Ctr
+  FY --> Pay & Rct & Jrn & Ctr
+
+  Godown --> GT & MI
+  Item --> GT & MI & RQ & SR
+  FY --> GT & MI & RQ & SR
+  RQ -.->|ref| SR
+`,
+
+      full: `flowchart TB
+  %% Compact full dependency spine (masters → documents)
+
+  Company["Company"]
+  Branch["Branch"]
+  FY["FY"]
+  Currency["Currency"]
+  Role["Role"]
+  Contact["Contact"]
+  User["User"]
+  AccGroup["AccountGroup"]
+  Ledger["Ledger"]
+  Dept["Department"]
+  Desig["Designation"]
+  Emp["Employee"]
+  LPol["LeavePolicy"]
+  InvGroup["ItemGroup"]
+  Brand["Brand"]
+  Category["Category"]
+  TaxCat["TaxCat"]
+  UOM["UOM"]
+  Item["Item"]
+  SKU["SKU"]
+  Batch["Batch"]
+  Godown["Godown"]
+  Project["Project"]
+  Vouchers["All vouchers\\nSI · item-qty · pay/rct · jrn/ctr · stock"]
+  Reports["Reports · Desk"]
+
+  Company --> Branch & FY
+  Role --> User
+  Contact --> User
+  Branch --> User
+  AccGroup --> Ledger
+  Dept --> Desig --> Emp
+  Emp --> LPol
+  InvGroup & Brand & Category & TaxCat & UOM --> Item
+  Ledger --> Item
+  Item --> SKU & Batch
+  Ledger & Godown & Emp --> Project
+  Project --> Project
+  Ledger & Godown & Item & SKU & Batch & Project & Emp & FY --> Vouchers
+  Vouchers --> Reports
+  Ledger & Item --> Reports
+`,
+    };
+
+    const descriptions = {
+      overview:
+        'Cross-module dependency map: who consumes whom. Solid arrows = hard FK / form dependency. Dotted = optional convert/link.',
+      organization:
+        'Org masters and access. Cross-module soft FKs on Project point into Accounts, Inventory, and HR.',
+      accounts:
+        'Chart of accounts: group tree → ledger; bank/credit/tax nested under ledger.',
+      inventory:
+        'Catalogue graph: classifications and UOM feed Item; SKU/Batch hang off Item; GL ledgers for item posting accounts.',
+      employee:
+        'HR tree: department → designation → employee; leave allocation & request hang off employee + policy.',
+      transactions:
+        'Document kinds and the masters they require, plus conversion edges in sales/purchase chains.',
+      full:
+        'Spine view: org & masters funnel into vouchers, then reports/desk.',
+    };
+
+    const select = document.getElementById('view');
+    const desc = document.getElementById('desc');
+    const host = document.getElementById('diagram');
+    const zoomLabel = document.getElementById('zoom-label');
+    let zoom = 1;
+
+    async function render() {
+      const key = select.value;
+      desc.textContent = descriptions[key];
+      host.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'mermaid';
+      wrap.textContent = graphs[key];
+      host.appendChild(wrap);
+      await mermaid.run({ nodes: [wrap] });
+      applyZoom();
+    }
+
+    function applyZoom() {
+      const svg = host.querySelector('svg');
+      if (svg) {
+        svg.style.transform = `scale(${zoom})`;
+        svg.style.transformOrigin = 'top left';
+      }
+      zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
+    }
+
+    document.getElementById('zoom-in').onclick = () => {
+      zoom = Math.min(2.5, zoom + 0.1);
+      applyZoom();
+    };
+    document.getElementById('zoom-out').onclick = () => {
+      zoom = Math.max(0.4, zoom - 0.1);
+      applyZoom();
+    };
+    document.getElementById('zoom-reset').onclick = () => {
+      zoom = 1;
+      applyZoom();
+    };
+
+    select.addEventListener('change', () => {
+      zoom = 1;
+      render();
+    });
+
+    render();
+  </script>
+  <style>
+    :root {
+      --linen: #0f1419;
+      --paper: #161d24;
+      --mist: #2a3540;
+      --ink: #e8eef0;
+      --muted: #8aa0ab;
+      --lagoon: #2d8a9a;
+      --lagoon-soft: #1a3a42;
+      --brass: #c4a35a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, #1a3a4233, transparent),
+        radial-gradient(ellipse 60% 40% at 90% 100%, #c4a35a18, transparent),
+        var(--linen);
+      color: var(--ink);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--paper) 88%, transparent);
+      border-bottom: 1px solid var(--mist);
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+    h1 span {
+      color: var(--lagoon);
+      font-weight: 500;
+      font-size: 0.85rem;
+      margin-left: 0.5rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    select, button {
+      background: var(--paper);
+      color: var(--ink);
+      border: 1px solid var(--mist);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    select:hover, button:hover {
+      border-color: var(--lagoon);
+    }
+    button:active { transform: translateY(1px); }
+    #desc {
+      margin: 0 1.5rem;
+      padding: 0.75rem 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      max-width: 70rem;
+      border-bottom: 1px solid var(--mist);
+    }
+    main {
+      padding: 1rem 1.5rem 3rem;
+      overflow: auto;
+    }
+    #diagram {
+      background: var(--paper);
+      border: 1px solid var(--mist);
+      border-radius: 12px;
+      padding: 1.25rem;
+      min-height: 70vh;
+      overflow: auto;
+    }
+    .mermaid { display: flex; justify-content: flex-start; }
+    .legend {
+      margin: 1rem 1.5rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .legend i {
+      display: inline-block;
+      width: 1.5rem;
+      height: 2px;
+      vertical-align: middle;
+      margin-right: 0.35rem;
+      background: var(--muted);
+    }
+    .legend i.dotted {
+      background: repeating-linear-gradient(
+        90deg,
+        var(--muted) 0 4px,
+        transparent 4px 8px
+      );
+    }
+    footer {
+      padding: 0.75rem 1.5rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    footer code {
+      background: var(--paper);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid var(--mist);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>algoERP entity dependencies <span>feature → feature</span></h1>
+    <div class="controls">
+      <div>
+        <label for="view">View</label><br />
+        <select id="view">
+          <option value="overview">Overview (all domains)</option>
+          <option value="full">Spine (compact)</option>
+          <option value="organization">Organization</option>
+          <option value="accounts">Accounts</option>
+          <option value="inventory">Inventory</option>
+          <option value="employee">Employee / HR</option>
+          <option value="transactions">Transactions</option>
+        </select>
+      </div>
+      <div>
+        <label>Zoom</label><br />
+        <button type="button" id="zoom-out" title="Zoom out">−</button>
+        <button type="button" id="zoom-reset" title="Reset zoom"><span id="zoom-label">100%</span></button>
+        <button type="button" id="zoom-in" title="Zoom in">+</button>
+      </div>
+    </div>
+  </header>
+
+  <p id="desc"></p>
+  <div class="legend">
+    <span><i></i> Hard FK / required dependency</span>
+    <span><i class="dotted"></i> Optional / convert / nested</span>
+    <span>Arrows point <strong>from dependency → dependent</strong> (A → B means B needs A)</span>
+  </div>
+
+  <main>
+    <div id="diagram" aria-live="polite"></div>
+  </main>
+
+  <footer>
+    Generated for the Flutter client feature graph · open via file URL or static host ·
+    source relationships from manifests, voucher forms, and <code>docs/STATUS.md</code>
+  </footer>
+</body>
+</html>

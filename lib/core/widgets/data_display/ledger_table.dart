@@ -236,14 +236,22 @@ class _LedgerRow<T> extends StatefulWidget {
 }
 
 class _LedgerRowState<T> extends State<_LedgerRow<T>> {
-  bool _hovered = false;
-  bool _focused = false;
+  /// Pure UI hover/focus — [ValueNotifier] avoids setState for chrome only.
+  final ValueNotifier<({bool hovered, bool focused})> _lit = ValueNotifier((
+    hovered: false,
+    focused: false,
+  ));
+
+  @override
+  void dispose() {
+    _lit.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final ledger = tokens.ledger;
-    final lit = _hovered || _focused;
 
     // The ledger rules in fives: a faint line between rows, a full-strength one
     // closing each group so the eye can count down the column.
@@ -258,56 +266,65 @@ class _LedgerRowState<T> extends State<_LedgerRow<T>> {
       cursor: widget.onTap == null
           ? MouseCursor.defer
           : SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      onEnter: (_) => _lit.value = (hovered: true, focused: _lit.value.focused),
+      onExit: (_) => _lit.value = (hovered: false, focused: _lit.value.focused),
       child: InkWell(
         onTap: widget.onTap == null ? null : () => widget.onTap!(widget.item),
-        onFocusChange: (value) => setState(() => _focused = value),
+        onFocusChange: (value) =>
+            _lit.value = (hovered: _lit.value.hovered, focused: value),
         // The wash and gutter below already read as hover/focus; Material's own
         // overlay on top of them just muddies the paper.
         hoverColor: Colors.transparent,
         focusColor: Colors.transparent,
-        child: AnimatedContainer(
-          duration: duration,
-          curve: MotionTokens.standardCurve,
-          constraints: BoxConstraints(minHeight: ledger.rowMinHeight),
-          padding: EdgeInsetsDirectional.only(
-            // The gutter is always reserved, lit or not, so text never shifts.
-            start: widget.sidePadding - ledger.gutterWidth,
-            end: widget.sidePadding,
-            top: tokens.spacing.sm,
-            bottom: tokens.spacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: lit ? ledger.rowHover : Colors.transparent,
-            border: BorderDirectional(
-              start: BorderSide(
-                color: lit ? ledger.gutter : Colors.transparent,
-                width: ledger.gutterWidth,
+        child: ValueListenableBuilder<({bool hovered, bool focused})>(
+          valueListenable: _lit,
+          builder: (context, litFlags, _) {
+            final lit = litFlags.hovered || litFlags.focused;
+            return AnimatedContainer(
+              duration: duration,
+              curve: MotionTokens.standardCurve,
+              constraints: BoxConstraints(minHeight: ledger.rowMinHeight),
+              padding: EdgeInsetsDirectional.only(
+                // The gutter is always reserved, lit or not, so text never shifts.
+                start: widget.sidePadding - ledger.gutterWidth,
+                end: widget.sidePadding,
+                top: tokens.spacing.sm,
+                bottom: tokens.spacing.sm,
               ),
-              bottom: widget.isLast ? BorderSide.none : BorderSide(color: rule),
-            ),
-          ),
-          child: Row(
-            children: _cells(
-              widths: widget.widths,
-              gap: widget.gap,
-              children: [
-                for (final column in widget.columns)
-                  DefaultTextStyle(
-                    style: _cellStyle(context, column),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    child: Align(
-                      alignment: column.align == ColumnAlign.end
-                          ? AlignmentDirectional.centerEnd
-                          : AlignmentDirectional.centerStart,
-                      child: column.cellBuilder(context, widget.item),
-                    ),
+              decoration: BoxDecoration(
+                color: lit ? ledger.rowHover : Colors.transparent,
+                border: BorderDirectional(
+                  start: BorderSide(
+                    color: lit ? ledger.gutter : Colors.transparent,
+                    width: ledger.gutterWidth,
                   ),
-              ],
-            ),
-          ),
+                  bottom: widget.isLast
+                      ? BorderSide.none
+                      : BorderSide(color: rule),
+                ),
+              ),
+              child: Row(
+                children: _cells(
+                  widths: widget.widths,
+                  gap: widget.gap,
+                  children: [
+                    for (final column in widget.columns)
+                      DefaultTextStyle(
+                        style: _cellStyle(context, column),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        child: Align(
+                          alignment: column.align == ColumnAlign.end
+                              ? AlignmentDirectional.centerEnd
+                              : AlignmentDirectional.centerStart,
+                          child: column.cellBuilder(context, widget.item),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

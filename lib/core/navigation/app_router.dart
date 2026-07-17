@@ -974,7 +974,7 @@ class _ForbiddenPage extends StatelessWidget {
 /// Resolves binder hubs and hub-master list pages for AppMenu shell list items.
 Widget shellListPageFor(String route, {required String fallbackTitle}) {
   // Every business hub renders from its manifest — Sales, Purchase, Inventory,
-  // Finance, People, General, Organization, and the All-documents index.
+  // Finance, People, Organization (via Settings), and the All-documents index.
   if (AppMenu.hubs[route] case final hub?) return ModuleHubPage(hub: hub);
 
   return switch (route) {

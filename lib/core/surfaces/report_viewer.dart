@@ -1,11 +1,11 @@
-import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart' show ExportFormat;
 import 'package:algo_erp_front/core/manifest/field_spec.dart' show ColumnAlign;
 import 'package:algo_erp_front/core/printing/voucher_pdf.dart';
 import 'package:algo_erp_front/core/reports/report_definition.dart';
 import 'package:algo_erp_front/core/reports/report_json.dart';
 import 'package:algo_erp_front/core/reports/report_repository.dart';
 import 'package:algo_erp_front/core/surfaces/document_pdf_preview_page.dart';
-import 'package:algo_erp_front/core/utils/csv_exporter.dart';
+import 'package:algo_erp_front/core/surfaces/report_viewer_cubit.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/data_display/ledger_table.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
@@ -16,9 +16,11 @@ import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Filter bar → adaptive table / summary → CSV export for any [ReportDefinition].
-class ReportViewer extends StatefulWidget {
+/// Filter bar → adaptive table / summary → Excel, CSV and print, for any
+/// [ReportDefinition]. State lives in [ReportViewerCubit].
+class ReportViewer extends StatelessWidget {
   const ReportViewer({
     required this.definition,
     required this.repository,
@@ -29,237 +31,37 @@ class ReportViewer extends StatefulWidget {
   final ReportRepository repository;
 
   @override
-  State<ReportViewer> createState() => _ReportViewerState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          ReportViewerCubit(definition: definition, repository: repository),
+      child: _ReportViewerBody(definition: definition),
+    );
+  }
 }
 
-class _ReportViewerState extends State<ReportViewer> {
-  late final Map<String, String> _textValues;
-  late final Map<String, DateTime?> _dateValues;
-  bool _loading = false;
-  bool _hasRun = false;
-  Failure? _failure;
-  Object? _rawData;
+class _ReportViewerBody extends StatelessWidget {
+  const _ReportViewerBody({required this.definition});
 
-  ReportDefinition get def => widget.definition;
+  final ReportDefinition definition;
 
-  @override
-  void initState() {
-    super.initState();
-    _textValues = {};
-    _dateValues = {};
-    final now = DateTime.now();
-    for (final p in def.params) {
-      switch (p.type) {
-        case ReportParamType.date:
-          if (p.defaultToday) {
-            _dateValues[p.key] = DateTime(now.year, now.month, now.day);
-          } else if (p.defaultMonthStart) {
-            _dateValues[p.key] = DateTime(now.year, now.month);
-          } else {
-            _dateValues[p.key] = null;
-          }
-        case ReportParamType.text:
-        case ReportParamType.intField:
-          if (p.key == 'period') {
-            _textValues[p.key] =
-                '${now.year}-${now.month.toString().padLeft(2, '0')}';
-          } else {
-            _textValues[p.key] = '';
-          }
-      }
-    }
-    if (def.autoRun) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _run());
-    }
-  }
-
-  Map<String, String> _buildQuery() {
-    final q = <String, String>{};
-    for (final p in def.params) {
-      switch (p.type) {
-        case ReportParamType.date:
-          final d = _dateValues[p.key];
-          if (d != null) {
-            q[p.key] = d.toIso8601String().split('T').first;
-          }
-        case ReportParamType.text:
-        case ReportParamType.intField:
-          final v = _textValues[p.key]?.trim() ?? '';
-          if (v.isNotEmpty) q[p.key] = v;
-      }
-    }
-    return q;
-  }
-
-  String? _validate() {
-    for (final p in def.params) {
-      if (!p.required) continue;
-      switch (p.type) {
-        case ReportParamType.date:
-          if (_dateValues[p.key] == null) return '${p.label} is required';
-        case ReportParamType.text:
-        case ReportParamType.intField:
-          if ((_textValues[p.key] ?? '').trim().isEmpty) {
-            return '${p.label} is required';
-          }
-      }
-    }
-    return null;
-  }
-
-  Future<void> _run() async {
-    final err = _validate();
-    if (err != null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(err)));
-      return;
-    }
-    setState(() {
-      _loading = true;
-      _failure = null;
-      _hasRun = true;
-    });
-    final result = await widget.repository.fetch(def, _buildQuery());
-    if (!mounted) return;
-    result.fold(
-      (f) => setState(() {
-        _loading = false;
-        _failure = f;
-        _rawData = null;
-      }),
-      (data) => setState(() {
-        _loading = false;
-        _failure = null;
-        _rawData = data;
-      }),
-    );
-  }
-
-  Future<void> _exportCsv() async {
-    if (_rawData == null) return;
-
-    final List<String> headers;
-    final List<List<String>> rows;
-
-    if (def.shape == ReportShape.sections) {
-      final table = flattenReportSections(
-        data: _rawData,
-        sections: def.sections,
-        totals: def.columns,
-      );
-      headers = table.headers;
-      rows = table.rows;
-    } else if (def.shape == ReportShape.summary) {
-      final map = _rawData is Map
-          ? Map<String, dynamic>.from(_rawData! as Map)
-          : <String, dynamic>{};
-      headers = def.columns.map((c) => c.label).toList();
-      rows = [
-        [
-          for (final c in def.columns)
-            formatReportCell(readJsonPath(map, c.key)),
-        ],
-      ];
-    } else {
-      headers = def.columns.map((c) => c.label).toList();
-      rows = [
-        for (final row in extractReportRows(
-          data: _rawData,
-          rowsPath: def.rowsPath,
-        ))
-          [
-            for (final c in def.columns)
-              formatReportCell(readJsonPath(row, c.key)),
-          ],
-      ];
-    }
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      // Off the web this writes to disk, so the user needs the path back.
-      final path = await CsvExporter.exportToCsv(
-        filename: '${def.id}.csv',
-        headers: headers,
-        rows: rows,
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            path == null
-                ? 'Exported ${rows.length} rows'
-                : 'Exported ${rows.length} rows to $path',
-          ),
-        ),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
-    }
-  }
-
-  void _print() {
-    if (_rawData == null) return;
-    final headers = def.columns.map((c) => c.label).toList();
-    final List<List<String>> rows;
-    if (def.shape == ReportShape.sections) {
-      final table = flattenReportSections(
-        data: _rawData,
-        sections: def.sections,
-        totals: def.columns,
-      );
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => DocumentPdfPreviewPage(
-            title: def.title,
-            pdfBuilder: () => buildTablePdf(
-              title: def.title,
-              headers: table.headers,
-              rows: table.rows,
-            ),
-          ),
-        ),
-      );
-      return;
-    }
-    if (def.shape == ReportShape.summary) {
-      final map = _rawData is Map
-          ? Map<String, dynamic>.from(_rawData! as Map)
-          : <String, dynamic>{};
-      rows = [
-        for (final c in def.columns)
-          [c.label, formatReportCell(readJsonPath(map, c.key))],
-      ];
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => DocumentPdfPreviewPage(
-            title: def.title,
-            pdfBuilder: () => buildTablePdf(
-              title: def.title,
-              headers: const ['Field', 'Value'],
-              rows: rows,
-            ),
-          ),
-        ),
-      );
-      return;
-    }
-    final reportRows = extractReportRows(
-      data: _rawData,
-      rowsPath: def.rowsPath,
-    );
-    rows = [
-      for (final row in reportRows)
-        [
-          for (final c in def.columns)
-            formatReportCell(readJsonPath(row, c.key)),
-        ],
+  void _print(BuildContext context, Object? rawData) {
+    if (rawData == null) return;
+    final table = flattenReport(definition, rawData);
+    final rows = [
+      for (final row in table.rows)
+        [for (final cell in row) formatReportCell(cell)],
     ];
+
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => DocumentPdfPreviewPage(
-          title: def.title,
-          pdfBuilder: () =>
-              buildTablePdf(title: def.title, headers: headers, rows: rows),
+          title: definition.title,
+          pdfBuilder: () => buildTablePdf(
+            title: definition.title,
+            headers: table.headers,
+            rows: rows,
+          ),
         ),
       ),
     );
@@ -268,63 +70,102 @@ class _ReportViewerState extends State<ReportViewer> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PageHeader(
-          eyebrow: def.eyebrow,
-          title: def.title,
-          actions: [
-            if (_rawData != null)
-              OutlinedButton.icon(
-                onPressed: _print,
-                icon: const Icon(Icons.print_outlined, size: 18),
-                label: const Text('Print'),
+    final def = definition;
+
+    return BlocListener<ReportViewerCubit, ReportViewerUiState>(
+      listenWhen: (p, c) =>
+          p.exportSnack != c.exportSnack && c.exportSnack != null,
+      listener: (context, state) {
+        final snack = state.exportSnack;
+        if (snack == null) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(snack)));
+        context.read<ReportViewerCubit>().clearExportSnack();
+      },
+      child: BlocBuilder<ReportViewerCubit, ReportViewerUiState>(
+        builder: (context, state) {
+          final cubit = context.read<ReportViewerCubit>();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PageHeader(
+                eyebrow: def.eyebrow,
+                title: def.title,
+                actions: [
+                  if (state.rawData != null)
+                    OutlinedButton.icon(
+                      onPressed: () => _print(context, state.rawData),
+                      icon: const Icon(Icons.print_outlined, size: 18),
+                      label: const Text('Print'),
+                    ),
+                  if (def.supportsExport && state.rawData != null)
+                    OutlinedButton.icon(
+                      onPressed: state.exporting
+                          ? null
+                          : () => cubit.export(ExportFormat.csv),
+                      icon: const Icon(Icons.description_outlined, size: 18),
+                      label: const Text('CSV'),
+                    ),
+                  if (def.supportsExport && state.rawData != null)
+                    FilledButton.tonalIcon(
+                      onPressed: state.exporting
+                          ? null
+                          : () => cubit.export(ExportFormat.excel),
+                      icon: state.exporting
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.table_chart_outlined, size: 18),
+                      label: const Text('Excel'),
+                    ),
+                ],
               ),
-            if (def.supportsCsv && _rawData != null)
-              FilledButton.tonalIcon(
-                onPressed: _exportCsv,
-                icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('CSV'),
-              ),
-          ],
-        ),
-        SizedBox(height: tokens.spacing.md),
-        if (def.params.isNotEmpty) ...[
-          _FilterBar(
-            definition: def,
-            textValues: _textValues,
-            dateValues: _dateValues,
-            onTextChanged: (k, v) => setState(() => _textValues[k] = v),
-            onDateChanged: (k, v) => setState(() => _dateValues[k] = v),
-            onRun: _run,
-            loading: _loading,
-          ),
-          SizedBox(height: tokens.spacing.md),
-        ] else
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: FilledButton.icon(
-              onPressed: _loading ? null : _run,
-              icon: const Icon(Icons.play_arrow, size: 18),
-              label: Text(_loading ? 'Running…' : 'Run'),
-            ),
-          ),
-        Expanded(child: _buildBody(context)),
-      ],
+              SizedBox(height: tokens.spacing.md),
+              if (def.params.isNotEmpty) ...[
+                _FilterBar(
+                  definition: def,
+                  textValues: state.textValues,
+                  dateValues: state.dateValues,
+                  onTextChanged: cubit.setTextParam,
+                  onDateChanged: cubit.setDateParam,
+                  onRun: cubit.run,
+                  loading: state.isLoading,
+                ),
+                SizedBox(height: tokens.spacing.md),
+              ] else
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FilledButton.icon(
+                    onPressed: state.isLoading ? null : cubit.run,
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: Text(state.isLoading ? 'Running…' : 'Run'),
+                  ),
+                ),
+              Expanded(child: _buildBody(context, state, cubit)),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_loading) {
+  Widget _buildBody(
+    BuildContext context,
+    ReportViewerUiState state,
+    ReportViewerCubit cubit,
+  ) {
+    final def = definition;
+    if (state.isLoading) {
       return const WorkSheet(child: LoadingState(message: 'Running report…'));
     }
-    if (_failure != null) {
+    if (state.failure != null) {
       return WorkSheet(
-        child: ErrorState(failure: _failure!, onRetry: _run),
+        child: ErrorState(failure: state.failure!, onRetry: cubit.run),
       );
     }
-    if (!_hasRun) {
+    if (!state.hasRun) {
       return const WorkSheet(
         child: EmptyState(
           message: 'Set filters and run the report.',
@@ -332,19 +173,19 @@ class _ReportViewerState extends State<ReportViewer> {
         ),
       );
     }
-    if (_rawData == null) {
+    if (state.rawData == null) {
       return const WorkSheet(child: EmptyState(message: 'No data returned.'));
     }
 
     if (def.shape == ReportShape.sections) {
-      return _SectionsSheet(definition: def, data: _rawData!);
+      return _SectionsSheet(definition: def, data: state.rawData!);
     }
 
     if (def.shape == ReportShape.summary) {
-      return _SummarySheet(definition: def, data: _rawData!);
+      return _SummarySheet(definition: def, data: state.rawData!);
     }
 
-    final rows = extractReportRows(data: _rawData, rowsPath: def.rowsPath);
+    final rows = extractReportRows(data: state.rawData, rowsPath: def.rowsPath);
     if (rows.isEmpty) {
       return const WorkSheet(
         child: EmptyState(
@@ -458,7 +299,6 @@ class _FilterBar extends StatelessWidget {
   }
 }
 
-/// A financial statement: one sheet per row list, then the totals block.
 class _SectionsSheet extends StatelessWidget {
   const _SectionsSheet({required this.definition, required this.data});
 

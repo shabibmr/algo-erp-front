@@ -23,18 +23,6 @@ final class SalesInvoiceListLoadMoreRequested extends SalesInvoiceListEvent {
   const SalesInvoiceListLoadMoreRequested();
 }
 
-/// Pulls every page matching the current filters so the CSV holds the whole
-/// result set, not just the pages the user happened to scroll past.
-final class SalesInvoiceListExportRequested extends SalesInvoiceListEvent {
-  const SalesInvoiceListExportRequested();
-}
-
-/// The view has written the file; drop the payload so a later rebuild doesn't
-/// download it a second time.
-final class SalesInvoiceListExportHandled extends SalesInvoiceListEvent {
-  const SalesInvoiceListExportHandled();
-}
-
 final class SalesInvoiceListFilterToggled extends SalesInvoiceListEvent {
   const SalesInvoiceListFilterToggled();
 }

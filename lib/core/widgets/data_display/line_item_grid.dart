@@ -24,24 +24,6 @@ class LineItemColumn<R> {
 /// field widgets — this widget owns layout only, never field state. The
 /// caller's bloc/form owns `rows`; [onChanged] is called with the full,
 /// updated list on every add/remove so it stays a controlled component.
-///
-/// ```dart
-/// LineItemGrid<VoucherLine>(
-///   rows: lines,
-///   columns: [
-///     LineItemColumn(
-///       label: 'Item',
-///       cellBuilder: (context, row, i) => FkLookupField<Item>(...),
-///     ),
-///     LineItemColumn(
-///       label: 'Qty',
-///       cellBuilder: (context, row, i) => AppDecimalField(...),
-///     ),
-///   ],
-///   onChanged: (updated) => setState(() => lines = updated),
-///   newRow: () => VoucherLine.empty(),
-/// )
-/// ```
 class LineItemGrid<R> extends StatelessWidget {
   const LineItemGrid({
     required this.rows,
@@ -52,6 +34,8 @@ class LineItemGrid<R> extends StatelessWidget {
     this.keyOf,
     this.addLabel = 'Add line',
     this.enabled = true,
+    this.rowSearchFilter,
+    this.searchQuery = '',
   });
 
   final List<R> rows;
@@ -59,17 +43,20 @@ class LineItemGrid<R> extends StatelessWidget {
   final ValueChanged<List<R>> onChanged;
 
   /// Stable identity for a row, so its field widgets follow the row rather
-  /// than the slot it happens to sit in. Without it rows are keyed by index:
-  /// remove the middle of three and the third row's element — text and all —
-  /// slides up into the vacated position. Supply this whenever `R` carries an
-  /// id; omit it for grids that only ever append.
+  /// than the slot it happens to sit in.
   final Object Function(R row, int index)? keyOf;
 
   /// Factory for a fresh row, wired to the add-row button. Omit to hide
-  /// the add button (e.g. a read-only/approval view of the same grid).
+  /// the add button.
   final R Function()? newRow;
   final String addLabel;
   final bool enabled;
+
+  /// Optional function to filter rows by a search query.
+  final bool Function(R row, String query)? rowSearchFilter;
+
+  /// Active search query passed down from parent.
+  final String searchQuery;
 
   void _removeAt(int index) {
     final updated = List<R>.of(rows)..removeAt(index);
@@ -85,6 +72,8 @@ class LineItemGrid<R> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final query = searchQuery.trim().toLowerCase();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -106,31 +95,34 @@ class LineItemGrid<R> extends StatelessWidget {
             ),
           ),
         for (var i = 0; i < rows.length; i++)
-          KeyedSubtree(
-            key: ValueKey<Object>(keyOf?.call(rows[i], i) ?? i),
-            child: Padding(
-              padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.sm),
-              child: Row(
-                children: [
-                  for (final column in columns)
-                    Expanded(
-                      flex: column.flex,
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.only(
-                          end: tokens.spacing.xs,
+          if (rowSearchFilter == null ||
+              query.isEmpty ||
+              rowSearchFilter!(rows[i], query))
+            KeyedSubtree(
+              key: ValueKey<Object>(keyOf?.call(rows[i], i) ?? i),
+              child: Padding(
+                padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.sm),
+                child: Row(
+                  children: [
+                    for (final column in columns)
+                      Expanded(
+                        flex: column.flex,
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.only(
+                            end: tokens.spacing.xs,
+                          ),
+                          child: column.cellBuilder(context, rows[i], i),
                         ),
-                        child: column.cellBuilder(context, rows[i], i),
                       ),
+                    IconButton(
+                      tooltip: 'Remove row',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: enabled ? () => _removeAt(i) : null,
                     ),
-                  IconButton(
-                    tooltip: 'Remove row',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: enabled ? () => _removeAt(i) : null,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         if (newRow != null)
           Padding(
             padding: EdgeInsetsDirectional.only(top: tokens.spacing.xs),

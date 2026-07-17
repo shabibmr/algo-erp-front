@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// AppDateField(
 ///   label: 'Voucher date',
 ///   value: voucherDate,
-///   onChanged: (d) => setState(() => voucherDate = d),
+///   onChanged: (d) => context.read<MyCubit>().setDate(d),
 /// )
 /// ```
 class AppDateField extends StatelessWidget {
@@ -25,6 +25,9 @@ class AppDateField extends StatelessWidget {
     this.validator,
     this.enabled = true,
     this.labelWidget,
+    this.hideLabel = false,
+    this.isBorderless = false,
+    this.textAlign,
   });
 
   final String label;
@@ -32,6 +35,9 @@ class AppDateField extends StatelessWidget {
   /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
   /// required marker.
   final Widget? labelWidget;
+  final bool hideLabel;
+  final bool isBorderless;
+  final TextAlign? textAlign;
   final DateTime? value;
   final ValueChanged<DateTime?> onChanged;
   final DateTime? firstDate;
@@ -61,16 +67,30 @@ class AppDateField extends StatelessWidget {
           onTap: enabled ? () => _pick(context) : null,
           child: InputDecorator(
             decoration: InputDecoration(
-              label: labelWidget,
-              labelText: labelWidget == null ? label : null,
+              label: hideLabel ? null : labelWidget,
+              labelText: hideLabel
+                  ? null
+                  : (labelWidget == null ? label : null),
               helperText: helperText,
               errorText: state.errorText,
               suffixIcon: const Icon(Icons.calendar_today_outlined),
               enabled: enabled,
+              filled: !isBorderless,
+              border: isBorderless ? InputBorder.none : null,
+              enabledBorder: isBorderless ? InputBorder.none : null,
+              focusedBorder: isBorderless
+                  ? UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      ),
+                    )
+                  : null,
             ),
             child: Text(
               value == null ? '' : value!.toDayString(),
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: textAlign,
             ),
           ),
         );

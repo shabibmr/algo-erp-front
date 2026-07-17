@@ -4,18 +4,22 @@ import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
-import 'package:algo_erp_front/core/utils/csv_exporter.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
+import 'package:algo_erp_front/core/vouchers/voucher_export.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
+import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_invoice.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_list_bloc.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_list_event.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_list_state.dart';
@@ -30,88 +34,51 @@ final DioClient _dio = getIt<DioClient>();
 final _invoiceRepo = createSalesInvoiceRepository(_dio);
 final _ledgerRepo = createLedgerRepository(_dio);
 
+/// The same five fields every voucher list exports, with the customer as the
+/// party column.
+final _exportColumns = voucherExportColumns<SalesInvoiceListItem>(
+  displayNo: (i) => i.displayNo,
+  voucherDate: (i) => i.voucherDate,
+  status: (i) => i.status,
+  total: (i) => i.total,
+  party: (i) => i.billingName,
+  partyLabel: 'Customer',
+);
+
 class SalesInvoiceListPage extends StatelessWidget {
   const SalesInvoiceListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SalesInvoiceListBloc>(
-      create: (_) =>
-          SalesInvoiceListBloc(repository: _invoiceRepo)
-            ..add(const SalesInvoiceListFetchRequested()),
-      child: MultiBlocListener(
-        listeners: [
-          BlocListener<SalesInvoiceListBloc, SalesInvoiceListState>(
-            // A failed *append* keeps the pages already on screen, so it never
-            // reaches the full-page ErrorState — surface it here rather than
-            // letting the load-more (or a failed export) fail silently.
-            listenWhen: (prev, curr) =>
-                curr.isSuccess &&
-                curr.failure != null &&
-                prev.failure != curr.failure,
-            listener: (context, state) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.failure!.message)));
-            },
-          ),
-          BlocListener<SalesInvoiceListBloc, SalesInvoiceListState>(
-            // Writing the file is the side effect the bloc deliberately does
-            // not perform: it gathers the rows, the view saves them.
-            listenWhen: (prev, curr) => curr.export != null,
-            listener: (context, state) => _writeCsv(context, state.export!),
-          ),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SalesInvoiceListBloc>(
+          create: (_) =>
+              SalesInvoiceListBloc(repository: _invoiceRepo)
+                ..add(const SalesInvoiceListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<SalesInvoiceListItem>>(
+          create: (_) =>
+              ExportCubit<SalesInvoiceListItem>(source: _invoiceRepo.list),
+        ),
+      ],
+      child: BlocListener<SalesInvoiceListBloc, SalesInvoiceListState>(
+        // A failed *append* keeps the pages already on screen, so it never
+        // reaches the full-page ErrorState — surface it here rather than
+        // letting the load-more fail silently.
+        listenWhen: (prev, curr) =>
+            curr.isSuccess &&
+            curr.failure != null &&
+            prev.failure != curr.failure,
+        listener: (context, state) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.failure!.message)));
+        },
         child: const _SalesInvoiceListView(),
       ),
     );
   }
-}
-
-Future<void> _writeCsv(BuildContext context, SalesInvoiceExport export) async {
-  // Clear the payload before the first await: the write is async now, and a
-  // rebuild landing mid-write would otherwise hand us the same file again.
-  context.read<SalesInvoiceListBloc>().add(
-    const SalesInvoiceListExportHandled(),
-  );
-  final messenger = ScaffoldMessenger.of(context);
-
-  final String? path;
-  try {
-    path = await CsvExporter.exportToCsv(
-      filename: 'sales_invoices_export.csv',
-      headers: const ['Number', 'Date', 'Status', 'Customer', 'Total'],
-      rows: [
-        for (final row in export.rows)
-          [
-            row.displayNo,
-            row.voucherDate?.toDayString() ?? '',
-            row.status ?? '',
-            row.billingName ?? '',
-            // The raw decimal, not toMoney(): a currency symbol and thousands
-            // separators would land in the spreadsheet as text, not a number.
-            row.total?.toString() ?? '',
-          ],
-      ],
-    );
-  } on Object catch (e) {
-    // A denied folder or a full disk must not take the list down with it.
-    messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
-    return;
-  }
-
-  final count = export.isTruncated
-      ? 'the first ${export.rows.length} of ${export.total} invoices — narrow '
-            'the filters to export the rest'
-      : '${export.rows.length} invoices';
-
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(
-        path == null ? 'Exported $count' : 'Exported $count to $path',
-      ),
-    ),
-  );
 }
 
 class _SalesInvoiceListView extends StatelessWidget {
@@ -133,153 +100,156 @@ class _SalesInvoiceListView extends StatelessWidget {
         builder: (context, state) {
           final bloc = context.read<SalesInvoiceListBloc>();
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _bp.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
+          return CreateNewShortcuts(
+            module: _bp.rbacModule,
+            onCreate: () => context.push('/transactions/sales-invoices/new'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _bp.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ),
-                  ),
-                  _ExportButton(
-                    isExporting: state.isExporting,
-                    // Nothing on screen means nothing matches the filters —
-                    // there is no larger set hiding behind pagination.
-                    enabled: state.isSuccess && state.items.isNotEmpty,
-                    onPressed: () =>
-                        bloc.add(const SalesInvoiceListExportRequested()),
-                  ),
-                  IconButton(
-                    tooltip: 'Filters',
-                    onPressed: () =>
-                        bloc.add(const SalesInvoiceListFilterToggled()),
-                    icon: Icon(
-                      state.filtersExpanded
-                          ? Icons.filter_alt
-                          : Icons.filter_alt_outlined,
+                    ExportButton<SalesInvoiceListItem>(
+                      id: 'sales_invoices',
+                      label: _bp.label,
+                      columns: _exportColumns,
+                      query: () => state.query,
                     ),
-                  ),
-                  PermissionGate(
-                    module: _bp.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
+                    IconButton(
+                      tooltip: 'Filters',
                       onPressed: () =>
-                          context.push('/transactions/sales-invoices/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New'),
+                          bloc.add(const SalesInvoiceListFilterToggled()),
+                      icon: Icon(
+                        state.filtersExpanded
+                            ? Icons.filter_alt
+                            : Icons.filter_alt_outlined,
+                      ),
+                    ),
+                    PermissionGate(
+                      module: _bp.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            context.push('/transactions/sales-invoices/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (state.filtersExpanded) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppDateField(
+                                  label: 'From date',
+                                  value: state.startDate,
+                                  onChanged: (d) => bloc.add(
+                                    SalesInvoiceListStartDateChanged(d),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AppDateField(
+                                  label: 'To date',
+                                  value: state.endDate,
+                                  onChanged: (d) => bloc.add(
+                                    SalesInvoiceListEndDateChanged(d),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String?>(
+                            initialValue: state.statusFilter,
+                            decoration: const InputDecoration(
+                              labelText: 'Status',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                child: Text('Any status'),
+                              ),
+                              for (final s in _statuses)
+                                DropdownMenuItem(value: s, child: Text(s)),
+                            ],
+                            onChanged: (v) =>
+                                bloc.add(SalesInvoiceListStatusChanged(v)),
+                          ),
+                          const SizedBox(height: 12),
+                          AppTextField(
+                            label: 'Prefix',
+                            value: state.prefix,
+                            hintText: 'SI',
+                            onChanged: (v) =>
+                                bloc.add(SalesInvoiceListPrefixChanged(v)),
+                          ),
+                          const SizedBox(height: 12),
+                          FkLookupField<Ledger>(
+                            label: 'Customer',
+                            value: state.customer,
+                            displayOf: (l) {
+                              final code = l.code;
+                              return (code == null || code.isEmpty)
+                                  ? l.name
+                                  : '$code — ${l.name}';
+                            },
+                            loader: (q) async {
+                              final r = await _ledgerRepo.list(
+                                PageQuery(search: q),
+                              );
+                              return r.fold((_) => const [], (p) => p.items);
+                            },
+                            onSelected: (l) =>
+                                bloc.add(SalesInvoiceListCustomerChanged(l)),
+                          ),
+                          const SizedBox(height: 12),
+                          AppTextField(
+                            label: 'Search',
+                            value: state.search,
+                            hintText: 'Number or billing name',
+                            onChanged: (v) =>
+                                bloc.add(SalesInvoiceListSearchChanged(v)),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => bloc.add(
+                                  const SalesInvoiceListFiltersCleared(),
+                                ),
+                                child: const Text('Clear'),
+                              ),
+                              const Spacer(),
+                              FilledButton(
+                                onPressed: () => bloc.add(
+                                  const SalesInvoiceListFiltersApplied(),
+                                ),
+                                child: const Text('Apply'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ),
-              if (state.filtersExpanded) ...[
-                const SizedBox(height: 12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppDateField(
-                                label: 'From date',
-                                value: state.startDate,
-                                onChanged: (d) => bloc.add(
-                                  SalesInvoiceListStartDateChanged(d),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: AppDateField(
-                                label: 'To date',
-                                value: state.endDate,
-                                onChanged: (d) =>
-                                    bloc.add(SalesInvoiceListEndDateChanged(d)),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String?>(
-                          initialValue: state.statusFilter,
-                          decoration: const InputDecoration(
-                            labelText: 'Status',
-                          ),
-                          items: [
-                            const DropdownMenuItem<String?>(
-                              child: Text('Any status'),
-                            ),
-                            for (final s in _statuses)
-                              DropdownMenuItem(value: s, child: Text(s)),
-                          ],
-                          onChanged: (v) =>
-                              bloc.add(SalesInvoiceListStatusChanged(v)),
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'Prefix',
-                          value: state.prefix,
-                          hintText: 'SI',
-                          onChanged: (v) =>
-                              bloc.add(SalesInvoiceListPrefixChanged(v)),
-                        ),
-                        const SizedBox(height: 12),
-                        FkLookupField<Ledger>(
-                          label: 'Customer',
-                          value: state.customer,
-                          displayOf: (l) {
-                            final code = l.code;
-                            return (code == null || code.isEmpty)
-                                ? l.name
-                                : '$code — ${l.name}';
-                          },
-                          loader: (q) async {
-                            final r = await _ledgerRepo.list(
-                              PageQuery(search: q),
-                            );
-                            return r.fold((_) => const [], (p) => p.items);
-                          },
-                          onSelected: (l) =>
-                              bloc.add(SalesInvoiceListCustomerChanged(l)),
-                        ),
-                        const SizedBox(height: 12),
-                        AppTextField(
-                          label: 'Search',
-                          value: state.search,
-                          hintText: 'Number or billing name',
-                          onChanged: (v) =>
-                              bloc.add(SalesInvoiceListSearchChanged(v)),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: () => bloc.add(
-                                const SalesInvoiceListFiltersCleared(),
-                              ),
-                              child: const Text('Clear'),
-                            ),
-                            const Spacer(),
-                            FilledButton(
-                              onPressed: () => bloc.add(
-                                const SalesInvoiceListFiltersApplied(),
-                              ),
-                              child: const Text('Apply'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
               ],
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+            ),
           );
         },
       ),
@@ -356,39 +326,6 @@ class _SalesInvoiceListView extends StatelessWidget {
           },
         ),
       ),
-    );
-  }
-}
-
-class _ExportButton extends StatelessWidget {
-  const _ExportButton({
-    required this.isExporting,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final bool isExporting;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isExporting) {
-      // An export walks every page, so on a wide filter this is a real wait —
-      // it needs to look busy, not dead.
-      return const Padding(
-        padding: EdgeInsets.all(12),
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-    return IconButton(
-      tooltip: 'Export to CSV',
-      icon: const Icon(Icons.download_outlined),
-      onPressed: enabled ? onPressed : null,
     );
   }
 }

@@ -10,84 +10,45 @@ import 'package:algo_erp_front/core/widgets/data_display/adaptive_entity_list.da
 import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
 import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/employee_employee/domain/employee.dart';
 import 'package:algo_erp_front/features/employee_employee/employee_di.dart';
+import 'package:algo_erp_front/features/employee_leave_allocation/cubit/leave_allocation_list_cubit.dart';
 import 'package:algo_erp_front/features/employee_leave_allocation/domain/leave_allocation.dart';
 import 'package:algo_erp_front/features/employee_leave_allocation/leave_allocation_di.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 /// Per-employee leave balances for a year (no global list API).
-class LeaveAllocationListPage extends StatefulWidget {
+class LeaveAllocationListPage extends StatelessWidget {
   const LeaveAllocationListPage({super.key});
 
   @override
-  State<LeaveAllocationListPage> createState() =>
-      _LeaveAllocationListPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => LeaveAllocationListCubit(
+        allocationRepository: createLeaveAllocationRepository(
+          getIt<DioClient>(),
+        ),
+      ),
+      child: const _LeaveAllocationListView(),
+    );
+  }
 }
 
-class _LeaveAllocationListPageState extends State<LeaveAllocationListPage> {
-  final _employeeRepo = createEmployeeRepository(getIt<DioClient>());
-  final _allocationRepo = createLeaveAllocationRepository(getIt<DioClient>());
-
-  Employee? _employee;
-  late int _year;
-  List<LeaveAllocation>? _items;
-  bool _loading = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _year = DateTime.now().year;
-  }
+class _LeaveAllocationListView extends StatelessWidget {
+  const _LeaveAllocationListView();
 
   Future<List<Employee>> _searchEmployees(String query) async {
-    final result = await _employeeRepo.list(PageQuery(search: query));
+    final result = await createEmployeeRepository(
+      getIt<DioClient>(),
+    ).list(PageQuery(search: query));
     return result.fold((_) => const [], (page) => page.items);
   }
-
-  Future<void> _load() async {
-    final emp = _employee;
-    if (emp == null) {
-      setState(() {
-        _items = null;
-        _error = null;
-      });
-      return;
-    }
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final result = await _allocationRepo.listForEmployee(
-      employeeId: emp.id,
-      year: _year,
-    );
-    if (!mounted) return;
-    result.fold(
-      (f) => setState(() {
-        _loading = false;
-        _error = _messageOf(f);
-        _items = null;
-      }),
-      (rows) => setState(() {
-        _loading = false;
-        _items = rows;
-      }),
-    );
-  }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-    _ => f.toString(),
-  };
 
   String _employeeLabel(Employee e) {
     final code = e.code;
@@ -97,100 +58,115 @@ class _LeaveAllocationListPageState extends State<LeaveAllocationListPage> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final items = _items;
 
-    return AdaptiveLayout(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          PageHeader(
-            eyebrow: 'Employee',
-            title: 'Leave allocation',
-            subtitle: items == null ? null : '${items.length} policies',
-            actions: [
-              PermissionGate(
-                module: 'Employee',
-                action: PermissionAction.create,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    final created = await context.push<bool>(
-                      '/employee/leave/allocations/new',
-                      extra: {'employeeId': _employee?.id, 'year': _year},
-                    );
-                    if ((created ?? false) && mounted) await _load();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Allocate'),
+    return BlocBuilder<LeaveAllocationListCubit, LeaveAllocationListState>(
+      builder: (context, state) {
+        final cubit = context.read<LeaveAllocationListCubit>();
+        final items = state.items;
+
+        Future<void> openAllocate() async {
+          final created = await context.push<bool>(
+            '/employee/leave/allocations/new',
+            extra: {'employeeId': state.employee?.id, 'year': state.year},
+          );
+          if ((created ?? false) && context.mounted) {
+            await cubit.load();
+          }
+        }
+
+        return AdaptiveLayout(
+          child: CreateNewShortcuts(
+            module: 'Employee',
+            onCreate: openAllocate,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PageHeader(
+                  eyebrow: 'Employee',
+                  title: 'Leave allocation',
+                  subtitle: items == null ? null : '${items.length} policies',
+                  actions: [
+                    PermissionGate(
+                      module: 'Employee',
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: openAllocate,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Allocate'),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                SizedBox(height: tokens.spacing.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: FkLookupField<Employee>(
+                        label: 'Employee',
+                        value: state.employee,
+                        displayOf: _employeeLabel,
+                        loader: _searchEmployees,
+                        onSelected: cubit.setEmployee,
+                      ),
+                    ),
+                    SizedBox(width: tokens.spacing.md),
+                    Expanded(
+                      child: AppNumberField(
+                        label: 'Year',
+                        value: state.year,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          cubit.setYear(v);
+                        },
+                      ),
+                    ),
+                    SizedBox(width: tokens.spacing.sm),
+                    Padding(
+                      padding: EdgeInsets.only(top: tokens.spacing.lg),
+                      child: OutlinedButton(
+                        onPressed: state.employee == null || state.loading
+                            ? null
+                            : cubit.load,
+                        child: const Text('Refresh'),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: tokens.spacing.lg),
+                Expanded(child: _body(context, state)),
+              ],
+            ),
           ),
-          SizedBox(height: tokens.spacing.md),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: FkLookupField<Employee>(
-                  label: 'Employee',
-                  value: _employee,
-                  displayOf: _employeeLabel,
-                  loader: _searchEmployees,
-                  onSelected: (e) {
-                    setState(() => _employee = e);
-                    _load();
-                  },
-                ),
-              ),
-              SizedBox(width: tokens.spacing.md),
-              Expanded(
-                child: AppNumberField(
-                  label: 'Year',
-                  value: _year,
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _year = v);
-                    _load();
-                  },
-                ),
-              ),
-              SizedBox(width: tokens.spacing.sm),
-              Padding(
-                padding: EdgeInsets.only(top: tokens.spacing.lg),
-                child: OutlinedButton(
-                  onPressed: _employee == null || _loading ? null : _load,
-                  child: const Text('Refresh'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: tokens.spacing.lg),
-          Expanded(child: _body(context)),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _body(BuildContext context) {
-    if (_employee == null) {
+  Widget _body(BuildContext context, LeaveAllocationListState state) {
+    if (state.employee == null) {
       return const EmptyState(
         message: 'Choose an employee — allocations are listed per year.',
       );
     }
-    if (_loading) {
+    if (state.loading) {
       return const LoadingState();
     }
-    if (_error != null) {
-      return ErrorState(failure: Failure.unknown(_error!), onRetry: _load);
+    if (state.error != null) {
+      return ErrorState(
+        failure: Failure.unknown(state.error!),
+        onRetry: context.read<LeaveAllocationListCubit>().load,
+      );
     }
-    final items = _items ?? const <LeaveAllocation>[];
+    final items = state.items ?? const <LeaveAllocation>[];
     if (items.isEmpty) {
       return EmptyState(
-        message: 'No allocations for $_year. Allocate a leave policy.',
+        message: 'No allocations for ${state.year}. Allocate a leave policy.',
         actionLabel: 'Allocate',
         onAction: () => context.push(
           '/employee/leave/allocations/new',
-          extra: {'employeeId': _employee?.id, 'year': _year},
+          extra: {'employeeId': state.employee?.id, 'year': state.year},
         ),
       );
     }

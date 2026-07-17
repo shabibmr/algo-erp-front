@@ -155,6 +155,7 @@ Full detail in `docs/api-contract.md`; live gaps and their status in `docs/backe
 - `docs/STATUS.md` — the living status board: which entities are shipped, partial, deferred, or
   parked. Check here first to see what already exists.
 - `docs/manifest-spec.md` — the recipe for adding an entity. Start here to build one.
+- `docs/bloc-migration-checklist.md` — per-package work queue to retire hand-written master List/FormBlocs onto EMR.
 - `docs/manifest-exceptions.md` — entities that don't fit, and why.
 - `docs/api-contract.md` — the backend contract.
 - `docs/backend-suggestions.md` — living log of backend gaps (BE-001…BE-008) and their status.

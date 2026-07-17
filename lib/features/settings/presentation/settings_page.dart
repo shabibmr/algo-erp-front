@@ -18,6 +18,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final brand = tokens.brand;
+    final organization = AppMenu.hubs['/organization']!;
 
     return DecoratedBox(
       decoration: BoxDecoration(gradient: tokens.gradient.canvasGradient),
@@ -120,6 +121,28 @@ class SettingsPage extends StatelessWidget {
                           },
                         ),
                       ],
+                    ),
+                  ),
+                  SizedBox(height: tokens.spacing.md),
+                  WorkSheet(
+                    fill: false,
+                    title: 'Organization',
+                    padding: EdgeInsets.all(tokens.spacing.md),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(organization.icon, color: brand.lagoon),
+                      title: Text(organization.label),
+                      subtitle: Text(
+                        organization.subtitle,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: brand.inkMuted),
+                      ),
+                      trailing: Icon(
+                        Icons.chevron_right,
+                        color: brand.inkMuted,
+                      ),
+                      onTap: () => context.go(organization.route),
                     ),
                   ),
                   SizedBox(height: tokens.spacing.md),

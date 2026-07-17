@@ -2,10 +2,13 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -24,11 +27,20 @@ class InventoryGroupListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dio = getIt<DioClient>();
-    return BlocProvider<InventoryGroupListBloc>(
-      create: (_) => InventoryGroupListBloc(
-        repository: createInventoryGroupRepository(dio),
-      )..add(const InventoryGroupListFetchRequested()),
+    // One repository, two blocs: the list reads pages through it, and export
+    // walks every page of the same query through it.
+    final repository = createInventoryGroupRepository(getIt<DioClient>());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<InventoryGroupListBloc>(
+          create: (_) =>
+              InventoryGroupListBloc(repository: repository)
+                ..add(const InventoryGroupListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<InventoryGroup>>(
+          create: (_) => ExportCubit<InventoryGroup>(source: repository.list),
+        ),
+      ],
       child: BlocListener<InventoryGroupListBloc, InventoryGroupListState>(
         listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
         listener: (context, state) {
@@ -69,41 +81,50 @@ class _InventoryGroupListView extends StatelessWidget {
         builder: (context, state) {
           final bloc = context.read<InventoryGroupListBloc>();
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      inventoryGroupManifest.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
+          return CreateNewShortcuts(
+            module: inventoryGroupManifest.rbacModule,
+            onCreate: () => context.push('/inventory/group/new'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        inventoryGroupManifest.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ),
-                  ),
-                  PermissionGate(
-                    module: inventoryGroupManifest.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
-                      onPressed: () => context.push('/inventory/group/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New Group'),
+                    if (inventoryGroupManifest.supportsExport)
+                      ExportButton<InventoryGroup>.fromManifest(
+                        manifest: inventoryGroupManifest,
+                        query: () => state.query,
+                      ),
+                    PermissionGate(
+                      module: inventoryGroupManifest.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () => context.push('/inventory/group/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Group'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 300,
-                child: AppTextField(
-                  label: 'Search Group',
-                  value: state.search,
-                  onChanged: (v) =>
-                      bloc.add(InventoryGroupListSearchChanged(v)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 300,
+                  child: AppTextField(
+                    label: 'Search Group',
+                    value: state.search,
+                    onChanged: (v) =>
+                        bloc.add(InventoryGroupListSearchChanged(v)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
+              ],
+            ),
           );
         },
       ),

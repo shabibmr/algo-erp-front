@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 /// AppSwitchField(
 ///   label: 'Active',
 ///   value: isActive,
-///   onChanged: (v) => setState(() => isActive = v),
+///   onChanged: (v) => context.read<MyCubit>().setActive(v),
 /// )
 /// ```
 class AppSwitchField extends StatelessWidget {

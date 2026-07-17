@@ -53,10 +53,53 @@ List<Map<String, dynamic>> extractReportRows({
   return const [];
 }
 
-/// Flattens a [ReportShape.sections] payload into a single table for CSV and
-/// PDF, which both take one header row: every row is tagged with its section,
-/// and the totals block is appended as trailing `Totals` rows.
-({List<String> headers, List<List<String>> rows}) flattenReportSections({
+/// A report flattened to one header row and a rectangular body.
+typedef ReportTable = ({List<String> headers, List<List<Object?>> rows});
+
+/// Flattens any report — whatever its [ReportShape] — into a single table.
+///
+/// **Values stay raw.** A number arrives here as a `num` and leaves as one, so
+/// the Excel export can write it into a cell the user can sum. The consumers
+/// that need text (CSV, PDF) run the cells through [formatReportCell]
+/// themselves. This used to be inlined three times in `ReportViewer` — once per
+/// destination — which is how CSV and PDF drifted apart on the sections shape.
+ReportTable flattenReport(ReportDefinition def, Object? data) =>
+    switch (def.shape) {
+      ReportShape.sections => _flattenSections(
+        data: data,
+        sections: def.sections,
+        totals: def.columns,
+      ),
+      ReportShape.summary => (
+        headers: [for (final c in def.columns) c.label],
+        rows: [
+          [
+            for (final c in def.columns)
+              readJsonPath(
+                data is Map<dynamic, dynamic>
+                    ? Map<String, dynamic>.from(data)
+                    : const <String, dynamic>{},
+                c.key,
+              ),
+          ],
+        ],
+      ),
+      ReportShape.table => (
+        headers: [for (final c in def.columns) c.label],
+        rows: [
+          for (final row in extractReportRows(
+            data: data,
+            rowsPath: def.rowsPath,
+          ))
+            [for (final c in def.columns) readJsonPath(row, c.key)],
+        ],
+      ),
+    };
+
+/// A statement has several parallel row lists and a totals block, but an export
+/// takes one header row: every line is tagged with its section, and the totals
+/// are appended as trailing `Totals` rows.
+ReportTable _flattenSections({
   required Object? data,
   required List<ReportSectionSpec> sections,
   required List<ReportColumnSpec> totals,
@@ -72,20 +115,17 @@ List<Map<String, dynamic>> extractReportRows({
     for (var i = sections.first.columns.length; i < width; i++) '',
   ];
 
-  final rows = <List<String>>[];
+  final rows = <List<Object?>>[];
   for (final section in sections) {
     for (final row in extractReportRows(
       data: data,
       rowsPath: section.rowsPath,
     )) {
-      final cells = [
-        for (final c in section.columns)
-          formatReportCell(readJsonPath(row, c.key)),
-      ];
+      final cells = [for (final c in section.columns) readJsonPath(row, c.key)];
       rows.add([
         section.title,
         ...cells,
-        for (var i = cells.length; i < width; i++) '',
+        for (var i = cells.length; i < width; i++) null,
       ]);
     }
   }
@@ -94,9 +134,9 @@ List<Map<String, dynamic>> extractReportRows({
       ? Map<String, dynamic>.from(data)
       : const <String, dynamic>{};
   for (final c in totals) {
-    final cells = List.filled(width, '');
+    final cells = List<Object?>.filled(width, null);
     cells[0] = c.label;
-    if (width > 1) cells[1] = formatReportCell(readJsonPath(map, c.key));
+    if (width > 1) cells[1] = readJsonPath(map, c.key);
     rows.add(['Totals', ...cells]);
   }
 

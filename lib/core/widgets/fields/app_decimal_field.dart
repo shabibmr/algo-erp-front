@@ -35,6 +35,9 @@ class AppDecimalField extends StatefulWidget {
     this.controller,
     this.prefixText,
     this.labelWidget,
+    this.hideLabel = false,
+    this.isBorderless = false,
+    this.textAlign,
   });
 
   final String label;
@@ -42,6 +45,9 @@ class AppDecimalField extends StatefulWidget {
   /// Renders instead of [label] when set — e.g. a `FieldLabel` carrying the
   /// required marker.
   final Widget? labelWidget;
+  final bool hideLabel;
+  final bool isBorderless;
+  final TextAlign? textAlign;
   final Decimal? value;
   final String? helperText;
   final String? hintText;
@@ -102,6 +108,10 @@ class _AppDecimalFieldState extends State<AppDecimalField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
+      style: Theme.of(context).textTheme.bodyMedium,
+      textAlign:
+          widget.textAlign ??
+          (widget.isBorderless ? TextAlign.right : TextAlign.start),
       enabled: widget.enabled,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
@@ -122,11 +132,24 @@ class _AppDecimalFieldState extends State<AppDecimalField> {
           ? null
           : (text) => widget.onSaved!(_parse(text)),
       decoration: InputDecoration(
-        label: widget.labelWidget,
-        labelText: widget.labelWidget == null ? widget.label : null,
+        label: widget.hideLabel ? null : widget.labelWidget,
+        labelText: widget.hideLabel
+            ? null
+            : (widget.labelWidget == null ? widget.label : null),
         hintText: widget.hintText,
         helperText: widget.helperText,
         prefixText: widget.prefixText == null ? null : '${widget.prefixText} ',
+        filled: !widget.isBorderless,
+        border: widget.isBorderless ? InputBorder.none : null,
+        enabledBorder: widget.isBorderless ? InputBorder.none : null,
+        focusedBorder: widget.isBorderless
+            ? UnderlineInputBorder(
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              )
+            : null,
       ),
     );
   }

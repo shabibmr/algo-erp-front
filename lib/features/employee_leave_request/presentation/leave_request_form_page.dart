@@ -4,13 +4,13 @@ import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
+import 'package:algo_erp_front/features/employee_leave_request/cubit/leave_request_action_cubit.dart';
 import 'package:algo_erp_front/features/employee_leave_request/data/leave_request_repository.dart';
 import 'package:algo_erp_front/features/employee_leave_request/domain/leave_request.dart';
 import 'package:algo_erp_front/features/employee_leave_request/leave_request_di.dart';
@@ -60,52 +60,17 @@ class LeaveRequestFormPage extends StatelessWidget {
   }
 }
 
-class _LeaveRequestDetail extends StatefulWidget {
+class _LeaveRequestDetail extends StatelessWidget {
   const _LeaveRequestDetail({required this.entityId});
 
   final int entityId;
 
-  @override
-  State<_LeaveRequestDetail> createState() => _LeaveRequestDetailState();
-}
-
-class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
-  bool _busy = false;
-  String? _error;
-
-  void _refreshListAndReturn() {
+  void _refreshListAndReturn(BuildContext context) {
     leaveRequestCrudBloc(context).add(const CrudRefreshRequested());
     context.go(leaveRequestManifest.resourcePath);
   }
 
-  Future<void> _setStatus(String status, {String? reason}) async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    final repo = context.read<LeaveRequestRepository>();
-    final result = await repo.updateStatus(
-      widget.entityId,
-      status,
-      reason: reason,
-    );
-    if (!mounted) return;
-    result.fold(
-      (f) => setState(() {
-        _busy = false;
-        _error = switch (f) {
-          NetworkFailure(:final message) => message,
-          ValidationFailure(:final message) => message,
-          ServerFailure(:final message) => message,
-          UnknownFailure(:final message) => message,
-          _ => f.toString(),
-        };
-      }),
-      (_) => _refreshListAndReturn(),
-    );
-  }
-
-  Future<void> _reject() async {
+  Future<void> _reject(BuildContext context) async {
     final controller = TextEditingController();
     final reason = await showDialog<String>(
       context: context,
@@ -132,8 +97,11 @@ class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
       ),
     );
     controller.dispose();
-    if (reason == null || !mounted) return;
-    await _setStatus('Rejected', reason: reason.isEmpty ? null : reason);
+    if (reason == null || !context.mounted) return;
+    await context.read<LeaveRequestActionCubit>().setStatus(
+      'Rejected',
+      reason: reason.isEmpty ? null : reason,
+    );
   }
 
   @override
@@ -141,99 +109,142 @@ class _LeaveRequestDetailState extends State<_LeaveRequestDetail> {
     final tokens = context.tokens;
     final repo = context.read<LeaveRequestRepository>();
 
-    return BlocProvider(
-      create: (_) =>
-          DetailBloc<LeaveRequest, int>(repository: repo, id: widget.entityId)
-            ..add(const DetailLoadRequested()),
-      child:
-          BlocBuilder<DetailBloc<LeaveRequest, int>, DetailState<LeaveRequest>>(
-            builder: (context, state) {
-              return AsyncStateView<LeaveRequest>(
-                state: state.toViewState(),
-                onRetry: () => context
-                    .read<DetailBloc<LeaveRequest, int>>()
-                    .add(const DetailLoadRequested()),
-                builder: (context, request) {
-                  final pending = request.status == 'Pending';
-                  final empLabel =
-                      request.employeeName ?? '#${request.employeeId}';
-                  final policyLabel =
-                      request.policyName ?? '#${request.leavePolicyId}';
-                  return ListView(
-                    children: [
-                      Text(
-                        'Leave request #${request.id}',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      SizedBox(height: tokens.spacing.md),
-                      if (_error != null) ...[
-                        Text(
-                          _error!,
-                          style: TextStyle(color: tokens.semanticColors.danger),
-                        ),
-                        SizedBox(height: tokens.spacing.sm),
-                      ],
-                      _row('Employee', empLabel),
-                      _row('Policy', policyLabel),
-                      _row(
-                        'From',
-                        request.fromDate.toIso8601String().split('T').first,
-                      ),
-                      _row(
-                        'To',
-                        request.toDate.toIso8601String().split('T').first,
-                      ),
-                      _row('Days', request.numberOfDays.toString()),
-                      _row('Status', request.status),
-                      if (request.reason != null && request.reason!.isNotEmpty)
-                        _row('Reason', request.reason!),
-                      if (request.rejectionReason != null &&
-                          request.rejectionReason!.isNotEmpty)
-                        _row('Rejection reason', request.rejectionReason!),
-                      SizedBox(height: tokens.spacing.lg),
-                      if (pending)
-                        PermissionGate(
-                          module: leaveRequestManifest.rbacModule,
-                          action: PermissionAction.update,
-                          child: Wrap(
-                            spacing: tokens.spacing.sm,
-                            runSpacing: tokens.spacing.sm,
-                            children: [
-                              FilledButton(
-                                onPressed: _busy
-                                    ? null
-                                    : () => _setStatus('Approved'),
-                                child: Text(_busy ? 'Working…' : 'Approve'),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              DetailBloc<LeaveRequest, int>(repository: repo, id: entityId)
+                ..add(const DetailLoadRequested()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              LeaveRequestActionCubit(repository: repo, entityId: entityId),
+        ),
+      ],
+      child: BlocListener<LeaveRequestActionCubit, LeaveRequestActionState>(
+        listenWhen: (p, c) => !p.done && c.done,
+        listener: (context, state) => _refreshListAndReturn(context),
+        child:
+            BlocBuilder<
+              DetailBloc<LeaveRequest, int>,
+              DetailState<LeaveRequest>
+            >(
+              builder: (context, state) {
+                return AsyncStateView<LeaveRequest>(
+                  state: state.toViewState(),
+                  onRetry: () => context
+                      .read<DetailBloc<LeaveRequest, int>>()
+                      .add(const DetailLoadRequested()),
+                  builder: (context, request) {
+                    return BlocBuilder<
+                      LeaveRequestActionCubit,
+                      LeaveRequestActionState
+                    >(
+                      builder: (context, action) {
+                        final pending = request.status == 'Pending';
+                        final empLabel =
+                            request.employeeName ?? '#${request.employeeId}';
+                        final policyLabel =
+                            request.policyName ?? '#${request.leavePolicyId}';
+                        final cubit = context.read<LeaveRequestActionCubit>();
+                        return ListView(
+                          children: [
+                            Text(
+                              'Leave request #${request.id}',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            SizedBox(height: tokens.spacing.md),
+                            if (action.error != null) ...[
+                              Text(
+                                action.error!,
+                                style: TextStyle(
+                                  color: tokens.semanticColors.danger,
+                                ),
                               ),
-                              OutlinedButton(
-                                onPressed: _busy ? null : _reject,
-                                child: const Text('Reject'),
-                              ),
-                              TextButton(
-                                onPressed: _busy
-                                    ? null
-                                    : () => _setStatus('Cancelled'),
-                                child: const Text('Cancel request'),
-                              ),
+                              SizedBox(height: tokens.spacing.sm),
                             ],
-                          ),
-                        ),
-                      SizedBox(height: tokens.spacing.md),
-                      TextButton(
-                        onPressed: () =>
-                            context.go(leaveRequestManifest.resourcePath),
-                        child: const Text('Back to list'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
+                            _row(context, 'Employee', empLabel),
+                            _row(context, 'Policy', policyLabel),
+                            _row(
+                              context,
+                              'From',
+                              request.fromDate
+                                  .toIso8601String()
+                                  .split('T')
+                                  .first,
+                            ),
+                            _row(
+                              context,
+                              'To',
+                              request.toDate.toIso8601String().split('T').first,
+                            ),
+                            _row(
+                              context,
+                              'Days',
+                              request.numberOfDays.toString(),
+                            ),
+                            _row(context, 'Status', request.status),
+                            if (request.reason != null &&
+                                request.reason!.isNotEmpty)
+                              _row(context, 'Reason', request.reason!),
+                            if (request.rejectionReason != null &&
+                                request.rejectionReason!.isNotEmpty)
+                              _row(
+                                context,
+                                'Rejection reason',
+                                request.rejectionReason!,
+                              ),
+                            SizedBox(height: tokens.spacing.lg),
+                            if (pending)
+                              PermissionGate(
+                                module: leaveRequestManifest.rbacModule,
+                                action: PermissionAction.update,
+                                child: Wrap(
+                                  spacing: tokens.spacing.sm,
+                                  runSpacing: tokens.spacing.sm,
+                                  children: [
+                                    FilledButton(
+                                      onPressed: action.busy
+                                          ? null
+                                          : () => cubit.setStatus('Approved'),
+                                      child: Text(
+                                        action.busy ? 'Working…' : 'Approve',
+                                      ),
+                                    ),
+                                    OutlinedButton(
+                                      onPressed: action.busy
+                                          ? null
+                                          : () => _reject(context),
+                                      child: const Text('Reject'),
+                                    ),
+                                    TextButton(
+                                      onPressed: action.busy
+                                          ? null
+                                          : () => cubit.setStatus('Cancelled'),
+                                      child: const Text('Cancel request'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            SizedBox(height: tokens.spacing.md),
+                            TextButton(
+                              onPressed: () =>
+                                  context.go(leaveRequestManifest.resourcePath),
+                              child: const Text('Back to list'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+      ),
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
     final tokens = context.tokens;
     return Padding(
       padding: EdgeInsets.only(bottom: tokens.spacing.sm),

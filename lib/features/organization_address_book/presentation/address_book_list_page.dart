@@ -2,10 +2,13 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -24,11 +27,20 @@ class AddressBookListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dio = getIt<DioClient>();
-    return BlocProvider<AddressBookListBloc>(
-      create: (_) =>
-          AddressBookListBloc(repository: createAddressBookRepository(dio))
-            ..add(const AddressBookListFetchRequested()),
+    // One repository, two blocs: the list reads pages through it, and export
+    // walks every page of the same query through it.
+    final repository = createAddressBookRepository(getIt<DioClient>());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AddressBookListBloc>(
+          create: (_) =>
+              AddressBookListBloc(repository: repository)
+                ..add(const AddressBookListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<AddressBook>>(
+          create: (_) => ExportCubit<AddressBook>(source: repository.list),
+        ),
+      ],
       child: BlocListener<AddressBookListBloc, AddressBookListState>(
         listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
         listener: (context, state) {
@@ -67,41 +79,50 @@ class _AddressBookListView extends StatelessWidget {
         builder: (context, state) {
           final bloc = context.read<AddressBookListBloc>();
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      addressBookManifest.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
+          return CreateNewShortcuts(
+            module: addressBookManifest.rbacModule,
+            onCreate: () => context.push('/organization/contacts/new'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        addressBookManifest.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ),
-                  ),
-                  PermissionGate(
-                    module: addressBookManifest.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
-                      onPressed: () =>
-                          context.push('/organization/contacts/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New Contact'),
+                    if (addressBookManifest.supportsExport)
+                      ExportButton<AddressBook>.fromManifest(
+                        manifest: addressBookManifest,
+                        query: () => state.query,
+                      ),
+                    PermissionGate(
+                      module: addressBookManifest.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            context.push('/organization/contacts/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Contact'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 300,
-                child: AppTextField(
-                  label: 'Search Contacts',
-                  value: state.search,
-                  onChanged: (v) => bloc.add(AddressBookListSearchChanged(v)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 300,
+                  child: AppTextField(
+                    label: 'Search Contacts',
+                    value: state.search,
+                    onChanged: (v) => bloc.add(AddressBookListSearchChanged(v)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
+              ],
+            ),
           );
         },
       ),

@@ -70,12 +70,14 @@ For a flat master with no foreign keys (Brand's shape, Department's shape):
    none is needed at this scale.
 6. **`presentation/<entity>_list_page.dart`** — `BlocProvider<CrudBloc>` +
    `MasterListSurface<E>` with `onCreate`/`onTap` pushing the two form
-   routes. Copy `brand_list_page.dart` verbatim and rename.
+   routes. Copy `department_list_page.dart` (or `brand_list_page.dart`)
+   verbatim and rename.
 7. **`presentation/<entity>_form_page.dart`** — `RepositoryProvider` + (edit
    mode only) `BlocProvider<DetailBloc>` + `MasterFormSurface<E, ID>`.
-   Copy `brand_form_page.dart` verbatim and rename. Title create as
-   `New ${label}`; for edit mode use `Edit ${label}` when
-   `manifest.supportsUpdate`, otherwise `View ${label}` (read-only detail).
+   Copy `department_form_page.dart` (or `brand_form_page.dart`) verbatim
+   and rename. Title create as `New ${label}`; for edit mode use
+   `Edit ${label}` when `manifest.supportsUpdate`, otherwise
+   `View ${label}` (read-only detail).
 
 Plus **2 router entries** (`/<path>/new`, `/<path>/:id`) added directly to
 `ShellRoute.routes` in `app_router.dart` (not through the `AppMenu.allItems`

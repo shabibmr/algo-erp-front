@@ -66,56 +66,60 @@ void main() {
     });
   });
 
-  group('flattenReportSections', () {
+  group('flattenReport — sections shape', () {
     const def = ReportCatalog.balanceSheet;
 
     test('tags every line with its section, then appends the totals', () {
-      final table = flattenReportSections(
-        data: _balanceSheetData,
-        sections: def.sections,
-        totals: def.columns,
-      );
+      final table = flattenReport(def, _balanceSheetData);
 
       expect(table.headers, ['Section', 'Ledger', 'Amount']);
+      // Values stay raw — 900, not '900'. That is what lets the Excel export
+      // write a cell the user can sum.
       expect(table.rows.take(3), [
-        ['Assets', 'Cash', '900'],
-        ['Assets', 'Customer A', '100'],
-        ['Liabilities', 'Vendor B', '400'],
+        ['Assets', 'Cash', 900],
+        ['Assets', 'Customer A', 100],
+        ['Liabilities', 'Vendor B', 400],
       ]);
       // Capital is empty, so it contributes no rows — the rest is the totals.
       expect(table.rows.skip(3).every((r) => r.first == 'Totals'), isTrue);
       expect(table.rows.skip(3), hasLength(def.columns.length));
-      expect(table.rows, contains(equals(['Totals', 'Total assets', '1000'])));
-      expect(table.rows, contains(equals(['Totals', 'Balanced', 'Yes'])));
+      expect(table.rows, contains(equals(['Totals', 'Total assets', 1000])));
+      expect(table.rows, contains(equals(['Totals', 'Balanced', true])));
     });
 
-    test('every row is header-width, so CSV columns stay aligned', () {
-      final table = flattenReportSections(
-        data: _balanceSheetData,
-        sections: def.sections,
-        totals: def.columns,
-      );
+    test('every row is header-width, so the columns stay aligned', () {
+      final table = flattenReport(def, _balanceSheetData);
       for (final row in table.rows) {
         expect(row, hasLength(table.headers.length));
       }
     });
 
     test('an empty payload yields totals rows but no lines', () {
-      final table = flattenReportSections(
-        data: const <String, dynamic>{},
-        sections: def.sections,
-        totals: def.columns,
-      );
+      final table = flattenReport(def, const <String, dynamic>{});
       expect(table.rows.every((r) => r.first == 'Totals'), isTrue);
     });
+  });
 
-    test('no sections yields no rows rather than throwing', () {
-      final table = flattenReportSections(
-        data: _balanceSheetData,
-        sections: const [],
-        totals: def.columns,
-      );
-      expect(table.rows, isEmpty);
+  group('flattenReport — table shape', () {
+    test('reads the rows out from under rowsPath', () {
+      const def = ReportCatalog.salesRegister;
+      final table = flattenReport(def, {
+        'items': [
+          {'voucher_no': 'A1'},
+        ],
+        'meta': {'total': 1},
+      });
+      expect(table.headers, def.columns.map((c) => c.label));
+      expect(table.rows, hasLength(1));
+    });
+  });
+
+  group('ReportDefinition.paginated', () {
+    test('a table report with a rowsPath pages, a statement does not', () {
+      // Drives whether the export re-fetches at export size — get this wrong
+      // and the register exports page one.
+      expect(ReportCatalog.salesRegister.paginated, isTrue);
+      expect(ReportCatalog.balanceSheet.paginated, isFalse);
     });
   });
 }

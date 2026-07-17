@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-/// Adaptive binder shell: drawer on mobile, icon spine on tablet, extended
-/// labeled spine on desktop. Single [AppMenu] model drives every form.
+/// Adaptive binder shell: drawer on mobile; collapsible binder spine on
+/// tablet/desktop (icon-only ↔ labeled). Single [AppMenu] model drives every form.
 class AppShell extends StatelessWidget {
   const AppShell({required this.child, super.key});
 
@@ -60,15 +60,17 @@ class AppShell extends StatelessWidget {
             onSelect: onSelect,
             child: child,
           ),
+          // Tablet starts icon-only; desktop starts labeled. User can toggle
+          // either way via the sidebar footer control.
           DeviceClass.tablet => _RailShell(
-            extended: false,
+            initialExtended: false,
             sections: sections,
             selectedIndex: selectedIndex,
             onSelect: onSelect,
             child: child,
           ),
           DeviceClass.desktop || DeviceClass.large => _RailShell(
-            extended: true,
+            initialExtended: true,
             sections: sections,
             selectedIndex: selectedIndex,
             onSelect: onSelect,
@@ -247,20 +249,31 @@ class _MobileShellState extends State<_MobileShell> {
   }
 }
 
-class _RailShell extends StatelessWidget {
+class _RailShell extends StatefulWidget {
   const _RailShell({
-    required this.extended,
+    required this.initialExtended,
     required this.sections,
     required this.selectedIndex,
     required this.onSelect,
     required this.child,
   });
 
-  final bool extended;
+  /// Starting width mode for this session. Not reapplied when the breakpoint
+  /// flips tablet ↔ desktop so a manual expand/collapse is preserved.
+  final bool initialExtended;
   final List<MenuSectionModel> sections;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final Widget child;
+
+  @override
+  State<_RailShell> createState() => _RailShellState();
+}
+
+class _RailShellState extends State<_RailShell> {
+  late bool _extended = widget.initialExtended;
+
+  void _toggleExtended() => setState(() => _extended = !_extended);
 
   @override
   Widget build(BuildContext context) {
@@ -275,17 +288,18 @@ class _RailShell extends StatelessWidget {
           children: [
             BinderSidebar(
               key: const Key('binder-sidebar'),
-              extended: extended,
-              sections: sections,
-              selectedIndex: selectedIndex,
-              onSelect: onSelect,
+              extended: _extended,
+              sections: widget.sections,
+              selectedIndex: widget.selectedIndex,
+              onSelect: widget.onSelect,
+              onToggleExtended: _toggleExtended,
             ),
             VerticalDivider(width: 1, thickness: 1, color: brand.mist),
             Expanded(
               child: Column(
                 children: [
                   const ShellHeader(),
-                  Expanded(child: child),
+                  Expanded(child: widget.child),
                 ],
               ),
             ),

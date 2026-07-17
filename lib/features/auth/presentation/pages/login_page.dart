@@ -4,6 +4,12 @@ import 'package:algo_erp_front/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+/// Local UI toggle for password visibility on the login form.
+class _ObscurePasswordCubit extends Cubit<bool> {
+  _ObscurePasswordCubit() : super(true);
+  void toggle() => emit(!state);
+}
+
 /// Adaptive sign-in screen — "closed desk, open for the day".
 ///
 /// Linen canvas, paper card, brand logo. Desktop splits into a soft lagoon
@@ -24,7 +30,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
-  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -62,85 +67,93 @@ class _LoginPageState extends State<LoginPage> {
     final tokens = context.tokens;
     final brand = tokens.brand;
 
-    return Scaffold(
-      backgroundColor: brand.linen,
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listenWhen: (previous, current) =>
-            current is AuthFailure && current.fieldErrors.isEmpty,
-        listener: (context, state) {
-          if (state is AuthFailure) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text(state.failure.message)));
-          }
-        },
-        builder: (context, state) {
-          final isLoading = state is AuthLoading;
-          final fieldErrors = state is AuthFailure
-              ? state.fieldErrors
-              : const <String, String>{};
-          final form = _LoginForm(
-            formKey: _formKey,
-            usernameController: _usernameController,
-            passwordController: _passwordController,
-            obscurePassword: _obscurePassword,
-            onToggleObscure: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
-            isLoading: isLoading,
-            fieldErrors: fieldErrors,
-            onSubmit: _submit,
-            showLogo: true,
-          );
+    return BlocProvider(
+      create: (_) => _ObscurePasswordCubit(),
+      child: Scaffold(
+        backgroundColor: brand.linen,
+        body: BlocConsumer<AuthBloc, AuthState>(
+          listenWhen: (previous, current) =>
+              current is AuthFailure && current.fieldErrors.isEmpty,
+          listener: (context, state) {
+            if (state is AuthFailure) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(SnackBar(content: Text(state.failure.message)));
+            }
+          },
+          builder: (context, state) {
+            final isLoading = state is AuthLoading;
+            final fieldErrors = state is AuthFailure
+                ? state.fieldErrors
+                : const <String, String>{};
+            return BlocBuilder<_ObscurePasswordCubit, bool>(
+              builder: (context, obscurePassword) {
+                final form = _LoginForm(
+                  formKey: _formKey,
+                  usernameController: _usernameController,
+                  passwordController: _passwordController,
+                  obscurePassword: obscurePassword,
+                  onToggleObscure: context.read<_ObscurePasswordCubit>().toggle,
+                  isLoading: isLoading,
+                  fieldErrors: fieldErrors,
+                  onSubmit: _submit,
+                  showLogo: true,
+                );
 
-          if (context.isMobile) {
-            return SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(tokens.spacing.lg),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: form,
-                  ),
-                ),
-              ),
-            );
-          }
-
-          return Row(
-            children: [
-              const Expanded(flex: 5, child: _DeskWashPanel()),
-              Expanded(
-                flex: 4,
-                child: ColoredBox(
-                  color: brand.linen,
-                  child: SafeArea(
+                if (context.isMobile) {
+                  return SafeArea(
                     child: Center(
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.all(tokens.spacing.xl),
+                        padding: EdgeInsets.all(tokens.spacing.lg),
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 420),
-                          child: Card(
-                            elevation: tokens.elevation.level2,
-                            color: brand.paper,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                tokens.radii.xl,
-                              ),
-                            ),
-                            child: Padding(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: form,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return Row(
+                  children: [
+                    const Expanded(flex: 5, child: _DeskWashPanel()),
+                    Expanded(
+                      flex: 4,
+                      child: ColoredBox(
+                        color: brand.linen,
+                        child: SafeArea(
+                          child: Center(
+                            child: SingleChildScrollView(
                               padding: EdgeInsets.all(tokens.spacing.xl),
-                              child: form,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 420,
+                                ),
+                                child: Card(
+                                  elevation: tokens.elevation.level2,
+                                  color: brand.paper,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      tokens.radii.xl,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(tokens.spacing.xl),
+                                    child: form,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

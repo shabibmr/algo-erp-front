@@ -25,14 +25,20 @@ void main() {
         'Inventory',
         'Finance',
         'People',
-        'General',
-        'Organization',
         'Reports',
         'Settings',
       ]);
     });
 
-    test('All documents is routed but kept out of the binder', () {
+    test('Organization and All documents are routed but not in the binder', () {
+      expect(AppMenu.hubs.containsKey('/organization'), isTrue);
+      expect(AppMenu.hubs['/organization']!.inBinder, isFalse);
+      expect(AppMenu.allItems.any((i) => i.route == '/organization'), isFalse);
+      expect(
+        AppMenu.allShellListItems.any((i) => i.route == '/organization'),
+        isTrue,
+      );
+
       expect(AppMenu.hubs.containsKey('/transactions'), isTrue);
       expect(AppMenu.allItems.any((i) => i.route == '/transactions'), isFalse);
       expect(
@@ -41,10 +47,16 @@ void main() {
       );
     });
 
+    test('General hub is removed', () {
+      expect(AppMenu.hubs.containsKey('/general'), isFalse);
+      expect(AppMenu.allItems.any((i) => i.label == 'General'), isFalse);
+    });
+
     test('every tile has exactly one canonical home', () {
       final owners = <String, List<String>>{};
       for (final hub in AppMenu.hubs.values) {
-        if (!hub.inBinder) continue;
+        // All-documents reuses domain tiles; skip ownership claims from it.
+        if (hub.route == '/transactions') continue;
         for (final tile in hub.tiles) {
           owners.putIfAbsent(tile.route, () => []).add(hub.label);
         }
@@ -111,7 +123,17 @@ void main() {
         AppMenu.selectedBinderRoute('/transactions/godown-transfers'),
         '/inventory',
       );
-      expect(AppMenu.selectedBinderRoute('/organization/contacts'), '/general');
+      // Organization lives under Settings, not as its own binder entry.
+      expect(
+        AppMenu.selectedBinderRoute('/organization/contacts'),
+        '/settings',
+      );
+      expect(AppMenu.selectedBinderRoute('/organization'), '/settings');
+      // Fiscal masters still highlight Finance, their canonical home.
+      expect(
+        AppMenu.selectedBinderRoute('/organization/currencies'),
+        '/accounts',
+      );
     });
 
     test('child routes resolve to the owning hub', () {
@@ -140,6 +162,7 @@ void main() {
       expect(labels, isNot(contains('Purchase')));
       expect(labels, isNot(contains('People')));
       expect(labels, isNot(contains('Organization')));
+      expect(labels, isNot(contains('General')));
       // Ungated entries always survive.
       expect(labels, containsAll(['Desk', 'Reports', 'Settings']));
 

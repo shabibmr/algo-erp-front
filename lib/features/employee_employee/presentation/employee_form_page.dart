@@ -1,19 +1,15 @@
-import 'dart:async';
-
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/bloc/crud_contract.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
-import 'package:algo_erp_front/core/bloc/form_mixin.dart';
+import 'package:algo_erp_front/core/bloc/master_form_cubit.dart';
+import 'package:algo_erp_front/core/bloc/master_form_state.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/manifest/field_renderer.dart';
-import 'package:algo_erp_front/core/manifest/field_spec.dart';
 import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
-import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
@@ -51,15 +47,25 @@ class EmployeeFormPage extends StatelessWidget {
                 Text(title, style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: mode == FormMode.edit
-                      ? BlocProvider<DetailBloc<Employee, int>>(
-                          create: (ctx) => DetailBloc<Employee, int>(
-                            repository: ctx.read<Repository<Employee, int>>(),
-                            id: entityId!,
-                          )..add(const DetailLoadRequested()),
-                          child: _EmployeeTabbedForm(mode: mode),
-                        )
-                      : _EmployeeTabbedForm(mode: mode),
+                  child: BlocProvider(
+                    create: (_) => MasterFormCubit<Employee, int>(
+                      manifest: employeeManifest,
+                      mode: mode,
+                      idOf: (e) => e.id,
+                      formFields: allEmployeeFormFields(
+                        employeeManifest.formFields,
+                      ),
+                    ),
+                    child: mode == FormMode.edit
+                        ? BlocProvider<DetailBloc<Employee, int>>(
+                            create: (ctx) => DetailBloc<Employee, int>(
+                              repository: ctx.read<Repository<Employee, int>>(),
+                              id: entityId!,
+                            )..add(const DetailLoadRequested()),
+                            child: _EmployeeTabbedForm(mode: mode),
+                          )
+                        : _EmployeeTabbedForm(mode: mode),
+                  ),
                 ),
               ],
             ),
@@ -80,29 +86,14 @@ class _EmployeeTabbedForm extends StatefulWidget {
 }
 
 class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
-    with FormMixin, SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late final TabController _tabs;
   final _formKey = GlobalKey<FormState>();
-  late Employee _draft;
-  bool _seeded = false;
-  bool _submitting = false;
-  String? _generalError;
-  Map<String, String> _fieldErrors = const {};
-  final Map<String, Object?> _fkDisplayCache = {};
-
-  List<FormFieldSpec<Employee>> get _allFields =>
-      allEmployeeFormFields(employeeManifest.formFields);
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
-    if (widget.mode == FormMode.create) {
-      _draft = employeeManifest.emptyEntity!();
-      _seeded = true;
-    } else {
-      _draft = employeeManifest.emptyEntity!();
-    }
   }
 
   @override
@@ -111,87 +102,10 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
     super.dispose();
   }
 
-  static bool _isFkType(FieldType type) =>
-      type == FieldType.fk || type == FieldType.selfFk;
-
-  void _seedFromLoaded(Employee entity) {
-    if (_seeded) return;
-    _seeded = true;
-    _draft = entity;
-    for (final field in _allFields) {
-      if (!_isFkType(field.type)) continue;
-      final rawId = field.getValue(entity);
-      if (rawId == null) continue;
-      unawaited(
-        field.fkResolveById!(rawId).then((resolved) {
-          if (!mounted || resolved == null) return;
-          setState(() => _fkDisplayCache[field.key] = resolved);
-        }),
-      );
-    }
-  }
-
-  void _setField(FormFieldSpec<Employee> field, Object? value) {
-    setState(() {
-      _draft = field.setValue(_draft, value);
-      if (_isFkType(field.type)) _fkDisplayCache[field.key] = value;
-      _fieldErrors = Map.of(_fieldErrors)..remove(field.errorKey);
-    });
-  }
-
-  Future<List<Object>> _fkLoader(
-    FormFieldSpec<Employee> field,
-    String query,
-  ) async {
-    return field.fkSearch!(query);
-  }
-
-  Future<void> _submit(Repository<Employee, int> repo) async {
-    if (widget.mode == FormMode.edit && !employeeManifest.supportsUpdate) {
-      return;
-    }
-    final formState = _formKey.currentState;
-    if (formState == null || !formState.validate()) return;
-    setState(() {
-      _submitting = true;
-      _generalError = null;
-    });
-    final draft = _draft;
-    final result = widget.mode == FormMode.create
-        ? await repo.create(draft)
-        : await repo.update(draft.id, draft);
-    if (!mounted) return;
-    result.fold((failure) {
-      setState(() {
-        _submitting = false;
-        _fieldErrors = fieldErrorsFrom(failure);
-        _generalError = failure is ValidationFailure
-            ? null
-            : _messageOf(failure);
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _formKey.currentState?.validate();
-      });
-    }, (_) => _refreshListAndReturn(context));
-  }
-
   void _refreshListAndReturn(BuildContext context) {
     employeeCrudBloc(context).add(const CrudRefreshRequested());
     context.go(employeeManifest.resourcePath);
   }
-
-  String _messageOf(Failure failure) => switch (failure) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
 
   Future<void> _delete(BuildContext context) async {
     if (!employeeManifest.supportsDelete) return;
@@ -210,24 +124,31 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
     );
   }
 
-  Widget _fieldList(List<FormFieldSpec<Employee>> fields) {
+  Widget _fieldList(
+    MasterFormCubit<Employee, int> cubit,
+    MasterFormState<Employee> state,
+    List<FormFieldSpec<Employee>> fields,
+  ) {
     final tokens = context.tokens;
     final isReadOnlyEdit =
         widget.mode == FormMode.edit && !employeeManifest.supportsUpdate;
+    final draft = state.draft;
+    if (draft == null) return const SizedBox.shrink();
+
     return ListView(
       padding: EdgeInsets.only(top: tokens.spacing.sm),
       children: [
         for (final field in fields) ...[
           FieldRenderer.build<Employee>(
             field: field,
-            value: _isFkType(field.type)
-                ? _fkDisplayCache[field.key]
-                : field.getValue(_draft),
-            onChanged: (value) => _setField(field, value),
-            enabled: !_submitting && !isReadOnlyEdit,
-            errorText: _fieldErrors[field.errorKey],
-            fkLoaderOverride: _isFkType(field.type)
-                ? (q) => _fkLoader(field, q)
+            value: MasterFormCubit.isFkType(field.type)
+                ? state.fkDisplayCache[field.key]
+                : field.getValue(draft),
+            onChanged: (value) => cubit.setField(field, value),
+            enabled: !state.submitting && !isReadOnlyEdit,
+            errorText: state.fieldErrors[field.errorKey],
+            fkLoaderOverride: MasterFormCubit.isFkType(field.type)
+                ? (q) => cubit.fkLoader(field, q)
                 : null,
           ),
           SizedBox(height: tokens.spacing.sm),
@@ -236,7 +157,11 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
     );
   }
 
-  Widget _buildForm(Repository<Employee, int> repo) {
+  Widget _buildForm(
+    Repository<Employee, int> repo,
+    MasterFormCubit<Employee, int> cubit,
+    MasterFormState<Employee> state,
+  ) {
     final tokens = context.tokens;
     final action = widget.mode == FormMode.create
         ? PermissionAction.create
@@ -262,7 +187,7 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
             ),
             SizedBox(height: tokens.spacing.md),
           ],
-          if (_generalError != null) ...[
+          if (state.generalError != null) ...[
             Container(
               padding: EdgeInsets.all(tokens.spacing.sm),
               decoration: BoxDecoration(
@@ -270,7 +195,7 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
                 borderRadius: BorderRadius.circular(tokens.radii.sm),
               ),
               child: Text(
-                _generalError!,
+                state.generalError!,
                 style: TextStyle(color: tokens.semanticColors.danger),
               ),
             ),
@@ -289,9 +214,9 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
             child: TabBarView(
               controller: _tabs,
               children: [
-                _fieldList(employeeManifest.formFields),
-                _fieldList(employeeBankFormFields),
-                _fieldList(employeeSalaryFormFields),
+                _fieldList(cubit, state, employeeManifest.formFields),
+                _fieldList(cubit, state, employeeBankFormFields),
+                _fieldList(cubit, state, employeeSalaryFormFields),
               ],
             ),
           ),
@@ -303,9 +228,15 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
                   module: employeeManifest.rbacModule,
                   action: action,
                   child: FilledButton(
-                    onPressed: _submitting ? null : () => _submit(repo),
+                    onPressed: state.submitting
+                        ? null
+                        : () => cubit.submit(
+                            repository: repo,
+                            formIsValid: () =>
+                                _formKey.currentState?.validate() ?? false,
+                          ),
                     child: Text(
-                      _submitting
+                      state.submitting
                           ? 'Saving...'
                           : (widget.mode == FormMode.create
                                 ? 'Create'
@@ -319,7 +250,7 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
                   module: employeeManifest.rbacModule,
                   action: PermissionAction.delete,
                   child: OutlinedButton(
-                    onPressed: _submitting ? null : () => _delete(context),
+                    onPressed: state.submitting ? null : () => _delete(context),
                     child: const Text('Delete'),
                   ),
                 ),
@@ -335,28 +266,82 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
   Widget build(BuildContext context) {
     final repo = RepositoryProvider.of<Repository<Employee, int>>(context);
 
-    if (widget.mode == FormMode.create) {
-      return _buildForm(repo);
-    }
-
-    return BlocListener<DetailBloc<Employee, int>, DetailState<Employee>>(
+    return BlocListener<
+      MasterFormCubit<Employee, int>,
+      MasterFormState<Employee>
+    >(
+      listenWhen: (previous, current) =>
+          previous.savedEntity != current.savedEntity &&
+              current.savedEntity != null ||
+          previous.serverErrorsVersion != current.serverErrorsVersion,
       listener: (context, state) {
-        if (state is DetailDeleted<Employee>) {
+        if (state.savedEntity != null) {
           _refreshListAndReturn(context);
+          return;
         }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _formKey.currentState?.validate();
+        });
       },
-      child: BlocBuilder<DetailBloc<Employee, int>, DetailState<Employee>>(
-        builder: (context, state) {
-          if (state is DetailLoaded<Employee>) _seedFromLoaded(state.entity);
-          return AsyncStateView<Employee>(
-            state: state.toViewState(),
-            onRetry: () => context.read<DetailBloc<Employee, int>>().add(
-              const DetailLoadRequested(),
+      child: widget.mode == FormMode.create
+          ? BlocBuilder<
+              MasterFormCubit<Employee, int>,
+              MasterFormState<Employee>
+            >(
+              builder: (context, state) {
+                final cubit = context.read<MasterFormCubit<Employee, int>>();
+                return _buildForm(repo, cubit, state);
+              },
+            )
+          : MultiBlocListener(
+              listeners: [
+                BlocListener<DetailBloc<Employee, int>, DetailState<Employee>>(
+                  listener: (context, state) {
+                    if (state is DetailDeleted<Employee>) {
+                      _refreshListAndReturn(context);
+                    }
+                  },
+                ),
+                BlocListener<DetailBloc<Employee, int>, DetailState<Employee>>(
+                  listenWhen: (previous, current) =>
+                      current is DetailLoaded<Employee> &&
+                      previous is! DetailLoaded<Employee>,
+                  listener: (context, state) {
+                    if (state is DetailLoaded<Employee>) {
+                      context
+                          .read<MasterFormCubit<Employee, int>>()
+                          .seedFromEntity(state.entity);
+                    }
+                  },
+                ),
+              ],
+              child:
+                  BlocBuilder<DetailBloc<Employee, int>, DetailState<Employee>>(
+                    builder: (context, detailState) {
+                      return AsyncStateView<Employee>(
+                        state: detailState.toViewState(),
+                        onRetry: () => context
+                            .read<DetailBloc<Employee, int>>()
+                            .add(const DetailLoadRequested()),
+                        builder: (context, _) {
+                          return BlocBuilder<
+                            MasterFormCubit<Employee, int>,
+                            MasterFormState<Employee>
+                          >(
+                            builder: (context, formState) {
+                              final cubit = context
+                                  .read<MasterFormCubit<Employee, int>>();
+                              if (formState.draft == null) {
+                                return const SizedBox.shrink();
+                              }
+                              return _buildForm(repo, cubit, formState);
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
             ),
-            builder: (context, _) => _buildForm(repo),
-          );
-        },
-      ),
     );
   }
 }

@@ -157,7 +157,6 @@ abstract final class AppMenu {
     '/inventory': _inventory,
     '/accounts': _finance,
     '/employee': _people,
-    '/general': _general,
     '/organization': _organization,
     '/transactions': _allDocuments,
   };
@@ -496,57 +495,15 @@ abstract final class AppMenu {
     ],
   );
 
-  /// Reference data no single domain owns. Seeded with Contact; new
-  /// cross-domain masters belong here rather than in Organization.
-  static const ModuleHub _general = ModuleHub(
-    route: '/general',
-    label: 'General',
-    icon: Icons.dataset_outlined,
-    selectedIcon: Icons.dataset,
-    eyebrow: 'Back office',
-    subtitle: 'Shared reference data used across every domain',
-    groups: [
-      MenuGroup(
-        title: 'Shared reference data',
-        items: [
-          MenuItemModel(
-            label: 'Contact',
-            icon: Icons.contacts_outlined,
-            selectedIcon: Icons.contacts,
-            route: '/organization/contacts',
-            requiredModule: 'AddressBook',
-            blurb: 'Address book contacts',
-          ),
-        ],
-      ),
-    ],
-    crossLinks: [
-      MenuItemModel(
-        label: 'Ledger',
-        icon: Icons.menu_book_outlined,
-        selectedIcon: Icons.menu_book,
-        route: '/accounts/ledgers',
-        requiredModule: 'Accounts',
-        blurb: 'Customers, suppliers, cash, bank, and GL',
-      ),
-      MenuItemModel(
-        label: 'Project',
-        icon: Icons.account_tree_outlined,
-        selectedIcon: Icons.account_tree,
-        route: '/organization/projects',
-        requiredModule: 'ProjectMaster',
-        blurb: 'Project hierarchy for vouchers',
-      ),
-    ],
-  );
-
+  /// Company structure and admin. Not a binder entry — opened from Settings.
   static const ModuleHub _organization = ModuleHub(
     route: '/organization',
     label: 'Organization',
     icon: Icons.corporate_fare_outlined,
     selectedIcon: Icons.corporate_fare,
-    eyebrow: 'Back office',
+    eyebrow: 'Settings',
     subtitle: 'Company structure, access, and system administration',
+    inBinder: false,
     groups: [
       MenuGroup(
         title: 'Structure',
@@ -574,6 +531,14 @@ abstract final class AppMenu {
             route: '/organization/projects',
             requiredModule: 'ProjectMaster',
             blurb: 'Project hierarchy for vouchers',
+          ),
+          MenuItemModel(
+            label: 'Contact',
+            icon: Icons.contacts_outlined,
+            selectedIcon: Icons.contacts,
+            route: '/organization/contacts',
+            requiredModule: 'AddressBook',
+            blurb: 'Address book contacts',
           ),
         ],
       ),
@@ -629,14 +594,6 @@ abstract final class AppMenu {
       ),
     ],
     crossLinks: [
-      MenuItemModel(
-        label: 'Contact',
-        icon: Icons.contacts_outlined,
-        selectedIcon: Icons.contacts,
-        route: '/organization/contacts',
-        requiredModule: 'AddressBook',
-        blurb: 'Address book contacts',
-      ),
       MenuItemModel(
         label: 'Voucher series',
         icon: Icons.pin_outlined,
@@ -875,13 +832,14 @@ abstract final class AppMenu {
 
   /// The hub that owns [route], or null. Prefers an exact tile match, then the
   /// longest matching tile prefix — a voucher's *route* prefix (`/transactions`)
-  /// is not its owner, so prefix-matching hub routes alone would be wrong.
+  /// is not its owner, so the All-documents hub is never considered.
   static ModuleHub? owningHub(String route) {
     ModuleHub? best;
     var bestLength = -1;
 
     for (final hub in hubs.values) {
-      if (!hub.inBinder) continue;
+      // Index hub only — never claims ownership over domain tiles.
+      if (hub.route == '/transactions') continue;
       for (final tile in hub.tiles) {
         if (route == tile.route) return hub;
         if (route.startsWith('${tile.route}/') &&
@@ -894,7 +852,7 @@ abstract final class AppMenu {
     if (best != null) return best;
 
     for (final hub in hubs.values) {
-      if (!hub.inBinder) continue;
+      if (hub.route == '/transactions') continue;
       if (route == hub.route || route.startsWith('${hub.route}/')) {
         if (hub.route.length > bestLength) {
           best = hub;
@@ -912,7 +870,11 @@ abstract final class AppMenu {
         return item.route;
       }
     }
-    return owningHub(location)?.route;
+    final hub = owningHub(location);
+    if (hub == null) return null;
+    // Organization (and any other non-binder hub) lives under Settings.
+    if (!hub.inBinder) return settings.route;
+    return hub.route;
   }
 
   /// [sections] with everything the user may not read removed. A hub survives

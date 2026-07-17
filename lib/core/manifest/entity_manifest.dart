@@ -31,7 +31,7 @@ class EntityManifest<E> {
     required this.listColumns,
     this.searchFields = const [],
     this.supportsPrint = false,
-    this.supportsExcel = false,
+    this.supportsExport = true,
     this.shareActions = const [],
     this.formFields = const [],
     this.emptyEntity,
@@ -73,8 +73,17 @@ class EntityManifest<E> {
   /// Whether this entity supports printing or exporting to PDF/print preview.
   final bool supportsPrint;
 
-  /// Whether this entity supports Excel/CSV export.
-  final bool supportsExcel;
+  /// Whether the list offers "Export to Excel" (and CSV alongside it).
+  ///
+  /// **Defaults to on.** Every list is built from [listColumns], and every one
+  /// of those columns already knows how to render itself, so there is nothing
+  /// for a manifest to do to earn an export — a spreadsheet of what is on the
+  /// screen is always a reasonable thing for a user to ask for. Set it `false`
+  /// only where an export would be actively wrong.
+  ///
+  /// (This was `supportsExcel`, defaulted `false`, and gated a *CSV* export
+  /// that consequently no manifest ever switched on.)
+  final bool supportsExport;
 
   /// Share actions supported for this entity (e.g. `'email'`, `'whatsapp'`).
   final List<String> shareActions;

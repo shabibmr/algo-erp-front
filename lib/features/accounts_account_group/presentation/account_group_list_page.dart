@@ -2,10 +2,13 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -24,11 +27,20 @@ class AccountGroupListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dio = getIt<DioClient>();
-    return BlocProvider<AccountGroupListBloc>(
-      create: (_) =>
-          AccountGroupListBloc(repository: createAccountGroupRepository(dio))
-            ..add(const AccountGroupListFetchRequested()),
+    // One repository, two blocs: the list reads pages through it, and export
+    // walks every page of the same query through it.
+    final repository = createAccountGroupRepository(getIt<DioClient>());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AccountGroupListBloc>(
+          create: (_) =>
+              AccountGroupListBloc(repository: repository)
+                ..add(const AccountGroupListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<AccountGroup>>(
+          create: (_) => ExportCubit<AccountGroup>(source: repository.list),
+        ),
+      ],
       child: BlocListener<AccountGroupListBloc, AccountGroupListState>(
         listenWhen: (prev, curr) => prev.actionMessage != curr.actionMessage,
         listener: (context, state) {
@@ -69,40 +81,50 @@ class _AccountGroupListView extends StatelessWidget {
         builder: (context, state) {
           final bloc = context.read<AccountGroupListBloc>();
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      accountGroupManifest.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
+          return CreateNewShortcuts(
+            module: accountGroupManifest.rbacModule,
+            onCreate: () => context.push('/accounts/groups/new'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        accountGroupManifest.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                     ),
-                  ),
-                  PermissionGate(
-                    module: accountGroupManifest.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
-                      onPressed: () => context.push('/accounts/groups/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New Account Group'),
+                    if (accountGroupManifest.supportsExport)
+                      ExportButton<AccountGroup>.fromManifest(
+                        manifest: accountGroupManifest,
+                        query: () => state.query,
+                      ),
+                    PermissionGate(
+                      module: accountGroupManifest.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () => context.push('/accounts/groups/new'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Account Group'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 300,
-                child: AppTextField(
-                  label: 'Search Account Group',
-                  value: state.search,
-                  onChanged: (v) => bloc.add(AccountGroupListSearchChanged(v)),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 300,
+                  child: AppTextField(
+                    label: 'Search Account Group',
+                    value: state.search,
+                    onChanged: (v) =>
+                        bloc.add(AccountGroupListSearchChanged(v)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
+              ],
+            ),
           );
         },
       ),

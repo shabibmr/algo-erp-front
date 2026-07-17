@@ -7,24 +7,6 @@ import 'package:equatable/equatable.dart';
 
 enum SalesInvoiceListStatus { initial, loading, success, failure }
 
-/// A finished export, waiting for the view to turn it into a file.
-///
-/// The bloc gathers the rows; writing bytes to disk is a side effect and stays
-/// in the widget layer. [total] is what the server says matches the filter, so
-/// the view can tell the user when the cap trimmed the export rather than
-/// letting a short file pass for a complete one.
-final class SalesInvoiceExport extends Equatable {
-  const SalesInvoiceExport({required this.rows, required this.total});
-
-  final List<SalesInvoiceListItem> rows;
-  final int total;
-
-  bool get isTruncated => rows.length < total;
-
-  @override
-  List<Object?> get props => [rows, total];
-}
-
 final class SalesInvoiceListState extends Equatable {
   const SalesInvoiceListState({
     this.status = SalesInvoiceListStatus.initial,
@@ -33,8 +15,6 @@ final class SalesInvoiceListState extends Equatable {
     this.page = 1,
     this.meta,
     this.isLoadingMore = false,
-    this.isExporting = false,
-    this.export,
     this.startDate,
     this.endDate,
     this.statusFilter,
@@ -52,12 +32,6 @@ final class SalesInvoiceListState extends Equatable {
   final int page;
   final PaginationMeta? meta;
   final bool isLoadingMore;
-
-  final bool isExporting;
-
-  /// One-shot: set when an export finishes, cleared by a
-  /// `SalesInvoiceListExportHandled` once the view has written the file.
-  final SalesInvoiceExport? export;
 
   final DateTime? startDate;
   final DateTime? endDate;
@@ -106,8 +80,6 @@ final class SalesInvoiceListState extends Equatable {
     int? page,
     PaginationMeta? Function()? meta,
     bool? isLoadingMore,
-    bool? isExporting,
-    SalesInvoiceExport? Function()? export,
     DateTime? Function()? startDate,
     DateTime? Function()? endDate,
     String? Function()? statusFilter,
@@ -123,8 +95,6 @@ final class SalesInvoiceListState extends Equatable {
       page: page ?? this.page,
       meta: meta != null ? meta() : this.meta,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      isExporting: isExporting ?? this.isExporting,
-      export: export != null ? export() : this.export,
       startDate: startDate != null ? startDate() : this.startDate,
       endDate: endDate != null ? endDate() : this.endDate,
       statusFilter: statusFilter != null ? statusFilter() : this.statusFilter,
@@ -143,8 +113,6 @@ final class SalesInvoiceListState extends Equatable {
     page,
     meta,
     isLoadingMore,
-    isExporting,
-    export,
     startDate,
     endDate,
     statusFilter,

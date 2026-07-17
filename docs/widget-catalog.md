@@ -157,6 +157,27 @@ These controls act on the sheet's *contents*. Page-level actions go on
 **Key props:** `searchHint`, `onSearchChanged`, `filters`,
 `onFilterToggled`, `trailing`.
 
+## Export
+
+### `ExportButton<E>` — `export/export_button.dart`
+The export control every list wears: a menu offering **Excel (.xlsx)** and CSV.
+Lives in `FilterBar.trailing` on a `WorkSheet`, or in the header `Row` on the
+feature-bloc lists. Shows a spinner while the rows are being gathered, then
+writes the file and snackbars where it went — naming the truncation when the
+5000-row cap trimmed it.
+
+Needs an `ExportCubit<E>` above it, which is what actually walks every page of
+the current query (the widget only writes the bytes). Use
+`ExportButton.fromManifest` for an entity that has an `EntityManifest`; pass
+`id` / `label` / `columns` directly for one that doesn't (the voucher lists —
+see `voucherExportColumns`).
+
+Gated on `EntityManifest.supportsExport`, which **defaults to true**: every
+list is built from `listColumns`, so there is nothing to opt into. Set it false
+only where an export would be actively wrong.
+
+**Key props:** `id`, `label`, `columns`, `query`.
+
 ## Lookup
 
 ### `FkLookupField<T>` — `lookup/fk_lookup_field.dart`

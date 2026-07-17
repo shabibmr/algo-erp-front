@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 ///   value: selectedCategory,
 ///   items: categories,
 ///   labelOf: (c) => c.name,
-///   onChanged: (c) => setState(() => selectedCategory = c),
+///   onChanged: (c) => context.read<MyCubit>().setCategory(c),
 /// )
 /// ```
 class AppDropdownField<T> extends StatelessWidget {

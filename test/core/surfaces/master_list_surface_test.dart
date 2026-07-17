@@ -12,9 +12,11 @@ import 'package:algo_erp_front/core/surfaces/master_list_surface.dart';
 import 'package:algo_erp_front/core/theme/app_theme.dart';
 import 'package:algo_erp_front/core/widgets/filters/filter_bar.dart';
 import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/ledger_skeleton.dart';
 import 'package:algo_erp_front/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -209,5 +211,32 @@ void main() {
     final query =
         verify(() => repo.list(captureAny())).captured.last as PageQuery;
     expect(query.search, 'alp');
+  });
+
+  testWidgets('Ctrl+N invokes onCreate', (tester) async {
+    when(() => repo.list(any())).thenAnswer(
+      (_) async => Right(_page([const _Widget(1, 'Alpha')], total: 1)),
+    );
+
+    var createCount = 0;
+    await tester.pumpWidget(
+      wrap(
+        MasterListSurface<_Widget>(
+          manifest: _manifest,
+          idOf: (w) => w.id,
+          onCreate: () => createCount++,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // CreateNewShortcuts autofocuses so Ctrl+N works without a click.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(createCount, 1);
+    expect(find.byType(CreateNewShortcuts), findsOneWidget);
   });
 }

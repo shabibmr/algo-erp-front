@@ -1,11 +1,9 @@
-import 'dart:async';
-
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/bloc/detail_bloc.dart';
-import 'package:algo_erp_front/core/bloc/form_mixin.dart';
+import 'package:algo_erp_front/core/bloc/master_form_cubit.dart';
+import 'package:algo_erp_front/core/bloc/master_form_state.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/manifest/entity_manifest.dart';
 import 'package:algo_erp_front/core/manifest/field_renderer.dart';
 import 'package:algo_erp_front/core/manifest/field_spec.dart';
@@ -19,12 +17,12 @@ import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Whether a [MasterFormSurface] is creating a new entity or editing one.
-enum FormMode { create, edit }
+export 'package:algo_erp_front/core/bloc/master_form_state.dart' show FormMode;
 
 /// Renders a manifest's create/edit form: fields from
 /// `manifest.formFields` via [FieldRenderer], server validation errors
-/// mapped back to fields by [FormMixin], and (edit mode) a delete action.
+/// mapped back to fields by [FormMixin] inside [MasterFormCubit], and
+/// (edit mode) a delete action.
 ///
 /// **Update-event design**: submits call `Repository<E,ID>.create`/`.update`
 /// directly (already the exact `Future<Result<E>>` shape a form submit
@@ -42,8 +40,9 @@ enum FormMode { create, edit }
 /// Expects a `Repository<E, ID>` provided above it (via `RepositoryProvider`)
 /// and — in edit mode — a `DetailBloc<E, ID>` provided above it as well.
 /// The Surface constructs neither, matching `MasterListSurface`'s
-/// no-bloc-construction convention.
-class MasterFormSurface<E, ID> extends StatefulWidget {
+/// no-bloc-construction convention. Draft/submit state lives in a local
+/// [MasterFormCubit] created by this widget.
+class MasterFormSurface<E, ID> extends StatelessWidget {
   const MasterFormSurface({
     required this.manifest,
     required this.mode,
@@ -65,118 +64,45 @@ class MasterFormSurface<E, ID> extends StatefulWidget {
   final VoidCallback? onCancel;
 
   @override
-  State<MasterFormSurface<E, ID>> createState() =>
-      _MasterFormSurfaceState<E, ID>();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          MasterFormCubit<E, ID>(manifest: manifest, mode: mode, idOf: idOf),
+      child: _MasterFormView<E, ID>(
+        manifest: manifest,
+        mode: mode,
+        idOf: idOf,
+        onSaved: onSaved,
+        onDeleted: onDeleted,
+        onCancel: onCancel,
+      ),
+    );
+  }
 }
 
-class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
-    with FormMixin {
-  final _formKey = GlobalKey<FormState>();
-  E? _draft;
-  bool _seeded = false;
-  bool _submitting = false;
-  String? _generalError;
-  Map<String, String> _fieldErrors = const {};
-  final Map<String, Object?> _fkDisplayCache = {};
+class _MasterFormView<E, ID> extends StatefulWidget {
+  const _MasterFormView({
+    required this.manifest,
+    required this.mode,
+    required this.idOf,
+    this.onSaved,
+    this.onDeleted,
+    this.onCancel,
+  });
+
+  final EntityManifest<E> manifest;
+  final FormMode mode;
+  final ID Function(E entity) idOf;
+  final ValueChanged<E>? onSaved;
+  final VoidCallback? onDeleted;
+  final VoidCallback? onCancel;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.mode == FormMode.create) {
-      _draft = widget.manifest.emptyEntity!();
-      _seeded = true;
-    }
-  }
+  State<_MasterFormView<E, ID>> createState() => _MasterFormViewState<E, ID>();
+}
 
-  static bool _isFkType(FieldType type) =>
-      type == FieldType.fk || type == FieldType.selfFk;
-
-  void _seedFromLoaded(E entity) {
-    if (_seeded) return;
-    _seeded = true;
-    _draft = entity;
-    for (final field in widget.manifest.formFields) {
-      if (!_isFkType(field.type)) continue;
-      final rawId = field.getValue(entity);
-      if (rawId == null) continue;
-      unawaited(
-        field.fkResolveById!(rawId).then((resolved) {
-          if (!mounted || resolved == null) return;
-          setState(() => _fkDisplayCache[field.key] = resolved);
-        }),
-      );
-    }
-  }
-
-  void _setField(FormFieldSpec<E> field, Object? value) {
-    setState(() {
-      _draft = field.setValue(_draft as E, value);
-      if (_isFkType(field.type)) _fkDisplayCache[field.key] = value;
-      _fieldErrors = Map.of(_fieldErrors)..remove(field.errorKey);
-    });
-  }
-
-  /// For [FieldType.selfFk], drop the draft row from parent candidates so the
-  /// user cannot pick self. Full cycle checks remain server-side.
-  Future<List<Object>> _fkLoader(FormFieldSpec<E> field, String query) async {
-    final items = await field.fkSearch!(query);
-    if (field.type != FieldType.selfFk || _draft == null) return items;
-    final selfId = widget.idOf(_draft as E);
-    return items
-        .where((item) {
-          // Self-ref pickers return the same entity type as the form draft.
-          return widget.idOf(item as E) != selfId;
-        })
-        .toList(growable: false);
-  }
-
-  Future<void> _submit(Repository<E, ID> repo) async {
-    // Defense in depth: capability flags are primarily a UI concern, but
-    // still refuse update when the manifest says the backend has no PUT.
-    if (widget.mode == FormMode.edit && !widget.manifest.supportsUpdate) {
-      return;
-    }
-    final formState = _formKey.currentState;
-    if (formState == null || !formState.validate()) return;
-    setState(() {
-      _submitting = true;
-      _generalError = null;
-    });
-    final draft = _draft as E;
-    final result = widget.mode == FormMode.create
-        ? await repo.create(draft)
-        : await repo.update(widget.idOf(draft), draft);
-    if (!mounted) return;
-    result.fold((failure) {
-      setState(() {
-        _submitting = false;
-        _fieldErrors = fieldErrorsFrom(failure);
-        _generalError = failure is ValidationFailure
-            ? null
-            : _messageOf(failure);
-      });
-      // FormField only re-runs its validator on Form.validate() — a
-      // rebuild alone (even with a changed validator closure) doesn't
-      // repaint the new server errorText, so force one after the errors
-      // above have landed in the widget tree.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _formKey.currentState?.validate();
-      });
-    }, (saved) => widget.onSaved?.call(saved));
-  }
-
-  String _messageOf(Failure failure) => switch (failure) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
+class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
+  final _formKey = GlobalKey<FormState>();
 
   Future<void> _delete(BuildContext context) async {
     if (!widget.manifest.supportsDelete) return;
@@ -203,8 +129,8 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
   };
 
   /// The save button keeps the name of what it does, through the whole flow.
-  String get _saveLabel {
-    if (_submitting) return 'Saving…';
+  String _saveLabel(bool submitting) {
+    if (submitting) return 'Saving…';
     return widget.mode == FormMode.create ? 'Create' : 'Save';
   }
 
@@ -247,15 +173,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     );
   }
 
-  /// Lays a section's fields out in one or two columns.
-  ///
-  /// - Mobile: one column.
-  /// - Tablet/desktop: two columns by default so the form uses the full
-  ///   work area (not a narrow 720px strip). Explicit `half: true` on both
-  ///   still pairs; a bool alone at the end of a row stays full width when
-  ///   it is the only remaining field.
   List<Widget> _fieldsOf(
     BuildContext context,
+    MasterFormCubit<E, ID> cubit,
+    MasterFormState<E> state,
     List<FormFieldSpec<E>> fields, {
     required bool enabled,
   }) {
@@ -275,12 +196,28 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _field(context, field, enabled: enabled)),
+                    Expanded(
+                      child: _field(
+                        context,
+                        cubit,
+                        state,
+                        field,
+                        enabled: enabled,
+                      ),
+                    ),
                     SizedBox(width: tokens.spacing.lg),
-                    Expanded(child: _field(context, next, enabled: enabled)),
+                    Expanded(
+                      child: _field(
+                        context,
+                        cubit,
+                        state,
+                        next,
+                        enabled: enabled,
+                      ),
+                    ),
                   ],
                 )
-              : _field(context, field, enabled: enabled),
+              : _field(context, cubit, state, field, enabled: enabled),
         ),
       );
       if (pairs) i++;
@@ -288,20 +225,13 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     return rows;
   }
 
-  /// Whether [a] and [b] share a row on wide layouts.
-  ///
-  /// Prefer explicit `half: true` pairs; otherwise auto-pair consecutive
-  /// compact fields so full-width forms don't leave empty horizontal space.
   bool _shouldPair(FormFieldSpec<E> a, FormFieldSpec<E> b) {
     if (a.half && b.half) return true;
-    // One field opted into half and the other didn't — don't force a pair.
     if (a.half || b.half) return false;
     return _isCompactField(a) && _isCompactField(b);
   }
 
   bool _isCompactField(FormFieldSpec<E> field) {
-    // Switches with long labels read better full width when alone; still
-    // pair when both sides are switches or compact inputs.
     return switch (field.type) {
       FieldType.text ||
       FieldType.int ||
@@ -315,24 +245,32 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
 
   Widget _field(
     BuildContext context,
+    MasterFormCubit<E, ID> cubit,
+    MasterFormState<E> state,
     FormFieldSpec<E> field, {
     required bool enabled,
   }) {
+    final draft = state.draft as E;
     return FieldRenderer.build<E>(
       field: field,
-      value: _isFkType(field.type)
-          ? _fkDisplayCache[field.key]
-          : field.getValue(_draft as E),
-      onChanged: (value) => _setField(field, value),
+      value: MasterFormCubit.isFkType(field.type)
+          ? state.fkDisplayCache[field.key]
+          : field.getValue(draft),
+      onChanged: (value) => cubit.setField(field, value),
       enabled: enabled,
-      errorText: _fieldErrors[field.errorKey],
-      fkLoaderOverride: _isFkType(field.type)
-          ? (q) => _fkLoader(field, q)
+      errorText: state.fieldErrors[field.errorKey],
+      fkLoaderOverride: MasterFormCubit.isFkType(field.type)
+          ? (q) => cubit.fkLoader(field, q)
           : null,
     );
   }
 
-  Widget _buildForm(BuildContext context, Repository<E, ID> repo) {
+  Widget _buildForm(
+    BuildContext context,
+    Repository<E, ID> repo,
+    MasterFormCubit<E, ID> cubit,
+    MasterFormState<E> state,
+  ) {
     final tokens = context.tokens;
     final manifest = widget.manifest;
     final action = widget.mode == FormMode.create
@@ -342,6 +280,8 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
         widget.mode == FormMode.edit && !manifest.supportsUpdate;
     final canDelete = widget.mode == FormMode.edit && manifest.supportsDelete;
     final sections = _sections;
+    final submitting = state.submitting;
+    final generalError = state.generalError;
 
     Widget formBody;
 
@@ -358,10 +298,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                 color: tokens.brand.inkMuted,
                 icon: Icons.lock_outline,
               ),
-            if (_generalError != null)
+            if (generalError != null)
               _banner(
                 context,
-                message: _generalError!,
+                message: generalError,
                 color: tokens.semanticColors.danger,
                 icon: Icons.error_outline,
               ),
@@ -391,8 +331,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                           mainAxisSize: MainAxisSize.min,
                           children: _fieldsOf(
                             context,
+                            cubit,
+                            state,
                             entry.value,
-                            enabled: !_submitting && !isReadOnlyEdit,
+                            enabled: !submitting && !isReadOnlyEdit,
                           ),
                         ),
                       ),
@@ -423,8 +365,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
               mainAxisSize: MainAxisSize.min,
               children: _fieldsOf(
                 context,
+                cubit,
+                state,
                 entry.value,
-                enabled: !_submitting && !isReadOnlyEdit,
+                enabled: !submitting && !isReadOnlyEdit,
               ),
             ),
           ),
@@ -446,10 +390,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                 color: tokens.brand.inkMuted,
                 icon: Icons.lock_outline,
               ),
-            if (_generalError != null)
+            if (generalError != null)
               _banner(
                 context,
-                message: _generalError!,
+                message: generalError,
                 color: tokens.semanticColors.danger,
                 icon: Icons.error_outline,
               ),
@@ -486,10 +430,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                 color: tokens.brand.inkMuted,
                 icon: Icons.lock_outline,
               ),
-            if (_generalError != null)
+            if (generalError != null)
               _banner(
                 context,
-                message: _generalError!,
+                message: generalError,
                 color: tokens.semanticColors.danger,
                 icon: Icons.error_outline,
               ),
@@ -507,8 +451,10 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   mainAxisSize: MainAxisSize.min,
                   children: _fieldsOf(
                     context,
+                    cubit,
+                    state,
                     entry.value,
-                    enabled: !_submitting && !isReadOnlyEdit,
+                    enabled: !submitting && !isReadOnlyEdit,
                   ),
                 ),
               ),
@@ -532,7 +478,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   module: manifest.rbacModule,
                   action: PermissionAction.delete,
                   child: TextButton.icon(
-                    onPressed: _submitting ? null : () => _delete(context),
+                    onPressed: submitting ? null : () => _delete(context),
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: const Text('Delete'),
                     style: TextButton.styleFrom(
@@ -542,7 +488,7 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                 ),
               const Spacer(),
               OutlinedButton(
-                onPressed: _submitting ? null : widget.onCancel,
+                onPressed: submitting ? null : widget.onCancel,
                 child: const Text('Cancel'),
               ),
               if (!isReadOnlyEdit) ...[
@@ -551,8 +497,14 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
                   module: manifest.rbacModule,
                   action: action,
                   child: FilledButton(
-                    onPressed: _submitting ? null : () => _submit(repo),
-                    child: Text(_saveLabel),
+                    onPressed: submitting
+                        ? null
+                        : () => cubit.submit(
+                            repository: repo,
+                            formIsValid: () =>
+                                _formKey.currentState?.validate() ?? false,
+                          ),
+                    child: Text(_saveLabel(submitting)),
                   ),
                 ),
               ],
@@ -568,36 +520,82 @@ class _MasterFormSurfaceState<E, ID> extends State<MasterFormSurface<E, ID>>
     final tokens = context.tokens;
     final repo = RepositoryProvider.of<Repository<E, ID>>(context);
 
-    // The header sits outside the load state: which record you opened is known
-    // before it arrives, so the page shouldn't be a nameless spinner.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PageHeader(eyebrow: widget.manifest.eyebrowText, title: _title),
-        SizedBox(height: tokens.spacing.lg),
-        Expanded(child: _body(context, repo)),
-      ],
+    return BlocListener<MasterFormCubit<E, ID>, MasterFormState<E>>(
+      listenWhen: (previous, current) =>
+          previous.savedEntity != current.savedEntity &&
+              current.savedEntity != null ||
+          previous.serverErrorsVersion != current.serverErrorsVersion,
+      listener: (context, state) {
+        final saved = state.savedEntity;
+        if (saved != null) {
+          widget.onSaved?.call(saved);
+          context.read<MasterFormCubit<E, ID>>().clearSaved();
+          return;
+        }
+        // FormField only re-runs its validator on Form.validate() — a
+        // rebuild alone doesn't repaint new server errorText.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _formKey.currentState?.validate();
+        });
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PageHeader(eyebrow: widget.manifest.eyebrowText, title: _title),
+          SizedBox(height: tokens.spacing.lg),
+          Expanded(child: _body(context, repo)),
+        ],
+      ),
     );
   }
 
   Widget _body(BuildContext context, Repository<E, ID> repo) {
     if (widget.mode == FormMode.create) {
-      return _buildForm(context, repo);
+      return BlocBuilder<MasterFormCubit<E, ID>, MasterFormState<E>>(
+        builder: (context, state) {
+          final cubit = context.read<MasterFormCubit<E, ID>>();
+          return _buildForm(context, repo, cubit, state);
+        },
+      );
     }
 
-    return BlocListener<DetailBloc<E, ID>, DetailState<E>>(
-      listener: (context, state) {
-        if (state is DetailDeleted<E>) widget.onDeleted?.call();
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<DetailBloc<E, ID>, DetailState<E>>(
+          listener: (context, state) {
+            if (state is DetailDeleted<E>) widget.onDeleted?.call();
+          },
+        ),
+        BlocListener<DetailBloc<E, ID>, DetailState<E>>(
+          listenWhen: (previous, current) =>
+              current is DetailLoaded<E> && previous is! DetailLoaded<E>,
+          listener: (context, state) {
+            if (state is DetailLoaded<E>) {
+              context.read<MasterFormCubit<E, ID>>().seedFromEntity(
+                state.entity,
+              );
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<DetailBloc<E, ID>, DetailState<E>>(
-        builder: (context, state) {
-          if (state is DetailLoaded<E>) _seedFromLoaded(state.entity);
+        builder: (context, detailState) {
           return AsyncStateView<E>(
-            state: state.toViewState(),
+            state: detailState.toViewState(),
             onRetry: () => context.read<DetailBloc<E, ID>>().add(
               const DetailLoadRequested(),
             ),
-            builder: (context, _) => _buildForm(context, repo),
+            builder: (context, _) {
+              return BlocBuilder<MasterFormCubit<E, ID>, MasterFormState<E>>(
+                builder: (context, formState) {
+                  final cubit = context.read<MasterFormCubit<E, ID>>();
+                  if (formState.draft == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return _buildForm(context, repo, cubit, formState);
+                },
+              );
+            },
           );
         },
       ),

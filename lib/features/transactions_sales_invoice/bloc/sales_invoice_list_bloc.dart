@@ -8,15 +8,6 @@ import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Export pulls far bigger pages than the screen does — the rows never render,
-/// so the only cost is bytes over the wire, and fewer round trips is faster.
-const _exportPageSize = 200;
-
-/// A backstop, not a business rule: an unbounded loop against a filter that
-/// matches the whole ledger would hammer the server and blow up memory. The
-/// view tells the user when this trims the file.
-const _exportRowCap = 5000;
-
 class SalesInvoiceListBloc
     extends Bloc<SalesInvoiceListEvent, SalesInvoiceListState> {
   SalesInvoiceListBloc({required SalesInvoiceRepository repository})
@@ -30,13 +21,6 @@ class SalesInvoiceListBloc
       _onLoadMoreRequested,
       transformer: droppable(),
     );
-    // An export walks every page; a second tap while one is running would
-    // double the traffic and race to hand the view two files.
-    on<SalesInvoiceListExportRequested>(
-      _onExportRequested,
-      transformer: droppable(),
-    );
-    on<SalesInvoiceListExportHandled>(_onExportHandled);
     on<SalesInvoiceListFilterToggled>(_onFilterToggled);
     on<SalesInvoiceListStartDateChanged>(_onStartDateChanged);
     on<SalesInvoiceListEndDateChanged>(_onEndDateChanged);
@@ -141,68 +125,6 @@ class SalesInvoiceListBloc
         ),
       ),
     );
-  }
-
-  /// Gathers every row matching the current filters — not just the pages
-  /// already scrolled into view, which would silently export a partial file.
-  ///
-  /// Writing the bytes is a side effect and belongs to the view, so the rows
-  /// are parked in state and the view is left to turn them into a file.
-  Future<void> _onExportRequested(
-    SalesInvoiceListExportRequested event,
-    Emitter<SalesInvoiceListState> emit,
-  ) async {
-    if (state.isExporting) return;
-
-    emit(state.copyWith(isExporting: true, export: () => null));
-
-    final base = state.query.copyWith(limit: _exportPageSize);
-    final rows = <SalesInvoiceListItem>[];
-    var page = 1;
-    var totalPages = 1;
-    var total = 0;
-
-    while (page <= totalPages && rows.length < _exportRowCap) {
-      final result = await _repository.list(base.copyWith(page: page));
-
-      final ok = result.fold(
-        (failure) {
-          emit(state.copyWith(isExporting: false, failure: () => failure));
-          return false;
-        },
-        (fetched) {
-          rows.addAll(fetched.items);
-          total = fetched.meta.total;
-          totalPages = fetched.meta.totalPages;
-          // A page that comes back empty would otherwise spin against a server
-          // whose totalPages disagrees with what it actually returns.
-          return fetched.items.isNotEmpty;
-        },
-      );
-      if (!ok) return;
-
-      page++;
-    }
-
-    emit(
-      state.copyWith(
-        isExporting: false,
-        failure: () => null,
-        export: () => SalesInvoiceExport(
-          rows: rows.take(_exportRowCap).toList(),
-          // Trust the server's count over what we managed to pull, so a capped
-          // export still reports the true size of the result set.
-          total: total < rows.length ? rows.length : total,
-        ),
-      ),
-    );
-  }
-
-  void _onExportHandled(
-    SalesInvoiceListExportHandled event,
-    Emitter<SalesInvoiceListState> emit,
-  ) {
-    emit(state.copyWith(export: () => null));
   }
 
   void _onFilterToggled(

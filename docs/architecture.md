@@ -30,7 +30,8 @@ Parked (unwired): `lib/core/database/**`, `lib/core/sync/**` (offline-first pivo
 | `RemoteRepository` | `core/data/` | One repository implementation for masters |
 
 **Feature package (flat master):** 7 files + 2 routes + 1 menu item.  
-Recipe: [`manifest-spec.md`](./manifest-spec.md). Exceptions: [`manifest-exceptions.md`](./manifest-exceptions.md).
+Recipe: [`manifest-spec.md`](./manifest-spec.md). Exceptions: [`manifest-exceptions.md`](./manifest-exceptions.md).  
+**Migrating remaining hand-written list/form blocs:** [`bloc-migration-checklist.md`](./bloc-migration-checklist.md).
 
 ```
 EntityManifest ──► MasterListSurface ◄── CrudBloc ◄── Repository
@@ -67,9 +68,41 @@ EntityManifest ──► MasterListSurface ◄── CrudBloc ◄── Reposito
 | `ReportDefinition` + catalog | `core/reports/` |
 | `ReportViewer` | `core/surfaces/report_viewer.dart` |
 | Hub + pages | `features/reports/` |
-| CSV | `core/utils/csv_exporter.dart` (pipe-separated) |
+| Export (Excel + CSV) | `core/export/` — see below |
 
 Stamp a new report by adding a `ReportDefinition` to `ReportCatalog` and routing `/reports/:id` (already generic).
+
+## Export (`core/export/`)
+
+Every list and every report exports to a real `.xlsx` (Excel is the default; CSV sits beside it).
+Entirely client-side — the backend's five `/excel` endpoints are deliberately not used, so all 49
+reports behave the same way.
+
+| Piece | Path | Role |
+|-------|------|------|
+| `ExportCell` | `export_cell.dart` | Sealed cell union: text / number / date / bool / blank |
+| `ExcelWriter` | `excel_writer.dart` | Hand-rolled OOXML — zips the XML parts of an `.xlsx` |
+| `CsvWriter` | `csv_writer.dart` | The secondary format (still pipe-separated) |
+| `EntityExport` | `entity_export.dart` | `FieldSpec` → typed cells; `reportCell` for report JSON |
+| `ExportCubit<E>` | `export_cubit.dart` | Walks **every page** of the current query (200/page, 5000 cap) |
+| `ExportButton<E>` | `export_button.dart` | The Excel/CSV menu; `.fromManifest` for entities with one |
+| `saveExportBytes` | `export_sink*.dart` | The one platform fork: file on IO, Blob on web |
+
+Four things here are load-bearing and easy to undo by accident:
+
+1. **The `.xlsx` writer is hand-rolled on purpose.** `package:excel` pins `xml <7.0.0`; `package:pdf`
+   (the print stack) needs `xml ^7`. They cannot coexist, and the PDF stack is not worth trading away.
+   `archive` supplies the zip; the OOXML is ours.
+2. **Export re-runs the query server-side.** `CrudLoaded.items` holds only the pages scrolled into
+   view, so a file built from it is silently partial — that was the old CSV's core bug.
+3. **Cells are typed, not stringly.** `FieldSpec.type` drives recovery of the display string
+   (`AED 1,234.50` → `1234.5`), so `SUM()` works. Where the string is genuinely lossy, set
+   `FieldSpec.exportValue` and it wins. Parsing never guesses: an unrecognised value stays text.
+4. **The cubit gathers; the view writes.** Keeps the filesystem out of the bloc layer.
+
+Lists get this for free — `MasterListSurface` wires it from the manifest, and the feature-bloc lists
+pass `repository.list` to an `ExportCubit`. The voucher lists have no manifest, so they declare
+columns via `voucherExportColumns` (`core/vouchers/voucher_export.dart`).
 
 ## Command palette
 

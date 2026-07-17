@@ -2,12 +2,17 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_kind.dart';
+import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_models.dart';
+import 'package:algo_erp_front/core/vouchers/voucher_export.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -19,6 +24,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+/// The five fields every voucher list exports.
+final _exportColumns = voucherExportColumns<StockVoucherListItem>(
+  displayNo: (i) => i.displayNo,
+  voucherDate: (i) => i.voucherDate,
+  status: (i) => i.status,
+  total: (i) => i.total,
+  party: (i) => i.billingName,
+);
+
 class StockVoucherListPage extends StatelessWidget {
   const StockVoucherListPage({required this.kind, super.key});
 
@@ -26,12 +40,21 @@ class StockVoucherListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dio = getIt<DioClient>();
-    return BlocProvider<StockVoucherListBloc>(
-      create: (_) => StockVoucherListBloc(
-        repository: createStockVoucherRepository(dio, kind),
-        kind: kind,
-      )..add(const StockVoucherListFetchRequested()),
+    // One repository, two blocs: the list reads pages through it, and export
+    // walks every page of the same query through it.
+    final repository = createStockVoucherRepository(getIt<DioClient>(), kind);
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<StockVoucherListBloc>(
+          create: (_) =>
+              StockVoucherListBloc(repository: repository, kind: kind)
+                ..add(const StockVoucherListFetchRequested()),
+        ),
+        BlocProvider<ExportCubit<StockVoucherListItem>>(
+          create: (_) =>
+              ExportCubit<StockVoucherListItem>(source: repository.list),
+        ),
+      ],
       child: const _StockVoucherListView(),
     );
   }
@@ -56,106 +79,118 @@ class _StockVoucherListView extends StatelessWidget {
           final bloc = context.read<StockVoucherListBloc>();
           final bp = state.kind.blueprint;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      bp.label,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Filters',
-                    onPressed: () =>
-                        bloc.add(const StockVoucherListFilterToggled()),
-                    icon: Icon(
-                      state.filtersExpanded
-                          ? Icons.filter_alt
-                          : Icons.filter_alt_outlined,
-                    ),
-                  ),
-                  PermissionGate(
-                    module: bp.rbacModule,
-                    action: PermissionAction.create,
-                    child: FilledButton.icon(
-                      onPressed: () => context.go(state.kind.newRoute),
-                      icon: const Icon(Icons.add),
-                      label: const Text('New'),
-                    ),
-                  ),
-                ],
-              ),
-              if (state.filtersExpanded) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.end,
+          return CreateNewShortcuts(
+            module: bp.rbacModule,
+            onCreate: () => context.go(state.kind.newRoute),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    SizedBox(
-                      width: 160,
-                      child: AppDateField(
-                        label: 'From',
-                        value: state.startDate,
-                        onChanged: (d) =>
-                            bloc.add(StockVoucherListStartDateChanged(d)),
+                    Expanded(
+                      child: Text(
+                        bp.label,
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ),
-                    SizedBox(
-                      width: 160,
-                      child: AppDateField(
-                        label: 'To',
-                        value: state.endDate,
-                        onChanged: (d) =>
-                            bloc.add(StockVoucherListEndDateChanged(d)),
-                      ),
+                    ExportButton<StockVoucherListItem>(
+                      id: bp.id,
+                      label: bp.label,
+                      columns: _exportColumns,
+                      query: () => state.query,
                     ),
-                    SizedBox(
-                      width: 140,
-                      child: DropdownButtonFormField<String?>(
-                        initialValue: state.selectedStatus,
-                        decoration: const InputDecoration(labelText: 'Status'),
-                        items: [
-                          const DropdownMenuItem(child: Text('Any')),
-                          for (final s in _statuses)
-                            DropdownMenuItem(value: s, child: Text(s)),
-                        ],
-                        onChanged: (v) =>
-                            bloc.add(StockVoucherListStatusChanged(v)),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 100,
-                      child: AppTextField(
-                        label: 'Prefix',
-                        value: state.prefix,
-                        onChanged: (v) =>
-                            bloc.add(StockVoucherListPrefixChanged(v)),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 180,
-                      child: AppTextField(
-                        label: 'Search',
-                        value: state.search,
-                        onChanged: (v) =>
-                            bloc.add(StockVoucherListSearchChanged(v)),
-                      ),
-                    ),
-                    TextButton(
+                    IconButton(
+                      tooltip: 'Filters',
                       onPressed: () =>
-                          bloc.add(const StockVoucherListFiltersCleared()),
-                      child: const Text('Clear'),
+                          bloc.add(const StockVoucherListFilterToggled()),
+                      icon: Icon(
+                        state.filtersExpanded
+                            ? Icons.filter_alt
+                            : Icons.filter_alt_outlined,
+                      ),
+                    ),
+                    PermissionGate(
+                      module: bp.rbacModule,
+                      action: PermissionAction.create,
+                      child: FilledButton.icon(
+                        onPressed: () => context.go(state.kind.newRoute),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New'),
+                      ),
                     ),
                   ],
                 ),
+                if (state.filtersExpanded) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.end,
+                    children: [
+                      SizedBox(
+                        width: 160,
+                        child: AppDateField(
+                          label: 'From',
+                          value: state.startDate,
+                          onChanged: (d) =>
+                              bloc.add(StockVoucherListStartDateChanged(d)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 160,
+                        child: AppDateField(
+                          label: 'To',
+                          value: state.endDate,
+                          onChanged: (d) =>
+                              bloc.add(StockVoucherListEndDateChanged(d)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 140,
+                        child: DropdownButtonFormField<String?>(
+                          initialValue: state.selectedStatus,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                          ),
+                          items: [
+                            const DropdownMenuItem(child: Text('Any')),
+                            for (final s in _statuses)
+                              DropdownMenuItem(value: s, child: Text(s)),
+                          ],
+                          onChanged: (v) =>
+                              bloc.add(StockVoucherListStatusChanged(v)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 100,
+                        child: AppTextField(
+                          label: 'Prefix',
+                          value: state.prefix,
+                          onChanged: (v) =>
+                              bloc.add(StockVoucherListPrefixChanged(v)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 180,
+                        child: AppTextField(
+                          label: 'Search',
+                          value: state.search,
+                          onChanged: (v) =>
+                              bloc.add(StockVoucherListSearchChanged(v)),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            bloc.add(const StockVoucherListFiltersCleared()),
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Expanded(child: _buildListContent(context, state, bloc)),
               ],
-              const SizedBox(height: 16),
-              Expanded(child: _buildListContent(context, state, bloc)),
-            ],
+            ),
           );
         },
       ),

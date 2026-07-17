@@ -1,10 +1,11 @@
 # algoERP Frontend — Living Status
 
-> **Last updated:** 2026-07-13 (Module hubs; narrative audit — scorecard/archetypes/§4 reconciled with shipped voucher + report stacks)  
+> **Last updated:** 2026-07-15 (Linked master List/FormBloc → EMR migration checklist)  
 > **Code ground truth:** `lib/features/**`, `lib/core/**`  
 > **Required surface area:** [`feature-inventory.md`](./feature-inventory.md)  
 > **Deferred entities:** [`manifest-exceptions.md`](./manifest-exceptions.md)  
 > **Recipe:** [`manifest-spec.md`](./manifest-spec.md)  
+> **Master bloc → EMR migration:** [`bloc-migration-checklist.md`](./bloc-migration-checklist.md)  
 > **Execution plan (wave narrative):** [`BUILD_TASKS_V2.md`](./BUILD_TASKS_V2.md)  
 > **Reports context & status:** [`REPORTS_STATUS.md`](./REPORTS_STATUS.md)
 
@@ -152,6 +153,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | MasterListSurface | `core/surfaces` | `[x]` | |
 | MasterFormSurface | `core/surfaces` | `[x]` | Doubles as read-only view |
 | FieldRenderer | `core/manifest` | `[x]` | text/int/decimal/bool/dateTime/fk/selfFk |
+| Master List/FormBloc → EMR | early masters still on hand-written blocs | `[~]` | Checklist: [`bloc-migration-checklist.md`](./bloc-migration-checklist.md) · 12 packages remain |
 | FieldType.selfFk | | `[x]` | Self exclude in picker; InvGroup + AccountGroup |
 | FieldType.binary / image | | `[ ]` | Logo, ItemImage |
 | FieldType.enum | | `[ ]` | Free-string enums today |
@@ -161,7 +163,8 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | Idempotency-Key interceptor | | `[ ]` | See CR-004 / BE-005 |
 | Command palette | `core/navigation/command_palette.dart` | `[x]` | Ctrl/Cmd+K; NavigationRegistry |
 | DocumentSurface + Line Engine | `core/domain/line_engine`, `core/surfaces` | `[x]` | SI gold; expand lifecycle later |
-| Report framework | `core/reports` + `ReportViewer` | `[x]` | CSV; 49 stamped defs |
+| Report framework | `core/reports` + `ReportViewer` | `[x]` | Excel + CSV + print; 49 stamped defs |
+| Export to Excel | `core/export` | `[x]` | Hand-rolled `.xlsx`; every list + report |
 | Offline DB / outbox / sync | `core/database`, `core/sync` | `P` | Parked |
 
 ---
@@ -577,6 +580,7 @@ When you ship or defer work:
 | [`architecture.md`](./architecture.md) | Layering + engine walkthrough |
 | [`feature-contract.md`](./feature-contract.md) | What a feature must supply |
 | [`manifest-spec.md`](./manifest-spec.md) | 7-file master recipe |
+| [`bloc-migration-checklist.md`](./bloc-migration-checklist.md) | Per-package List/FormBloc → EMR work queue |
 | [`manifest-exceptions.md`](./manifest-exceptions.md) | Why an entity is not registered yet |
 | [`api-contract.md`](./api-contract.md) | Wire shapes |
 | [`backend-suggestions.md`](./backend-suggestions.md) | Backend gaps (BE-xxx) |

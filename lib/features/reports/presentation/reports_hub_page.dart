@@ -495,9 +495,9 @@ class _ReportCard extends StatelessWidget {
                       color: brand.lagoonSoft,
                       textColor: brand.lagoon,
                     ),
-                  if (report.supportsCsv)
+                  if (report.supportsExport)
                     _Badge(
-                      label: 'CSV',
+                      label: 'Excel',
                       color: brand.mist,
                       textColor: brand.inkMuted,
                     ),

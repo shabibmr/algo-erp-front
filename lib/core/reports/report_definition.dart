@@ -123,7 +123,7 @@ class ReportDefinition {
     this.shape = ReportShape.table,
     this.rowsPath,
     this.sections = const [],
-    this.supportsCsv = true,
+    this.supportsExport = true,
     this.autoRun = false,
   });
 
@@ -143,8 +143,19 @@ class ReportDefinition {
 
   /// The row lists to render, for [ReportShape.sections] only.
   final List<ReportSectionSpec> sections;
-  final bool supportsCsv;
+
+  /// Whether the viewer offers Excel and CSV export. (Was `supportsCsv`.)
+  final bool supportsExport;
 
   /// Run on open without waiting for the user to press Run.
   final bool autoRun;
+
+  /// Whether the endpoint pages its rows.
+  ///
+  /// A paginated report hands the viewer one screenful, so an export built from
+  /// what is on screen would quietly be an export of page one. `ReportViewer`
+  /// re-runs these at export size before writing the file. Inferred rather than
+  /// declared: an endpoint that pages is exactly one that puts its rows under a
+  /// `rowsPath` next to a `meta` block.
+  bool get paginated => shape == ReportShape.table && rowsPath != null;
 }

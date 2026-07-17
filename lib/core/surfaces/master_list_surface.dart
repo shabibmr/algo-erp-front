@@ -2,13 +2,15 @@ import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
 import 'package:algo_erp_front/core/bloc/crud_bloc.dart';
 import 'package:algo_erp_front/core/bloc/crud_contract.dart';
+import 'package:algo_erp_front/core/export/export_button.dart';
+import 'package:algo_erp_front/core/export/export_cubit.dart';
 import 'package:algo_erp_front/core/manifest/entity_manifest.dart';
-import 'package:algo_erp_front/core/utils/csv_exporter.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/data_display/adaptive_entity_list.dart';
 import 'package:algo_erp_front/core/widgets/filters/filter_bar.dart';
 import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
 import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
+import 'package:algo_erp_front/core/widgets/shortcuts/create_new_shortcuts.dart';
 import 'package:algo_erp_front/core/widgets/states/empty_state.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/ledger_skeleton.dart';
@@ -45,92 +47,80 @@ class MasterListSurface<E> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Export walks the list's own repository with the list's own query, so it
+    // is bound here off the CrudBloc rather than asking every feature page to
+    // wire a second binding.
+    return BlocProvider<ExportCubit<E>>(
+      create: (context) => ExportCubit<E>(
+        source: context.read<CrudBloc<E, int, void>>().repository.list,
+      ),
+      child: Builder(builder: _buildSheet),
+    );
+  }
+
+  Widget _buildSheet(BuildContext context) {
     final tokens = context.tokens;
 
-    return BlocBuilder<CrudBloc<E, int, void>, CrudState<E>>(
-      builder: (context, state) {
-        final loaded = state is CrudLoaded<E> ? state : null;
-        final total = loaded?.meta.total;
+    return CreateNewShortcuts(
+      module: manifest.rbacModule,
+      onCreate: onCreate,
+      child: BlocBuilder<CrudBloc<E, int, void>, CrudState<E>>(
+        builder: (context, state) {
+          final loaded = state is CrudLoaded<E> ? state : null;
+          final total = loaded?.meta.total;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            PageHeader(
-              eyebrow: manifest.eyebrowText,
-              title: manifest.label,
-              subtitle: switch (total) {
-                null => null,
-                1 => '1 record',
-                final count => '$count records',
-              },
-              actions: [
-                PermissionGate(
-                  module: manifest.rbacModule,
-                  action: PermissionAction.create,
-                  child: FilledButton.icon(
-                    onPressed: onCreate,
-                    icon: const Icon(Icons.add),
-                    label: Text(_createLabel),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PageHeader(
+                eyebrow: manifest.eyebrowText,
+                title: manifest.label,
+                subtitle: switch (total) {
+                  null => null,
+                  1 => '1 record',
+                  final count => '$count records',
+                },
+                actions: [
+                  PermissionGate(
+                    module: manifest.rbacModule,
+                    action: PermissionAction.create,
+                    child: Tooltip(
+                      message:
+                          '$_createLabel (${CreateNewShortcuts.shortcutLabel})',
+                      child: FilledButton.icon(
+                        onPressed: onCreate,
+                        icon: const Icon(Icons.add),
+                        label: Text(_createLabel),
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: tokens.spacing.lg),
-            Expanded(
-              child: WorkSheet(
-                toolbar: FilterBar(
-                  searchHint: 'Search ${manifest.label.toLowerCase()}',
-                  onSearchChanged: (query) => context
-                      .read<CrudBloc<E, int, void>>()
-                      .add(CrudSearchChanged<E, void>(query)),
-                  trailing: [
-                    if (manifest.supportsExcel) _exportButton(context, loaded),
-                  ],
-                ),
-                child: _sheetBody(context, state),
+                ],
               ),
-            ),
-          ],
-        );
-      },
+              SizedBox(height: tokens.spacing.lg),
+              Expanded(
+                child: WorkSheet(
+                  toolbar: FilterBar(
+                    searchHint: 'Search ${manifest.label.toLowerCase()}',
+                    onSearchChanged: (query) => context
+                        .read<CrudBloc<E, int, void>>()
+                        .add(CrudSearchChanged<E, void>(query)),
+                    trailing: [
+                      if (manifest.supportsExport)
+                        ExportButton<E>.fromManifest(
+                          manifest: manifest,
+                          query: () =>
+                              context.read<CrudBloc<E, int, void>>().query,
+                        ),
+                    ],
+                  ),
+                  child: _sheetBody(context, state),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
-  }
-
-  Widget _exportButton(BuildContext context, CrudLoaded<E>? loaded) {
-    final items = loaded?.items ?? const [];
-    return IconButton(
-      icon: const Icon(Icons.download_outlined),
-      tooltip: 'Export to CSV',
-      onPressed: items.isEmpty ? null : () => _export(context, items),
-    );
-  }
-
-  /// Off the web the file goes to disk, so the user has to be told where — and
-  /// a denied folder or a full disk has to surface instead of throwing into the
-  /// void from a button callback.
-  Future<void> _export(BuildContext context, List<E> items) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final path = await CsvExporter.exportToCsv(
-        filename: '${manifest.id}_export.csv',
-        headers: [for (final column in manifest.listColumns) column.label],
-        rows: [
-          for (final item in items)
-            [for (final column in manifest.listColumns) column.cellValue(item)],
-        ],
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            path == null
-                ? 'Exported ${items.length} rows'
-                : 'Exported ${items.length} rows to $path',
-          ),
-        ),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
-    }
   }
 
   /// The sheet's contents for whichever state the list is in. Deliberately not
