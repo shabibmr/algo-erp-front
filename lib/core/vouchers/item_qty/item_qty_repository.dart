@@ -10,7 +10,7 @@ import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// Online repository for one [ItemQtyVoucherKind] (list / get / post / cancel).
+/// Online repository for one [ItemQtyVoucherKind] (list / get / post / lifecycle).
 class ItemQtyRepository {
   ItemQtyRepository(this._client, this.kind);
 
@@ -60,6 +60,8 @@ class ItemQtyRepository {
     Future<String?> Function(int itemId)? resolveItemLabel,
     Future<String?> Function(int ledgerId)? resolvePartyLabel,
     Future<String?> Function(int godownId)? resolveGodownLabel,
+    Future<String?> Function(int employeeId)? resolveSalespersonLabel,
+    Future<String?> Function(int projectId)? resolveProjectLabel,
   }) {
     return safeCall(() async {
       final res = await _client.dio.get<Object?>(kind.blueprint.detailPath(id));
@@ -73,23 +75,39 @@ class ItemQtyRepository {
       }
       final detail = ItemQtyDto.detailFromJson(data);
 
-      var partyLabel = detail.partyLabel;
-      var godownLabel = detail.godownLabel;
-      if (resolvePartyLabel != null && detail.partyLedgerId != null) {
-        partyLabel =
-            await resolvePartyLabel(detail.partyLedgerId!) ?? partyLabel;
-      }
-      if (resolveGodownLabel != null && detail.godownId != null) {
-        godownLabel = await resolveGodownLabel(detail.godownId!) ?? godownLabel;
-      }
+      final partyFuture =
+          resolvePartyLabel != null && detail.partyLedgerId != null
+          ? resolvePartyLabel(detail.partyLedgerId!)
+          : Future<String?>.value(detail.partyLabel);
+      final godownFuture = resolveGodownLabel != null && detail.godownId != null
+          ? resolveGodownLabel(detail.godownId!)
+          : Future<String?>.value(detail.godownLabel);
+      final salespersonFuture =
+          resolveSalespersonLabel != null &&
+              detail.salespersonEmployeeId != null
+          ? resolveSalespersonLabel(detail.salespersonEmployeeId!)
+          : Future<String?>.value(detail.salespersonLabel);
+      final projectFuture =
+          resolveProjectLabel != null && detail.voucherProjectId != null
+          ? resolveProjectLabel(detail.voucherProjectId!)
+          : Future<String?>.value(detail.projectLabel);
+
+      final (partyLabel, godownLabel, salespersonLabel, projectLabel) = await (
+        partyFuture,
+        godownFuture,
+        salespersonFuture,
+        projectFuture,
+      ).wait;
 
       var lines = detail.lines;
       if (resolveItemLabel != null) {
-        final labels = <int, String?>{};
         final ids = detail.lines.map((l) => l.itemId).whereType<int>().toSet();
-        for (final itemId in ids) {
-          labels[itemId] = await resolveItemLabel(itemId);
-        }
+        final resolved = await Future.wait(
+          ids.map(
+            (itemId) async => MapEntry(itemId, await resolveItemLabel(itemId)),
+          ),
+        );
+        final labels = {for (final e in resolved) e.key: e.value};
         lines = [
           for (final line in detail.lines)
             line.copyWith(
@@ -99,8 +117,10 @@ class ItemQtyRepository {
       }
 
       return detail.copyWith(
-        partyLabel: partyLabel,
-        godownLabel: godownLabel,
+        partyLabel: partyLabel ?? detail.partyLabel,
+        godownLabel: godownLabel ?? detail.godownLabel,
+        salespersonLabel: salespersonLabel ?? detail.salespersonLabel,
+        projectLabel: projectLabel ?? detail.projectLabel,
         lines: lines,
       );
     });
@@ -124,30 +144,64 @@ class ItemQtyRepository {
     });
   }
 
-  Future<Result<ItemQtyLifecycleResult>> cancel(int id) {
+  /// Draft-only line/header replace via lifecycle edit.
+  Future<Result<ItemQtyLifecycleResult>> updateDraft(
+    int id,
+    ItemQtyDraft draft,
+  ) {
+    return safeCall(() async {
+      final res = await _client.dio.put<Object?>(
+        '/transactions/${kind.lifecycleType}/$id',
+        data: ItemQtyDto.draftToEditJson(draft),
+      );
+      return _lifecycleBody(res.data);
+    });
+  }
+
+  Future<Result<ItemQtyLifecycleResult>> cancel(int id) =>
+      _lifecycle('cancel', id);
+
+  Future<Result<ItemQtyLifecycleResult>> approve(int id) =>
+      _lifecycle('approve', id);
+
+  Future<Result<ItemQtyLifecycleResult>> reject(int id, String reason) {
     return safeCall(() async {
       final res = await _client.dio.post<Object?>(
-        '/transactions/${kind.lifecycleType}/$id/cancel',
+        '/transactions/${kind.lifecycleType}/$id/reject',
+        data: {'reason': reason},
       );
-      final envelope = decodeApiResponse<JsonMap>(
-        res.data,
-        (j) => j! as JsonMap,
-      );
-      final data = envelope.data;
-      if (data == null) {
-        throw const FormatException('Expected lifecycle result');
-      }
-      return ItemQtyDto.lifecycleFromJson(data);
+      return _lifecycleBody(res.data);
     });
+  }
+
+  Future<Result<ItemQtyLifecycleResult>> _lifecycle(String action, int id) {
+    return safeCall(() async {
+      final res = await _client.dio.post<Object?>(
+        '/transactions/${kind.lifecycleType}/$id/$action',
+      );
+      return _lifecycleBody(res.data);
+    });
+  }
+
+  ItemQtyLifecycleResult _lifecycleBody(Object? raw) {
+    final envelope = decodeApiResponse<JsonMap>(raw, (j) => j! as JsonMap);
+    final data = envelope.data;
+    if (data == null) {
+      throw const FormatException('Expected lifecycle result');
+    }
+    return ItemQtyDto.lifecycleFromJson(data);
   }
 
   Future<Result<List<ItemQtySourceLite>>> searchSourceVouchers({
     String query = '',
+    String? type,
+    String? listPath,
+    String? mainNestKey,
   }) {
-    final path = kind.sourceListPath;
-    final type = kind.sourceLifecycleType;
-    final nest = kind.sourceMainNestKey;
-    if (path == null || type == null || nest == null) {
+    final path = listPath ?? kind.sourceListPath;
+    final sourceType = type ?? kind.sourceLifecycleType;
+    final nest = mainNestKey ?? kind.sourceMainNestKey;
+    if (path == null || sourceType == null || nest == null) {
       return Future<Result<List<ItemQtySourceLite>>>.value(
         const Right(<ItemQtySourceLite>[]),
       );
@@ -173,7 +227,7 @@ class ItemQtyRepository {
           if (raw is Map<String, dynamic>)
             ItemQtySourceLite(
               id: raw['id'] as int,
-              type: type,
+              type: sourceType,
               displayNo: () {
                 final p = raw['voucher_prefix'] as String? ?? '';
                 final n = raw['voucher_no'] as String? ?? '';
@@ -187,11 +241,17 @@ class ItemQtyRepository {
     });
   }
 
-  Future<Result<ItemQtySourceLite>> getSourceVoucher(int id) {
-    final path = kind.sourceDetailPath(id);
-    final type = kind.sourceLifecycleType;
-    final nest = kind.sourceMainNestKey;
-    if (path == null || type == null || nest == null) {
+  Future<Result<ItemQtySourceLite>> getSourceVoucher(
+    int id, {
+    String? type,
+    String? detailPathPattern,
+    String? mainNestKey,
+  }) {
+    final pathPattern = detailPathPattern ?? kind.sourceDetailPathPattern;
+    final sourceType = type ?? kind.sourceLifecycleType;
+    final nest = mainNestKey ?? kind.sourceMainNestKey;
+    final path = pathPattern?.replaceAll(':id', id.toString());
+    if (path == null || sourceType == null || nest == null) {
       return Future<Result<ItemQtySourceLite>>.value(
         const Left(Failure.unknown('Source not configured')),
       );
@@ -206,7 +266,11 @@ class ItemQtyRepository {
       if (data == null) {
         throw const FormatException('Expected source voucher');
       }
-      return ItemQtyDto.sourceFromJson(data, type: type, mainNestKey: nest);
+      return ItemQtyDto.sourceFromJson(
+        data,
+        type: sourceType,
+        mainNestKey: nest,
+      );
     });
   }
 }

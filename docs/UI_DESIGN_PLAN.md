@@ -18,8 +18,11 @@
 | **Architecture reality** | Manifest-rendered **Surfaces** (not 40 unique screens). One visual language must scale across every master and voucher. |
 | **Differentiators to *feel*** | Command palette · adaptive shell · decimal-precise documents · personal company/branch/FY context |
 
-**Current baseline (to evolve, not throw away):**  
-`AppTokens` + Material seed `#2563EB` + compact density + light/dark + en/ar + `MotionTokens` + generic rail shell. Functional scaffold; emotionally neutral SaaS-blue. This plan replaces that neutrality with a **specific desk identity**.
+**Starting baseline (since evolved — this plan has largely shipped):**  
+The pre-plan scaffold was `AppTokens` + Material seed `#2563EB` + compact density + light/dark +
+en/ar + `MotionTokens` + generic rail shell — functional but emotionally neutral SaaS-blue. This
+plan replaced that neutrality with a **specific desk identity**; the lagoon-teal seed `#0E6B68`
+and Desk Lamp focus canvas are now shipped (see §5).
 
 ---
 
@@ -226,7 +229,12 @@ at the far right of `PageHeader`, the search inside the sheet's own toolbar.
 - Pinned footer: Delete (demoted, danger text button) ··· Cancel · Save.
 - Capped at a readable width, and it **scrolls** — previously it did neither, so
   a long form (Items) silently overflowed and its fields stretched to 1600px.
-- Desk Lamp rim: **not yet built.**
+- Desk Lamp rim: **shipped** (2026-07-23) — `WorkCanvas`
+  (`core/widgets/layout/work_canvas.dart`) wraps the form/document content region
+  and paints a soft lagoon focus rim (blurred ambient wash + faint inner edge)
+  that fades in once on route-enter, respecting reduced motion. Applied in
+  `MasterFormSurface` and `DocumentSurface`; lists stay unlit. The sidebar-opacity
+  softening and app-bar document-identity facets of §2B remain a later pass.
 
 ### 5.4 Document surface (vouchers) — *Real form on the desk*
 

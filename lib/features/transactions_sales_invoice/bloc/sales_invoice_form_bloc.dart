@@ -29,7 +29,7 @@ class SalesInvoiceFormBloc
        super(
          SalesInvoiceFormState(
            status: FormSubmissionStatus.initial,
-           draft: SalesInvoiceDraft(
+           draft: ItemQtyDraft(
              voucherPrefix:
                  VoucherBlueprints.salesInvoice.defaultPrefix ?? 'SI',
              financialYear: DateTime.now().year.toString(),
@@ -68,7 +68,13 @@ class SalesInvoiceFormBloc
   ) async {
     final entityId = event.entityId;
     if (entityId == null) {
-      emit(state.copyWith(status: FormSubmissionStatus.ready, isEdit: false));
+      emit(
+        state.copyWith(
+          status: FormSubmissionStatus.ready,
+          isEdit: false,
+          isDirty: false,
+        ),
+      );
       return;
     }
 
@@ -110,7 +116,7 @@ class SalesInvoiceFormBloc
         // StateError when the user navigated away mid-flight, and routing them
         // through CustomerSelected clobbered the invoice's own billing name.
         final (customer, godown, salesperson, project) = await (
-          _resolveCustomer(detail.customerLedgerId, detail.billingName),
+          _resolveCustomer(detail.partyLedgerId, detail.billingName),
           _resolveGodown(detail.godownId),
           _resolveSalesperson(
             detail.salespersonEmployeeId,
@@ -127,6 +133,7 @@ class SalesInvoiceFormBloc
             godown: () => godown,
             salesperson: () => salesperson,
             project: () => project,
+            isDirty: false,
           ),
         );
       },
@@ -161,9 +168,9 @@ class SalesInvoiceFormBloc
     if (id == null) return null;
     final result = await _repository.getEmployee(id);
     return result.fold(
-      (_) => EmployeeLite(id: id, name: label ?? 'Employee #$id'),
+      (_) => NamedRef(id: id, name: label ?? 'Employee #$id'),
       (employee) =>
-          employee ?? EmployeeLite(id: id, name: label ?? 'Employee #$id'),
+          employee ?? NamedRef(id: id, name: label ?? 'Employee #$id'),
     );
   }
 
@@ -171,9 +178,8 @@ class SalesInvoiceFormBloc
     if (id == null) return null;
     final result = await _repository.getProject(id);
     return result.fold(
-      (_) => ProjectLite(id: id, name: label ?? 'Project #$id'),
-      (project) =>
-          project ?? ProjectLite(id: id, name: label ?? 'Project #$id'),
+      (_) => NamedRef(id: id, name: label ?? 'Project #$id'),
+      (project) => project ?? NamedRef(id: id, name: label ?? 'Project #$id'),
     );
   }
 
@@ -193,10 +199,11 @@ class SalesInvoiceFormBloc
     emit(
       state.copyWith(
         customer: () => customer,
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
-          customerLedgerId: customer?.id,
-          customerLabel: customer?.name,
+          partyLedgerId: customer?.id,
+          partyLabel: customer?.name,
           billingName: customer?.name,
         ),
       ),
@@ -211,6 +218,7 @@ class SalesInvoiceFormBloc
     emit(
       state.copyWith(
         godown: () => godown,
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           godownId: godown?.id,
@@ -228,6 +236,7 @@ class SalesInvoiceFormBloc
     emit(
       state.copyWith(
         salesperson: () => salesperson,
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           salespersonEmployeeId: salesperson?.id,
@@ -245,6 +254,7 @@ class SalesInvoiceFormBloc
     emit(
       state.copyWith(
         project: () => project,
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           voucherProjectId: project?.id,
@@ -260,6 +270,7 @@ class SalesInvoiceFormBloc
   ) {
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(voucherDate: event.date),
       ),
@@ -273,6 +284,7 @@ class SalesInvoiceFormBloc
     final name = event.name;
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           billingName: (name == null || name.isEmpty) ? null : name,
@@ -287,6 +299,7 @@ class SalesInvoiceFormBloc
   ) {
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(creditDays: event.days ?? 30),
       ),
@@ -300,6 +313,7 @@ class SalesInvoiceFormBloc
     final narration = event.narration;
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           narration: (narration == null || narration.isEmpty)
@@ -318,6 +332,7 @@ class SalesInvoiceFormBloc
       state.copyWith(
         sourceType: event.sourceType,
         source: () => null,
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(
           sourceVoucherId: null,
@@ -337,6 +352,7 @@ class SalesInvoiceFormBloc
       emit(
         state.copyWith(
           source: () => null,
+          isDirty: true,
           errorMessage: () => null,
           draft: state.draft.copyWith(
             sourceVoucherId: null,
@@ -358,7 +374,7 @@ class SalesInvoiceFormBloc
           emit(state.copyWith(errorMessage: () => failure.message)),
       (source) async {
         final (customer, godown) = await (
-          _resolveCustomer(source.customerLedgerId, source.billingName),
+          _resolveCustomer(source.partyLedgerId, source.billingName),
           _resolveGodown(source.godownId ?? state.draft.godownId),
         ).wait;
 
@@ -367,12 +383,13 @@ class SalesInvoiceFormBloc
             source: () => source,
             customer: () => customer,
             godown: () => godown ?? state.godown,
+            isDirty: true,
             errorMessage: () => null,
             draft: state.draft.copyWith(
               sourceVoucherId: source.id,
               sourceVoucherType: source.type,
               sourceVoucherLabel: source.displayNo,
-              customerLedgerId: source.customerLedgerId,
+              partyLedgerId: source.partyLedgerId,
               billingName: source.billingName,
               godownId: source.godownId ?? state.draft.godownId,
               lines: source.lines,
@@ -389,6 +406,7 @@ class SalesInvoiceFormBloc
   ) {
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(lines: event.rows),
       ),
@@ -404,6 +422,7 @@ class SalesInvoiceFormBloc
     lines[event.index] = event.line;
     emit(
       state.copyWith(
+        isDirty: true,
         errorMessage: () => null,
         draft: state.draft.copyWith(lines: lines),
       ),
@@ -454,6 +473,7 @@ class SalesInvoiceFormBloc
             status: FormSubmissionStatus.success,
             postedInvoiceId: () => state.entityId,
             postedVerb: () => 'Draft updated',
+            isDirty: false,
           ),
         ),
       );
@@ -475,13 +495,14 @@ class SalesInvoiceFormBloc
           postedVoucherNo: () => posted.voucherNo,
           postedVerb: () =>
               event.saveStatus == 'Draft' ? 'Saved draft' : 'Posted',
+          isDirty: false,
         ),
       ),
     );
   }
 
   String? _validate() {
-    if (state.draft.customerLedgerId == null) return 'Customer is required';
+    if (state.draft.partyLedgerId == null) return 'Customer is required';
     if (state.draft.godownId == null) return 'Godown is required';
     if (!state.draft.lines.any((line) => line.isComplete)) {
       return 'Add at least one complete line (item, qty, price)';

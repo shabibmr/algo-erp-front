@@ -1,5 +1,7 @@
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/error/safe_call.dart';
+import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_repository.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
@@ -22,6 +24,8 @@ class ItemQtyDetailBloc extends Bloc<ItemQtyDetailEvent, ItemQtyDetailState> {
     on<ItemQtyDetailFetchRequested>(_onFetchRequested);
     on<ItemQtyDetailRefreshed>(_onRefreshed);
     on<ItemQtyDetailCancelled>(_onCancelled);
+    on<ItemQtyDetailApproved>(_onApproved);
+    on<ItemQtyDetailRejected>(_onRejected);
   }
 
   final ItemQtyRepository _repository;
@@ -89,16 +93,58 @@ class ItemQtyDetailBloc extends Bloc<ItemQtyDetailEvent, ItemQtyDetailState> {
     ItemQtyDetailCancelled event,
     Emitter<ItemQtyDetailState> emit,
   ) async {
+    await _runLifecycle(emit, _repository.cancel, fallbackMessage: 'Cancelled');
+  }
+
+  Future<void> _onApproved(
+    ItemQtyDetailApproved event,
+    Emitter<ItemQtyDetailState> emit,
+  ) async {
+    await _runLifecycle(emit, _repository.approve, fallbackMessage: 'Approved');
+  }
+
+  Future<void> _onRejected(
+    ItemQtyDetailRejected event,
+    Emitter<ItemQtyDetailState> emit,
+  ) async {
     if (state.detail == null) return;
     emit(state.copyWith(isBusy: true, actionMessage: () => null));
-
-    final result = await _repository.cancel(state.detail!.id);
+    final result = await _repository.reject(state.detail!.id, event.reason);
     result.fold(
       (failure) => emit(
         state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
       ),
-      (_) {
-        emit(state.copyWith(isBusy: false, actionMessage: () => 'Cancelled'));
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? 'Rejected',
+          ),
+        );
+        add(ItemQtyDetailFetchRequested(state.detail!.id));
+      },
+    );
+  }
+
+  Future<void> _runLifecycle(
+    Emitter<ItemQtyDetailState> emit,
+    Future<Result<ItemQtyLifecycleResult>> Function(int id) call, {
+    required String fallbackMessage,
+  }) async {
+    if (state.detail == null) return;
+    emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await call(state.detail!.id);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
+      ),
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? fallbackMessage,
+          ),
+        );
         add(ItemQtyDetailFetchRequested(state.detail!.id));
       },
     );

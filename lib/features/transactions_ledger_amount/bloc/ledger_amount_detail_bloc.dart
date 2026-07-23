@@ -1,5 +1,7 @@
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/error/safe_call.dart';
+import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_models.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_repository.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/transactions_ledger_amount/bloc/ledger_amount_detail_event.dart';
@@ -17,6 +19,8 @@ class LedgerAmountDetailBloc
     on<LedgerAmountDetailFetchRequested>(_onFetchRequested);
     on<LedgerAmountDetailRefreshed>(_onRefreshed);
     on<LedgerAmountDetailCancelled>(_onCancelled);
+    on<LedgerAmountDetailApproved>(_onApproved);
+    on<LedgerAmountDetailRejected>(_onRejected);
   }
 
   final LedgerAmountRepository _repository;
@@ -72,17 +76,55 @@ class LedgerAmountDetailBloc
   Future<void> _onCancelled(
     LedgerAmountDetailCancelled event,
     Emitter<LedgerAmountDetailState> emit,
+  ) => _run(emit, _repository.cancel, 'Cancelled');
+
+  Future<void> _onApproved(
+    LedgerAmountDetailApproved event,
+    Emitter<LedgerAmountDetailState> emit,
+  ) => _run(emit, _repository.approve, 'Approved');
+
+  Future<void> _onRejected(
+    LedgerAmountDetailRejected event,
+    Emitter<LedgerAmountDetailState> emit,
   ) async {
     if (state.detail == null) return;
     emit(state.copyWith(isBusy: true, actionMessage: () => null));
-
-    final result = await _repository.cancel(state.detail!.id);
+    final result = await _repository.reject(state.detail!.id, event.reason);
     result.fold(
       (failure) => emit(
         state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
       ),
-      (_) {
-        emit(state.copyWith(isBusy: false, actionMessage: () => 'Cancelled'));
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? 'Rejected',
+          ),
+        );
+        add(LedgerAmountDetailFetchRequested(state.detail!.id));
+      },
+    );
+  }
+
+  Future<void> _run(
+    Emitter<LedgerAmountDetailState> emit,
+    Future<Result<LedgerAmountLifecycleResult>> Function(int id) call,
+    String fallback,
+  ) async {
+    if (state.detail == null) return;
+    emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await call(state.detail!.id);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
+      ),
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? fallback,
+          ),
+        );
         add(LedgerAmountDetailFetchRequested(state.detail!.id));
       },
     );

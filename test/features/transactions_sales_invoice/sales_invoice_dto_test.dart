@@ -25,23 +25,23 @@ void main() {
   });
 
   test('draftToPostJson omits incomplete lines and formats date', () {
-    final draft = SalesInvoiceDraft(
+    final draft = ItemQtyDraft(
       voucherPrefix: 'SI',
       voucherDate: DateTime(2025, 4, 1),
       financialYear: '2025',
-      customerLedgerId: 3,
+      partyLedgerId: 3,
       godownId: 1,
       creditDays: 15,
       saveStatus: 'Draft',
       lines: [
-        SalesInvoiceLine(
+        ItemQtyLine(
           itemId: 10,
           quantity: Decimal.parse('2'),
           price: Decimal.parse('50'),
           discountPercent: Decimal.parse('10'),
           taxRate: Decimal.parse('5'),
         ),
-        SalesInvoiceLine(), // incomplete — skipped
+        ItemQtyLine(), // incomplete — skipped
       ],
     );
     final json = SalesInvoiceDto.draftToPostJson(draft);
@@ -97,12 +97,12 @@ void main() {
   });
 
   test('draftToEditJson builds header and computed lines', () {
-    final draft = SalesInvoiceDraft(
-      customerLedgerId: 3,
+    final draft = ItemQtyDraft(
+      partyLedgerId: 3,
       godownId: 1,
       billingName: 'Acme',
       lines: [
-        SalesInvoiceLine(
+        ItemQtyLine(
           itemId: 10,
           quantity: Decimal.parse('2'),
           price: Decimal.parse('50'),
@@ -149,11 +149,11 @@ void main() {
   });
 
   test('draftToPostJson includes salesperson, project, source, batch', () {
-    final draft = SalesInvoiceDraft(
+    final draft = ItemQtyDraft(
       voucherPrefix: 'SI',
       voucherDate: DateTime(2025, 4, 1),
       financialYear: '2025',
-      customerLedgerId: 3,
+      partyLedgerId: 3,
       godownId: 1,
       salespersonEmployeeId: 8,
       voucherProjectId: 4,
@@ -161,7 +161,7 @@ void main() {
       sourceVoucherType: 'SalesOrder',
       saveStatus: 'Draft',
       lines: [
-        SalesInvoiceLine(
+        ItemQtyLine(
           itemId: 10,
           skuId: 2,
           batchId: 5,
@@ -200,7 +200,7 @@ void main() {
     expect(src.id, 12);
     expect(src.type, 'SalesOrder');
     expect(src.displayNo, 'SO0001');
-    expect(src.customerLedgerId, 3);
+    expect(src.partyLedgerId, 3);
     expect(src.lines, hasLength(1));
     expect(src.lines.first.itemId, 9);
     expect(src.lines.first.quantity, Decimal.parse('3'));

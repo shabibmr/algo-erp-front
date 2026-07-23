@@ -69,6 +69,7 @@ abstract final class StockVoucherDto {
             crQty: _decimal(row['crQty']),
             drQty: _decimal(row['drQty']),
             requestQty: _decimal(row['Request_Qty']),
+            issueQty: _decimal(row['Issue_qty'] ?? row['Issue_Qty']),
             narration:
                 row['Item_Narration'] as String? ?? row['remarks'] as String?,
           ),

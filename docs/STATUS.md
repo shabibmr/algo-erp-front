@@ -1,6 +1,6 @@
 # algoERP Frontend — Living Status
 
-> **Last updated:** 2026-07-15 (Linked master List/FormBloc → EMR migration checklist)  
+> **Last updated:** 2026-07-23 (docs review: archived offline docs, reconciled report/BE counts)  
 > **Code ground truth:** `lib/features/**`, `lib/core/**`  
 > **Required surface area:** [`feature-inventory.md`](./feature-inventory.md)  
 > **Deferred entities:** [`manifest-exceptions.md`](./manifest-exceptions.md)  
@@ -122,7 +122,7 @@ No per-entity list/form widgets. See [`manifest-spec.md`](./manifest-spec.md).
 | Employee masters | **7 / ~14** | + LeaveAllocation (per-employee list/create; BE-009) |
 | Accounts masters | **2 / ~8** | AccountGroup (selfFk parent) + Ledger core |
 | Vouchers / documents | **17 / ~17** | Full Sprint D voucher matrix (SI gold + 16 kinds) |
-| Reports / dashboard data | ~60% | Live desk KPIs/alerts + fl_chart insights; ReportViewer + 7 defs + CSV |
+| Reports / dashboard data | ~60% | Live desk KPIs/alerts + fl_chart insights; ReportViewer + ~49 defs + CSV |
 | Offline / sync | `P` | Scaffold only under `lib/core/database/**` |
 | **ERP end-to-end usability** | **Trading loop closes** | Party + item masters → 17 voucher kinds → reports/CSV. Gaps: billwise/settlement, stock views, attendance/payslip |
 
@@ -275,10 +275,11 @@ All types share **header + main + lines + lifecycle**. DocumentSurface + Line En
 | GodownTransfer | `[x]` | stock engine · from/to godown · list/create/detail/cancel |
 | MaterialIn | `[x]` | stock engine · cr/dr qty lines |
 | Requirement | `[x]` | stock engine · item qty (no godown) |
-| StockRequest | `[x]` | stock engine · request qty; fulfill UI later |
-| Lifecycle (edit/approve/reject/cancel) | `[~]` | Cancel wired on item-qty kinds; full generic toolbar later |
-| TermsAndConditions | `[ ]` | Ancillary master |
-| TransportationDetails | `[ ]` | Ancillary master |
+| StockRequest | `[x]` | stock engine · request qty + **fulfill UI** |
+| Lifecycle (edit/approve/reject/cancel) | `[~]` | Cancel + **approve/reject** on all family engines; SI keeps draft/edit gold |
+| Billwise settlement (Payment/Receipt) | `[~]` | Optional allocate-against-outstanding on form; Agst Ref after post |
+| TermsAndConditions | `—` | Out of scope (skipped) |
+| TransportationDetails | `—` | Out of scope (skipped) |
 | Transactions hub | `/transactions` | `[x]` | Hub tiles (`AppMenu.transactionMasters`); binder hub-only |
 
 ### 2.6 Reports & desk
@@ -322,7 +323,7 @@ From `backend-suggestions.md` / feature contract (still active):
 | ID | Gap | Frontend impact |
 |----|-----|-----------------|
 | BE-001 | Permission matrix read | **Done** — `GET /auth/permissions` + role admin GET/PUT |
-| BE-002–004 | No search/filter/sort | ClientQuery deferred; params forwarded no-op |
+| BE-002–004 | Search/filter/sort | **Implemented server-side**; client sends the params. Only the client-side ClientQuery adapter (offline/local search) is still deferred |
 | BE-005 | No idempotency keys | Client should send keys; don’t auto-retry mutates |
 | BE-008 | No lightweight lookup DTOs | FK uses full list + projection |
 
@@ -383,12 +384,14 @@ Order after Sales Invoice:
 
 1. ~~Quotation → SalesOrder → DeliveryNote (pre-sales chain)~~ **`[x]`**  
 2. ~~PurchaseOrder → ReceiptNote → PurchaseInvoice~~ **`[x]`**  
-3. ~~Payment / Receipt~~ **`[x]`** `ledgerAmount` engine (no billwise allocation UI yet — honest list/post only)  
+3. ~~Payment / Receipt~~ **`[x]`** `ledgerAmount` engine + optional billwise settlement UI (Agst Ref after post)   
+
 4. ~~CreditNote / DebitNote~~ **`[x]`** item-qty + `ledger_id` party field  
 5. ~~Journal / Contra~~ **`[x]`** `debitCredit` engine (client balance check)  
-6. ~~GodownTransfer / MaterialIn / Requirement / StockRequest~~ **`[x]`** stock engine  
+6. ~~GodownTransfer / MaterialIn / Requirement / StockRequest~~ **`[x]`** stock engine (+ SR fulfill)
 
 **Sprint D complete** for registered voucher types (SI remains gold-depth).  
+**2026-07-23:** family approve/reject; SR fulfill; Payment/Receipt billwise allocate; SI convert-from + project on form.  
 
 **Shared stacks:**  
 - Item-qty: `lib/core/vouchers/item_qty/*` + `transactions_item_qty` (8 kinds)  
@@ -429,7 +432,7 @@ EmployeeDetails → leave policy/request → shifts shipped. Documents, attendan
 | # | Work | Status |
 |---|------|--------|
 | G1 | Wire desk to `/reports/dashboard` + `/reports/alerts` | `[x]` |
-| G2 | `ReportDefinition` + `ReportViewer` + CSV (7 defs) | `[x]` |
+| G2 | `ReportDefinition` + `ReportViewer` + CSV (~49 defs) | `[x]` |
 | G3 | Command palette over NavigationRegistry + report/create routes | `[x]` |
 | G4 | Settings + locale; `architecture.md`; responsive QA matrix seed | `[x]` (goldens later) |
 | G5 | Desk chart insights (`fl_chart`) + `/reports/dashboard/trend` endpoint | `[x]` |
@@ -584,7 +587,7 @@ When you ship or defer work:
 | [`manifest-exceptions.md`](./manifest-exceptions.md) | Why an entity is not registered yet |
 | [`api-contract.md`](./api-contract.md) | Wire shapes |
 | [`backend-suggestions.md`](./backend-suggestions.md) | Backend gaps (BE-xxx) |
-| [`offline-sync-readiness.md`](./offline-sync-readiness.md) | Parked offline track |
+| [`_archive/offline-sync-readiness.md`](./_archive/offline-sync-readiness.md) | Parked offline track |
 | [`SESSION_CONTEXT_EXPORT.md`](./SESSION_CONTEXT_EXPORT.md) | Architectural decisions snapshot |
 | [`BUILD_TASKS_V2.md`](./BUILD_TASKS_V2.md) | Wave plan (EMR-driven) |
 | [`UI_DESIGN_PLAN.md`](./UI_DESIGN_PLAN.md) | Visual / UX direction |

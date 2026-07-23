@@ -22,3 +22,15 @@ final class LedgerAmountDetailRefreshed extends LedgerAmountDetailEvent {
 final class LedgerAmountDetailCancelled extends LedgerAmountDetailEvent {
   const LedgerAmountDetailCancelled();
 }
+
+final class LedgerAmountDetailApproved extends LedgerAmountDetailEvent {
+  const LedgerAmountDetailApproved();
+}
+
+final class LedgerAmountDetailRejected extends LedgerAmountDetailEvent {
+  const LedgerAmountDetailRejected(this.reason);
+  final String reason;
+
+  @override
+  List<Object?> get props => [reason];
+}

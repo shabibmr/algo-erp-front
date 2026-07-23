@@ -177,4 +177,61 @@ void main() {
     expect(detail.lines, hasLength(1));
     expect(detail.lines.first.itemId, 9);
   });
+
+  test('salesInvoice kind posts status salesperson and source type', () {
+    final draft = ItemQtyDraft(
+      voucherPrefix: 'SI',
+      voucherDate: DateTime(2025, 4, 1),
+      financialYear: '2025-26',
+      partyLedgerId: 3,
+      godownId: 1,
+      salespersonEmployeeId: 8,
+      voucherProjectId: 4,
+      sourceVoucherId: 99,
+      sourceVoucherType: 'SalesOrder',
+      saveStatus: 'Draft',
+      lines: [
+        ItemQtyLine(
+          itemId: 10,
+          quantity: Decimal.one,
+          price: Decimal.parse('10'),
+          uid: 1,
+        ),
+      ],
+    );
+    final json = ItemQtyDto.draftToPostJson(
+      draft,
+      kind: ItemQtyKinds.salesInvoice,
+    );
+    expect(json['customer_ledger_id'], 3);
+    expect(json['status'], 'Draft');
+    expect(json['salesperson_employee_id'], 8);
+    expect(json['voucher_project_id'], 4);
+    expect(json['source_voucher_type'], 'SalesOrder');
+  });
+
+  test('draftToEditJson uses LineEngine totals', () {
+    final draft = ItemQtyDraft(
+      partyLedgerId: 3,
+      godownId: 1,
+      lines: [
+        ItemQtyLine(
+          itemId: 10,
+          quantity: Decimal.parse('2'),
+          price: Decimal.parse('50'),
+          discountPercent: Decimal.parse('10'),
+          taxRate: Decimal.parse('5'),
+        ),
+      ],
+    );
+    final json = ItemQtyDto.draftToEditJson(draft);
+    expect(json['header']['voucher_ledger_id'], 3);
+    expect(json['lines'][0]['Discount_Amount'], 10);
+    expect(json['lines'][0]['Tax_Amount'], 4.5);
+  });
+
+  test('ItemQtyLine uid is stable across copyWith', () {
+    final line = ItemQtyLine(itemId: 1, uid: 42);
+    expect(line.copyWith(itemLabel: 'x').uid, 42);
+  });
 }

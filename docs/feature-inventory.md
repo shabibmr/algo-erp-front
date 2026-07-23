@@ -454,7 +454,7 @@ runtime set as `Draft, Approved, Posted, Cancelled, Rejected`.
 
 List filters supported (from `ListFilters` in `voucherRead.service.ts`, real code):
 `start_date`, `end_date`, `prefix`, `financial_year`, `ledger_id`, `status`, `page`, `limit`
-(`limit` capped at 200). **No `updatedSince`/delta filter exists** (see `offline-sync-readiness.md`).
+(`limit` capped at 200). **No `updatedSince`/delta filter exists** (see `_archive/offline-sync-readiness.md`).
 
 ### Endpoint table — lifecycle (`/transactions`, `voucherLifecycle.routes.ts`)
 

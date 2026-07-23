@@ -1,5 +1,7 @@
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/error/safe_call.dart';
+import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_models.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_repository.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
 import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
@@ -20,6 +22,9 @@ class StockVoucherDetailBloc
     on<StockVoucherDetailFetchRequested>(_onFetchRequested);
     on<StockVoucherDetailRefreshed>(_onRefreshed);
     on<StockVoucherDetailCancelled>(_onCancelled);
+    on<StockVoucherDetailApproved>(_onApproved);
+    on<StockVoucherDetailRejected>(_onRejected);
+    on<StockVoucherDetailFulfilled>(_onFulfilled);
   }
 
   final StockVoucherRepository _repository;
@@ -81,17 +86,76 @@ class StockVoucherDetailBloc
   Future<void> _onCancelled(
     StockVoucherDetailCancelled event,
     Emitter<StockVoucherDetailState> emit,
+  ) => _run(emit, _repository.cancel, 'Cancelled');
+
+  Future<void> _onApproved(
+    StockVoucherDetailApproved event,
+    Emitter<StockVoucherDetailState> emit,
+  ) => _run(emit, _repository.approve, 'Approved');
+
+  Future<void> _onRejected(
+    StockVoucherDetailRejected event,
+    Emitter<StockVoucherDetailState> emit,
   ) async {
     if (state.detail == null) return;
     emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await _repository.reject(state.detail!.id, event.reason);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
+      ),
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? 'Rejected',
+          ),
+        );
+        add(StockVoucherDetailFetchRequested(state.detail!.id));
+      },
+    );
+  }
 
-    final result = await _repository.cancel(state.detail!.id);
+  Future<void> _onFulfilled(
+    StockVoucherDetailFulfilled event,
+    Emitter<StockVoucherDetailState> emit,
+  ) async {
+    if (state.detail == null) return;
+    emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await _repository.fulfill(
+      state.detail!.id,
+      event.issueQuantities,
+    );
     result.fold(
       (failure) => emit(
         state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
       ),
       (_) {
-        emit(state.copyWith(isBusy: false, actionMessage: () => 'Cancelled'));
+        emit(state.copyWith(isBusy: false, actionMessage: () => 'Fulfilled'));
+        add(StockVoucherDetailFetchRequested(state.detail!.id));
+      },
+    );
+  }
+
+  Future<void> _run(
+    Emitter<StockVoucherDetailState> emit,
+    Future<Result<StockVoucherLifecycleResult>> Function(int id) call,
+    String fallback,
+  ) async {
+    if (state.detail == null) return;
+    emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await call(state.detail!.id);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
+      ),
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? fallback,
+          ),
+        );
         add(StockVoucherDetailFetchRequested(state.detail!.id));
       },
     );

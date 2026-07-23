@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:equatable/equatable.dart';
 
 sealed class StockVoucherDetailEvent extends Equatable {
@@ -21,4 +22,24 @@ final class StockVoucherDetailRefreshed extends StockVoucherDetailEvent {
 
 final class StockVoucherDetailCancelled extends StockVoucherDetailEvent {
   const StockVoucherDetailCancelled();
+}
+
+final class StockVoucherDetailApproved extends StockVoucherDetailEvent {
+  const StockVoucherDetailApproved();
+}
+
+final class StockVoucherDetailRejected extends StockVoucherDetailEvent {
+  const StockVoucherDetailRejected(this.reason);
+  final String reason;
+
+  @override
+  List<Object?> get props => [reason];
+}
+
+final class StockVoucherDetailFulfilled extends StockVoucherDetailEvent {
+  const StockVoucherDetailFulfilled(this.issueQuantities);
+  final List<({int lineId, Decimal issueQty})> issueQuantities;
+
+  @override
+  List<Object?> get props => [issueQuantities];
 }

@@ -1,13 +1,17 @@
 import 'package:algo_erp_front/core/auth/permission_contract.dart';
 import 'package:algo_erp_front/core/auth/permission_gate.dart';
+import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/line_engine/line_engine.dart';
 import 'package:algo_erp_front/core/responsive/breakpoints.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_canvas.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Shared voucher document chrome: header slot, line grid, live totals,
 /// and primary lifecycle actions.
@@ -18,13 +22,13 @@ import 'package:flutter/material.dart';
 class DocumentSurface<R> extends StatefulWidget {
   const DocumentSurface({
     required this.blueprint,
-    required this.header,
     required this.rows,
     required this.columns,
     required this.onRowsChanged,
     required this.lineInputsOf,
     required this.onPost,
     super.key,
+    this.header,
     this.newRow,
     this.keyOf,
     this.enabled = true,
@@ -44,7 +48,10 @@ class DocumentSurface<R> extends StatefulWidget {
   });
 
   final VoucherBlueprint blueprint;
-  final Widget header;
+
+  /// Header fields above the line grid. Omit it when the voucher puts its
+  /// header in [topBar] instead — no empty slot is rendered.
+  final Widget? header;
   final List<R> rows;
   final List<LineItemColumn<R>> columns;
   final ValueChanged<List<R>> onRowsChanged;
@@ -105,6 +112,37 @@ class _DocumentSurfaceState<R> extends State<DocumentSurface<R>> {
     return LineEngine.computeDocument(inputs);
   }
 
+  bool get _canCommit =>
+      getIt<PermissionService>().can(
+        widget.blueprint.rbacModule,
+        PermissionAction.create,
+      ) &&
+      widget.enabled &&
+      !widget.posting;
+
+  /// Ctrl/Cmd+S — save draft. Mirrors the Save-draft button's guards exactly
+  /// (handler present, lifecycle, permission, enabled/not-posting) so the
+  /// shortcut can never fire an action the button itself wouldn't.
+  void _saveDraftShortcut() {
+    final onSaveDraft = widget.onSaveDraft;
+    if (onSaveDraft == null || !_canCommit) return;
+    if (!widget.blueprint.lifecycle.contains(
+      VoucherLifecycleAction.saveDraft,
+    )) {
+      return;
+    }
+    onSaveDraft();
+  }
+
+  /// Ctrl/Cmd+Enter — post. Mirrors the Post button's guards.
+  void _postShortcut() {
+    if (!_canCommit) return;
+    if (!widget.blueprint.lifecycle.contains(VoucherLifecycleAction.post)) {
+      return;
+    }
+    widget.onPost();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -146,75 +184,73 @@ class _DocumentSurfaceState<R> extends State<DocumentSurface<R>> {
       );
     }
 
-    final itemsContainer = Container(
-      padding: EdgeInsets.all(tokens.spacing.md),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(tokens.radii.md),
-        border: Border.all(color: Colors.blue.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    final itemsContainer = WorkSheet(
+      fill: isDesktop,
+      toolbar: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(widget.linesLabel, style: theme.textTheme.titleMedium),
-              if (widget.rowSearchFilter != null)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: _searchExpanded ? 200 : 36,
-                  height: 36,
-                  child: _searchExpanded
-                      ? TextField(
-                          autofocus: true,
-                          style: theme.textTheme.bodyMedium,
-                          decoration: InputDecoration(
-                            hintText: 'Search items...',
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.close, size: 16),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () {
-                                setState(() {
-                                  _searchExpanded = false;
-                                  _searchQuery = '';
-                                });
-                              },
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                tokens.radii.sm,
-                              ),
-                              borderSide: BorderSide(color: tokens.brand.mist),
-                            ),
-                          ),
-                          onChanged: (val) {
-                            setState(() {
-                              _searchQuery = val.trim().toLowerCase();
-                            });
-                          },
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.search, size: 20),
+          Text(widget.linesLabel, style: theme.textTheme.titleMedium),
+          if (widget.rowSearchFilter != null)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: _searchExpanded ? 200 : 36,
+              height: 36,
+              child: _searchExpanded
+                  ? TextField(
+                      autofocus: true,
+                      style: theme.textTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: 'Search items...',
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.close, size: 16),
                           padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           onPressed: () {
                             setState(() {
-                              _searchExpanded = true;
+                              _searchExpanded = false;
+                              _searchQuery = '';
                             });
                           },
                         ),
-                ),
-            ],
-          ),
-          SizedBox(height: tokens.spacing.sm),
-          itemsGrid,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(tokens.radii.sm),
+                          borderSide: BorderSide(color: tokens.brand.mist),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val.trim().toLowerCase();
+                        });
+                      },
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.search, size: 20),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        setState(() {
+                          _searchExpanded = true;
+                        });
+                      },
+                    ),
+            ),
         ],
+      ),
+      padding: EdgeInsets.fromLTRB(
+        tokens.spacing.md,
+        tokens.spacing.sm,
+        tokens.spacing.md,
+        tokens.spacing.md,
+      ),
+      // The grid stays inside a Flex so its desktop `Expanded` has a parent.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [itemsGrid],
       ),
     );
 
@@ -235,9 +271,11 @@ class _DocumentSurfaceState<R> extends State<DocumentSurface<R>> {
           ),
           SizedBox(height: tokens.spacing.md),
         ],
-        widget.header,
-        SizedBox(height: tokens.spacing.sm),
-        isDesktop ? Expanded(child: itemsContainer) : itemsContainer,
+        if (widget.header != null) ...[
+          widget.header!,
+          SizedBox(height: tokens.spacing.sm),
+        ],
+        if (isDesktop) Expanded(child: itemsContainer) else itemsContainer,
         if (widget.footer != null) ...[
           SizedBox(height: tokens.spacing.sm),
           widget.footer!,
@@ -308,35 +346,56 @@ class _DocumentSurfaceState<R> extends State<DocumentSurface<R>> {
       ],
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (widget.topBar != null) ...[
-          widget.topBar!,
-          SizedBox(height: tokens.spacing.sm),
-        ],
-        Expanded(
-          child: Breakpoints.isDesktop(context)
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(flex: 3, child: mainContent),
-                    SizedBox(width: tokens.spacing.md),
-                    SizedBox(width: 320, child: sidebar),
-                  ],
-                )
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      mainContent,
-                      SizedBox(height: tokens.spacing.md),
-                      sidebar,
-                    ],
-                  ),
-                ),
+    return CallbackShortcuts(
+      // Keyboard commit so a clerk never has to reach for the mouse. Both
+      // control (Win/Linux) and meta (macOS) map to the same callback; the
+      // callbacks self-guard, so a disabled surface just ignores the keys.
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.keyS, control: true):
+            _saveDraftShortcut,
+        const SingleActivator(LogicalKeyboardKey.keyS, meta: true):
+            _saveDraftShortcut,
+        const SingleActivator(LogicalKeyboardKey.enter, control: true):
+            _postShortcut,
+        const SingleActivator(LogicalKeyboardKey.enter, meta: true):
+            _postShortcut,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter, control: true):
+            _postShortcut,
+        const SingleActivator(LogicalKeyboardKey.numpadEnter, meta: true):
+            _postShortcut,
+      },
+      child: WorkCanvas(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.topBar != null) ...[
+              widget.topBar!,
+              SizedBox(height: tokens.spacing.sm),
+            ],
+            Expanded(
+              child: Breakpoints.isDesktop(context)
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 3, child: mainContent),
+                        SizedBox(width: tokens.spacing.md),
+                        SizedBox(width: 320, child: sidebar),
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          mainContent,
+                          SizedBox(height: tokens.spacing.md),
+                          sidebar,
+                        ],
+                      ),
+                    ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -368,24 +427,36 @@ class _TotalsBar extends StatelessWidget {
 
     Widget row(String k, Decimal v, {bool emphasize = false}) => Padding(
       padding: EdgeInsets.symmetric(vertical: tokens.spacing.xxs),
+      // The amount is laid out at its natural width and the label takes what's
+      // left: in a 320px sidebar a seven-figure total must never be the thing
+      // that gets clipped.
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            k,
-            style: emphasize
-                ? theme.textTheme.titleMedium?.copyWith(
-                    color: tokens.brand.lagoon,
-                    fontWeight: FontWeight.w700,
-                  )
-                : theme.textTheme.bodyMedium,
+          Expanded(
+            child: Text(
+              k,
+              overflow: TextOverflow.ellipsis,
+              // Grand total is a brass seal — "this is the money, this commits"
+              // — not the lagoon of a clickable action.
+              style: emphasize
+                  ? theme.textTheme.titleMedium?.copyWith(
+                      color: tokens.brand.brass,
+                      fontWeight: FontWeight.w700,
+                    )
+                  : theme.textTheme.bodyMedium,
+            ),
           ),
+          SizedBox(width: tokens.spacing.sm),
           Text(
             v.toMoney(),
+            // The document's headline figure: brass, in the Plex Mono figure
+            // face so it reads as final money (§5.4). The rows above stay in
+            // Plex-Sans tabular so the total deliberately stands apart.
             style: emphasize
-                ? theme.textTheme.titleMedium?.copyWith(
-                    color: tokens.brand.lagoon,
+                ? tokens.figures.copyWith(
+                    color: tokens.brand.brass,
                     fontWeight: FontWeight.w700,
+                    fontSize: theme.textTheme.titleMedium?.fontSize,
                   )
                 : theme.textTheme.bodyMedium?.copyWith(
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -395,57 +466,57 @@ class _TotalsBar extends StatelessWidget {
       ),
     );
 
-    return Card(
-      color: Colors.orange.shade50,
-      child: Padding(
-        padding: EdgeInsets.all(tokens.spacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(label, style: theme.textTheme.titleSmall),
-            SizedBox(height: tokens.spacing.sm),
-            row('Items total', subtotal),
-            row('Discount', discount),
-            row('Taxable amount', taxable),
-            row('Total tax', tax),
-            row('Round off', roundOff),
-            Divider(height: tokens.spacing.md, color: tokens.brand.mist),
-            row('Grand total', total, emphasize: true),
-            if (showEmptyHint && !Breakpoints.isDesktop(context)) ...[
-              SizedBox(height: tokens.spacing.md),
-              Container(
-                padding: EdgeInsets.all(tokens.spacing.sm),
-                decoration: BoxDecoration(
-                  color: tokens.brand.lagoonSoft.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(tokens.radii.sm),
-                  border: Border.all(
-                    color: tokens.brand.lagoon.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: tokens.brand.lagoon,
-                    ),
-                    SizedBox(width: tokens.spacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Add items to see totals. '
-                        'Values update as you complete lines.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: tokens.brand.inkMuted,
-                        ),
-                      ),
-                    ),
-                  ],
+    return WorkSheet(
+      fill: false,
+      title: label,
+      padding: EdgeInsets.all(tokens.spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          row('Items total', subtotal),
+          row('Discount', discount),
+          row('Taxable amount', taxable),
+          row('Total tax', tax),
+          row('Round off', roundOff),
+          Divider(height: tokens.spacing.md, color: tokens.brand.mist),
+          row('Grand total', total, emphasize: true),
+          // The clerk's primary surface is desktop; a fresh voucher there was
+          // a silent wall of zeros. Show the same cue on every breakpoint.
+          if (showEmptyHint) ...[
+            SizedBox(height: tokens.spacing.md),
+            Container(
+              padding: EdgeInsets.all(tokens.spacing.sm),
+              decoration: BoxDecoration(
+                color: tokens.brand.lagoonSoft.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(tokens.radii.sm),
+                border: Border.all(
+                  color: tokens.brand.lagoon.withValues(alpha: 0.25),
                 ),
               ),
-            ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: tokens.brand.lagoon,
+                  ),
+                  SizedBox(width: tokens.spacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Add items to see totals. '
+                      'Values update as you complete lines.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: tokens.brand.inkMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

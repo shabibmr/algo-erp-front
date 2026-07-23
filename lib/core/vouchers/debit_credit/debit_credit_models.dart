@@ -235,8 +235,11 @@ class DebitCreditDetail extends Equatable {
     return '$p$voucherNo';
   }
 
-  bool get canCancel =>
-      status == 'Posted' || status == 'Approved' || status == 'Draft';
+  bool get canCancel => status == 'Posted' || status == 'Approved';
+
+  bool get canApprove => status == 'Draft' || status == 'Approved';
+
+  bool get canReject => status == 'Draft' || status == 'Approved';
 
   DebitCreditDetail copyWith({
     String? status,

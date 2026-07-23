@@ -22,3 +22,15 @@ final class DebitCreditDetailRefreshed extends DebitCreditDetailEvent {
 final class DebitCreditDetailCancelled extends DebitCreditDetailEvent {
   const DebitCreditDetailCancelled();
 }
+
+final class DebitCreditDetailApproved extends DebitCreditDetailEvent {
+  const DebitCreditDetailApproved();
+}
+
+final class DebitCreditDetailRejected extends DebitCreditDetailEvent {
+  const DebitCreditDetailRejected(this.reason);
+  final String reason;
+
+  @override
+  List<Object?> get props => [reason];
+}

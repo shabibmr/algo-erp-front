@@ -29,6 +29,7 @@ final class SalesInvoiceFormState extends Equatable {
     this.postedVoucherNo,
     this.postedVerb,
     this.fieldErrors = const {},
+    this.isDirty = false,
   });
 
   final FormSubmissionStatus status;
@@ -46,6 +47,11 @@ final class SalesInvoiceFormState extends Equatable {
   final String? postedVoucherNo;
   final String? postedVerb;
   final Map<String, String> fieldErrors;
+
+  /// `true` once the user has changed any field or line on this form — drives
+  /// the discard-changes guard. Reset on (re)load and on a successful save so
+  /// leaving a freshly-loaded or just-saved document never prompts.
+  final bool isDirty;
 
   bool get isSubmitting => status == FormSubmissionStatus.submitting;
   bool get isLoading => status == FormSubmissionStatus.loading;
@@ -70,6 +76,7 @@ final class SalesInvoiceFormState extends Equatable {
     String? Function()? postedVoucherNo,
     String? Function()? postedVerb,
     Map<String, String>? fieldErrors,
+    bool? isDirty,
   }) {
     return SalesInvoiceFormState(
       status: status ?? this.status,
@@ -91,6 +98,7 @@ final class SalesInvoiceFormState extends Equatable {
           : this.postedVoucherNo,
       postedVerb: postedVerb != null ? postedVerb() : this.postedVerb,
       fieldErrors: fieldErrors ?? this.fieldErrors,
+      isDirty: isDirty ?? this.isDirty,
     );
   }
 
@@ -111,5 +119,6 @@ final class SalesInvoiceFormState extends Equatable {
     postedVoucherNo,
     postedVerb,
     fieldErrors,
+    isDirty,
   ];
 }

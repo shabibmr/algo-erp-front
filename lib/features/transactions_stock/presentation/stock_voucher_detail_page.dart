@@ -83,6 +83,137 @@ class _StockVoucherDetailView extends StatelessWidget {
     }
   }
 
+  Future<void> _approve(BuildContext context, StockVoucherDetail doc) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: 'Approve ${kind.blueprint.label}?',
+      message: 'Approve ${doc.displayNo}?',
+      confirmLabel: 'Approve',
+    );
+    if (ok && context.mounted) {
+      context.read<StockVoucherDetailBloc>().add(
+        const StockVoucherDetailApproved(),
+      );
+    }
+  }
+
+  Future<void> _reject(BuildContext context, StockVoucherDetail doc) async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reject ${kind.blueprint.label}'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Reason'),
+          maxLines: 3,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (reason != null && reason.isNotEmpty && context.mounted) {
+      context.read<StockVoucherDetailBloc>().add(
+        StockVoucherDetailRejected(reason),
+      );
+    }
+  }
+
+  Future<void> _fulfill(BuildContext context, StockVoucherDetail doc) async {
+    final controllers = <int, TextEditingController>{
+      for (final line in doc.lines)
+        line.id: TextEditingController(
+          text: (line.requestQty ?? line.quantity ?? Decimal.one).toString(),
+        ),
+    };
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Fulfill stock request'),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter issue qty for ${doc.displayNo}. '
+                  'Issues move stock from source to target godown.',
+                ),
+                const SizedBox(height: 12),
+                for (final line in doc.lines) ...[
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      line.itemLabel ??
+                          (line.itemId == null
+                              ? 'Line ${line.id}'
+                              : 'Item #${line.itemId}'),
+                    ),
+                    subtitle: Text(
+                      'Requested: ${line.requestQty ?? line.quantity ?? '—'}'
+                      '${line.issueQty != null ? ' · Issued: ${line.issueQty}' : ''}',
+                    ),
+                    trailing: SizedBox(
+                      width: 96,
+                      child: TextField(
+                        controller: controllers[line.id],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Issue',
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Fulfill'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final issues = <({int lineId, Decimal issueQty})>[];
+    for (final line in doc.lines) {
+      final raw = controllers[line.id]?.text.trim() ?? '';
+      final qty = Decimal.tryParse(raw) ?? Decimal.zero;
+      if (qty > Decimal.zero) {
+        issues.add((lineId: line.id, issueQty: qty));
+      }
+    }
+    if (issues.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter at least one issue quantity')),
+      );
+      return;
+    }
+    context.read<StockVoucherDetailBloc>().add(
+      StockVoucherDetailFulfilled(issues),
+    );
+  }
+
   Future<Uint8List> _buildPdf(StockVoucherDetail doc) async {
     final company = await fetchCurrentCompanyHeader(
       getIt<DioClient>(),
@@ -175,7 +306,41 @@ class _StockVoucherDetailView extends StatelessWidget {
                     onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
-                  if (doc.canCancel && doc.status != 'Cancelled')
+                  if (kind.lifecycleType == 'StockRequest' && doc.canFulfill)
+                    PermissionGate(
+                      module: 'Transactions',
+                      action: PermissionAction.update,
+                      child: FilledButton.icon(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _fulfill(context, doc),
+                        icon: const Icon(Icons.local_shipping_outlined),
+                        label: const Text('Fulfill'),
+                      ),
+                    ),
+                  if (doc.canApprove)
+                    PermissionGate(
+                      module: 'Transactions',
+                      action: PermissionAction.update,
+                      child: FilledButton(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _approve(context, doc),
+                        child: const Text('Approve'),
+                      ),
+                    ),
+                  if (doc.canReject)
+                    PermissionGate(
+                      module: 'Transactions',
+                      action: PermissionAction.update,
+                      child: TextButton(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _reject(context, doc),
+                        child: const Text('Reject'),
+                      ),
+                    ),
+                  if (doc.canCancel)
                     PermissionGate(
                       module: 'Transactions',
                       action: PermissionAction.update,

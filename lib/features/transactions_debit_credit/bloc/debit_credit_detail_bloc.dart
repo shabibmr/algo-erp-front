@@ -1,5 +1,7 @@
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/error/safe_call.dart';
+import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_models.dart';
 import 'package:algo_erp_front/core/vouchers/debit_credit/debit_credit_repository.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/transactions_debit_credit/bloc/debit_credit_detail_event.dart';
@@ -17,6 +19,8 @@ class DebitCreditDetailBloc
     on<DebitCreditDetailFetchRequested>(_onFetchRequested);
     on<DebitCreditDetailRefreshed>(_onRefreshed);
     on<DebitCreditDetailCancelled>(_onCancelled);
+    on<DebitCreditDetailApproved>(_onApproved);
+    on<DebitCreditDetailRejected>(_onRejected);
   }
 
   final DebitCreditRepository _repository;
@@ -69,17 +73,55 @@ class DebitCreditDetailBloc
   Future<void> _onCancelled(
     DebitCreditDetailCancelled event,
     Emitter<DebitCreditDetailState> emit,
+  ) => _run(emit, _repository.cancel, 'Cancelled');
+
+  Future<void> _onApproved(
+    DebitCreditDetailApproved event,
+    Emitter<DebitCreditDetailState> emit,
+  ) => _run(emit, _repository.approve, 'Approved');
+
+  Future<void> _onRejected(
+    DebitCreditDetailRejected event,
+    Emitter<DebitCreditDetailState> emit,
   ) async {
     if (state.detail == null) return;
     emit(state.copyWith(isBusy: true, actionMessage: () => null));
-
-    final result = await _repository.cancel(state.detail!.id);
+    final result = await _repository.reject(state.detail!.id, event.reason);
     result.fold(
       (failure) => emit(
         state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
       ),
-      (_) {
-        emit(state.copyWith(isBusy: false, actionMessage: () => 'Cancelled'));
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? 'Rejected',
+          ),
+        );
+        add(DebitCreditDetailFetchRequested(state.detail!.id));
+      },
+    );
+  }
+
+  Future<void> _run(
+    Emitter<DebitCreditDetailState> emit,
+    Future<Result<DebitCreditLifecycleResult>> Function(int id) call,
+    String fallback,
+  ) async {
+    if (state.detail == null) return;
+    emit(state.copyWith(isBusy: true, actionMessage: () => null));
+    final result = await call(state.detail!.id);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isBusy: false, actionMessage: () => _messageOf(failure)),
+      ),
+      (r) {
+        emit(
+          state.copyWith(
+            isBusy: false,
+            actionMessage: () => r.message ?? fallback,
+          ),
+        );
         add(DebitCreditDetailFetchRequested(state.detail!.id));
       },
     );

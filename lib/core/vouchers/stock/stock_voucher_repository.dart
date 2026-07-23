@@ -7,6 +7,7 @@ import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_dto.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_kind.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_models.dart';
+import 'package:decimal/decimal.dart';
 
 /// Online repository for stock vouchers ([StockVoucherKind]).
 class StockVoucherRepository {
@@ -131,10 +132,17 @@ class StockVoucherRepository {
     });
   }
 
-  Future<Result<StockVoucherLifecycleResult>> cancel(int id) {
+  Future<Result<StockVoucherLifecycleResult>> cancel(int id) =>
+      _lifecycle('cancel', id);
+
+  Future<Result<StockVoucherLifecycleResult>> approve(int id) =>
+      _lifecycle('approve', id);
+
+  Future<Result<StockVoucherLifecycleResult>> reject(int id, String reason) {
     return safeCall(() async {
       final res = await _client.dio.post<Object?>(
-        '/transactions/${kind.lifecycleType}/$id/cancel',
+        '/transactions/${kind.lifecycleType}/$id/reject',
+        data: {'reason': reason},
       );
       final envelope = decodeApiResponse<JsonMap>(
         res.data,
@@ -145,6 +153,47 @@ class StockVoucherRepository {
         throw const FormatException('Expected lifecycle result');
       }
       return StockVoucherDto.lifecycleFromJson(data);
+    });
+  }
+
+  Future<Result<StockVoucherLifecycleResult>> _lifecycle(
+    String action,
+    int id,
+  ) {
+    return safeCall(() async {
+      final res = await _client.dio.post<Object?>(
+        '/transactions/${kind.lifecycleType}/$id/$action',
+      );
+      final envelope = decodeApiResponse<JsonMap>(
+        res.data,
+        (j) => j! as JsonMap,
+      );
+      final data = envelope.data;
+      if (data == null) {
+        throw const FormatException('Expected lifecycle result');
+      }
+      return StockVoucherDto.lifecycleFromJson(data);
+    });
+  }
+
+  /// POST `/transactions/stock-request/:id/fulfill`.
+  Future<Result<void>> fulfill(
+    int id,
+    List<({int lineId, Decimal issueQty})> issueQuantities,
+  ) {
+    return safeCall(() async {
+      await _client.dio.post<Object?>(
+        '/transactions/stock-request/$id/fulfill',
+        data: {
+          'issueQuantities': [
+            for (final q in issueQuantities)
+              {
+                'lineId': q.lineId,
+                'issueQty': double.tryParse(q.issueQty.toString()) ?? 0,
+              },
+          ],
+        },
+      );
     });
   }
 }

@@ -113,10 +113,34 @@ class DebitCreditRepository {
     });
   }
 
-  Future<Result<DebitCreditLifecycleResult>> cancel(int id) {
+  Future<Result<DebitCreditLifecycleResult>> cancel(int id) =>
+      _lifecycle('cancel', id);
+
+  Future<Result<DebitCreditLifecycleResult>> approve(int id) =>
+      _lifecycle('approve', id);
+
+  Future<Result<DebitCreditLifecycleResult>> reject(int id, String reason) {
     return safeCall(() async {
       final res = await _client.dio.post<Object?>(
-        '/transactions/${kind.lifecycleType}/$id/cancel',
+        '/transactions/${kind.lifecycleType}/$id/reject',
+        data: {'reason': reason},
+      );
+      final envelope = decodeApiResponse<JsonMap>(
+        res.data,
+        (j) => j! as JsonMap,
+      );
+      final data = envelope.data;
+      if (data == null) {
+        throw const FormatException('Expected lifecycle result');
+      }
+      return DebitCreditDto.lifecycleFromJson(data);
+    });
+  }
+
+  Future<Result<DebitCreditLifecycleResult>> _lifecycle(String action, int id) {
+    return safeCall(() async {
+      final res = await _client.dio.post<Object?>(
+        '/transactions/${kind.lifecycleType}/$id/$action',
       );
       final envelope = decodeApiResponse<JsonMap>(
         res.data,

@@ -206,8 +206,11 @@ class LedgerAmountDetail extends Equatable {
     return '$p$voucherNo';
   }
 
-  bool get canCancel =>
-      status == 'Posted' || status == 'Approved' || status == 'Draft';
+  bool get canCancel => status == 'Posted' || status == 'Approved';
+
+  bool get canApprove => status == 'Draft' || status == 'Approved';
+
+  bool get canReject => status == 'Draft' || status == 'Approved';
 
   LedgerAmountDetail copyWith({
     String? status,
@@ -241,6 +244,72 @@ class LedgerAmountDetail extends Equatable {
     narration,
     lines,
   ];
+}
+
+/// One open bill from `GET /accounts/outstanding/:ledgerId`.
+class OutstandingBill extends Equatable {
+  const OutstandingBill({
+    required this.refNo,
+    required this.pendingAmount,
+    this.refPrefix,
+    this.voucherType,
+    this.voucherNo,
+    this.voucherPrefix,
+    this.dueDate,
+    this.originalAmount,
+    this.paidAmount,
+  });
+
+  factory OutstandingBill.fromJson(Map<String, dynamic> json) {
+    Decimal? d(dynamic v) => v == null ? null : Decimal.tryParse(v.toString());
+    DateTime? date;
+    final raw = json['due_date'];
+    if (raw is String && raw.isNotEmpty) date = DateTime.tryParse(raw);
+    return OutstandingBill(
+      refNo: (json['ref_no'] ?? json['RefNo'] ?? '').toString(),
+      refPrefix: json['ref_prefix'] as String? ?? json['RefPrefix'] as String?,
+      voucherType:
+          json['voucher_type'] as String? ?? json['VoucherType'] as String?,
+      voucherNo: json['voucher_no'] as String? ?? json['VoucherNo'] as String?,
+      voucherPrefix:
+          json['voucher_prefix'] as String? ?? json['voucherPrefix'] as String?,
+      dueDate: date,
+      originalAmount: d(json['original_amount']),
+      paidAmount: d(json['paid_amount']),
+      pendingAmount: d(json['pending_amount']) ?? Decimal.zero,
+    );
+  }
+
+  final String refNo;
+  final String? refPrefix;
+  final String? voucherType;
+  final String? voucherNo;
+  final String? voucherPrefix;
+  final DateTime? dueDate;
+  final Decimal? originalAmount;
+  final Decimal? paidAmount;
+  final Decimal pendingAmount;
+
+  String get displayLabel {
+    final p = voucherPrefix ?? refPrefix ?? '';
+    final n = voucherNo ?? refNo;
+    final label = '$p$n'.trim();
+    return label.isEmpty ? refNo : label;
+  }
+
+  @override
+  List<Object?> get props => [refNo, refPrefix, pendingAmount, voucherNo];
+}
+
+/// Client-side allocation of a payment/receipt line amount against a bill.
+class BillAllocation extends Equatable {
+  const BillAllocation({required this.bill, required this.amount});
+
+  final OutstandingBill bill;
+  final Decimal amount;
+
+  @override
+  List<Object?> get props => [bill, amount];
 }
 
 class LedgerAmountLifecycleResult extends Equatable {

@@ -1,5 +1,13 @@
 # algoERP Frontend — Session Context Export
 
+> ⚠️ **HISTORICAL SNAPSHOT (2026-07-11) — do not read as current state.** This captures the
+> project as of that date, *before* essentially all EMR/master/voucher/report work shipped.
+> Its **doctrine** (the offline→online pivot, the R1–R7 reuse rules, model-selection guidance)
+> still holds and is cited by `CLAUDE.md`. Its **status/state** claims are stale — e.g. RBAC is
+> now `MatrixPermissionService` (fails closed), not the `FailOpenPermissionService` described
+> here; EMR is the whole app, not an unresolved "should we build it" fork; test counts are
+> frozen. For current state see [`STATUS.md`](./STATUS.md).
+
 > Exported 2026-07-11. Purpose: a complete, self-contained record of the architectural
 > decisions, work completed, and open forks in this build so any future session (or
 > teammate) can resume without re-deriving context.

@@ -1,3 +1,6 @@
+import 'package:algo_erp_front/core/domain/decimal_wire.dart';
+import 'package:algo_erp_front/core/domain/line_engine/line_engine.dart';
+import 'package:algo_erp_front/core/domain/lookups.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:decimal/decimal.dart';
@@ -89,7 +92,11 @@ abstract final class ItemQtyDto {
       grossTotal: _decimal(json['Gross_Total']),
       discount: _decimal(json['Discount_in_Amount']),
       vat: _decimal(json['Vat_Amount']),
+      // Legacy SI/quotation column still used as reject reason on some rows.
+      rejectionReason: json['Quotation_Dropped_Reason'] as String?,
       narration: json['Narration'] as String?,
+      salespersonEmployeeId: json['salesperson_employee_id'] as int?,
+      voucherProjectId: json['voucher_project_id'] as int?,
       lines: lines,
     );
   }
@@ -104,13 +111,22 @@ abstract final class ItemQtyDto {
       'financial_year': draft.financialYear,
       kind.partyField.wireKey: draft.partyLedgerId,
       if (kind.requiresGodown) 'godown_id': draft.godownId,
+      if (kind.supportsSalesperson && draft.salespersonEmployeeId != null)
+        'salesperson_employee_id': draft.salespersonEmployeeId,
+      if (kind.supportsProject && draft.voucherProjectId != null)
+        'voucher_project_id': draft.voucherProjectId,
       if (draft.billingName != null && draft.billingName!.isNotEmpty)
         'billing_name': draft.billingName,
       if (draft.narration != null && draft.narration!.isNotEmpty)
         'narration': draft.narration,
       if (kind.supportsCreditDays) 'credit_days': draft.creditDays,
+      if (kind.supportsPostStatus) 'status': draft.saveStatus,
       if (kind.supportsSource && draft.sourceVoucherId != null)
         'source_voucher_id': draft.sourceVoucherId,
+      if (kind.supportsSource &&
+          kind.supportsSourceType &&
+          draft.sourceVoucherType != null)
+        'source_voucher_type': draft.sourceVoucherType,
       'lines': [
         for (final line in draft.lines.where((l) => l.isComplete))
           {
@@ -118,15 +134,89 @@ abstract final class ItemQtyDto {
             if (line.skuId != null) 'sku_id': line.skuId,
             if (line.batchId != null) 'batch_id': line.batchId,
             if (line.sourceLineId != null) 'source_line_id': line.sourceLineId,
-            'quantity': double.tryParse(line.quantity.toString()) ?? 0,
-            'price': double.tryParse(line.price.toString()) ?? 0,
-            'discount_percent':
-                double.tryParse(line.discountPercent.toString()) ?? 0,
-            'tax_rate': double.tryParse(line.taxRate.toString()) ?? 0,
+            'quantity': decimalToWire(line.quantity),
+            'price': decimalToWire(line.price),
+            'discount_percent': decimalToWire(line.discountPercent),
+            'tax_rate': decimalToWire(line.taxRate),
           },
       ],
     };
     return map;
+  }
+
+  /// Body for `PUT /transactions/{Type}/:id` (Draft only) — SI shape.
+  static Map<String, dynamic> draftToEditJson(ItemQtyDraft draft) {
+    final complete = draft.lines.where((l) => l.isComplete).toList();
+    final doc = LineEngine.computeDocument(
+      complete.map((l) => l.toLineInput()),
+    );
+
+    final lines = <Map<String, dynamic>>[];
+    for (var i = 0; i < complete.length; i++) {
+      final line = complete[i];
+      final computed = doc.lines[i];
+      lines.add({
+        'item_id': line.itemId,
+        if (line.skuId != null) 'voucher_sku_id': line.skuId,
+        'Quantity': decimalToWire(line.quantity),
+        'Price': decimalToWire(line.price),
+        'Discount_Percent': decimalToWire(line.discountPercent),
+        'Discount_Amount': decimalToWire(computed.discountAmount),
+        'Subtotal': decimalToWire(computed.subtotal),
+        'Tax_Rate': decimalToWire(line.taxRate),
+        'Tax_Amount': decimalToWire(computed.taxAmount),
+      });
+    }
+
+    return {
+      'header': {
+        'godown_id': draft.godownId,
+        'voucher_ledger_id': draft.partyLedgerId,
+        if (draft.salespersonEmployeeId != null)
+          'salesperson_employee_id': draft.salespersonEmployeeId,
+        if (draft.voucherProjectId != null)
+          'voucher_project_id': draft.voucherProjectId,
+        if (draft.billingName != null) 'Billing_Name': draft.billingName,
+        if (draft.narration != null) 'Narration': draft.narration,
+        'Total': decimalToWire(doc.total),
+        'Gross_Total': decimalToWire(doc.total),
+        'Discount_in_Amount': decimalToWire(doc.discount),
+        'Vat_Amount': decimalToWire(doc.tax),
+      },
+      'lines': lines,
+    };
+  }
+
+  /// Map a detail document into a create/edit draft for the form.
+  static ItemQtyDraft detailToDraft(
+    ItemQtyDetail detail, {
+    String saveStatus = 'Draft',
+    String defaultPrefix = '',
+  }) {
+    return ItemQtyDraft(
+      voucherPrefix: detail.voucherPrefix.isEmpty
+          ? defaultPrefix
+          : detail.voucherPrefix,
+      voucherDate: detail.voucherDate ?? DateTime.now(),
+      // Calendar year is a last-resort placeholder; callers should resolve FY.
+      financialYear: (detail.voucherDate?.year ?? DateTime.now().year)
+          .toString(),
+      partyLedgerId: detail.partyLedgerId,
+      partyLabel: detail.partyLabel ?? detail.billingName,
+      godownId: detail.godownId,
+      godownLabel: detail.godownLabel,
+      salespersonEmployeeId: detail.salespersonEmployeeId,
+      salespersonLabel: detail.salespersonLabel,
+      voucherProjectId: detail.voucherProjectId,
+      projectLabel: detail.projectLabel,
+      billingName: detail.billingName,
+      narration: detail.narration,
+      saveStatus: saveStatus,
+      lines: [
+        for (final line in detail.lines) line.toDraftLine(),
+        if (detail.lines.isEmpty) ItemQtyLine(),
+      ],
+    );
   }
 
   static ItemQtyPostResult postResultFromJson(
@@ -142,6 +232,9 @@ abstract final class ItemQtyDto {
       id: id,
       voucherNo: json['voucherNo'] as String? ?? '',
       total: _decimal(json['total']) ?? Decimal.zero,
+      subtotal: _decimal(json['subtotal']),
+      discount: _decimal(json['discount']),
+      vat: _decimal(json['vat']),
     );
   }
 
@@ -150,6 +243,8 @@ abstract final class ItemQtyDto {
       id: json['id'] as int? ?? 0,
       status: json['status'] as String? ?? '',
       message: json['message'] as String?,
+      reason: json['reason'] as String?,
+      booked: json['booked'] as bool?,
     );
   }
 
@@ -176,12 +271,16 @@ abstract final class ItemQtyDto {
         lines.add(
           ItemQtyLine(
             itemId: row['item_id'] as int?,
-            skuId: row['voucher_sku_id'] as int?,
+            skuId: row['voucher_sku_id'] as int? ?? row['sku_id'] as int?,
             sourceLineId: row['id'] as int?,
-            quantity: _decimal(row['Quantity']) ?? Decimal.one,
-            price: _decimal(row['Price']) ?? Decimal.zero,
-            discountPercent: _decimal(row['Discount_Percent']) ?? Decimal.zero,
-            taxRate: _decimal(row['Tax_Rate']) ?? Decimal.zero,
+            quantity:
+                _decimal(row['Quantity'] ?? row['quantity']) ?? Decimal.one,
+            price: _decimal(row['Price'] ?? row['price']) ?? Decimal.zero,
+            discountPercent:
+                _decimal(row['Discount_Percent'] ?? row['discount_percent']) ??
+                Decimal.zero,
+            taxRate:
+                _decimal(row['Tax_Rate'] ?? row['tax_rate']) ?? Decimal.zero,
           ),
         );
       }
@@ -192,9 +291,41 @@ abstract final class ItemQtyDto {
       type: type,
       displayNo: displayNo,
       billingName: json['Billing_Name'] as String?,
-      partyLedgerId: json['voucher_ledger_id'] as int?,
+      partyLedgerId:
+          json['voucher_ledger_id'] as int? ??
+          json['customer_ledger_id'] as int?,
       godownId: json['godown_id'] as int?,
       lines: lines.isEmpty ? [ItemQtyLine()] : lines,
     );
   }
+
+  static NamedRef namedRefFromJson(
+    Map<String, dynamic> json, {
+    String nameKey = 'Name',
+    String? altNameKey,
+    String? codeKey,
+    String? altCodeKey,
+  }) {
+    final name =
+        json[nameKey] as String? ??
+        (altNameKey != null ? json[altNameKey] as String? : null) ??
+        '';
+    final code = codeKey == null
+        ? null
+        : (json[codeKey] as String? ??
+              (altCodeKey != null ? json[altCodeKey] as String? : null));
+    return NamedRef(id: json['id'] as int, name: name, code: code);
+  }
+
+  static NamedRef employeeFromJson(Map<String, dynamic> json) =>
+      namedRefFromJson(json, nameKey: 'Name', codeKey: 'employee_code');
+
+  static NamedRef projectFromJson(Map<String, dynamic> json) =>
+      namedRefFromJson(
+        json,
+        nameKey: 'Project_Name',
+        altNameKey: 'project_name',
+        codeKey: 'project_code',
+        altCodeKey: 'PROJECT_ID',
+      );
 }

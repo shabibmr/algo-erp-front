@@ -14,7 +14,7 @@ import 'package:mocktail/mocktail.dart';
 class _MockSalesInvoiceRepository extends Mock
     implements SalesInvoiceRepository {}
 
-SalesInvoiceListItem _item(int id) => SalesInvoiceListItem(
+SalesInvoiceListItem _item(int id) => ItemQtyListItem(
   id: id,
   voucherPrefix: 'SI',
   voucherNo: '$id',

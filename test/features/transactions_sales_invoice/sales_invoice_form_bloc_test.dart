@@ -31,14 +31,14 @@ final _customer = Ledger(
 );
 final _godown = Godown(id: 3, name: 'Main store');
 
-SalesInvoiceLine _completeLine() => SalesInvoiceLine(
+SalesInvoiceLine _completeLine() => ItemQtyLine(
   itemId: 11,
   itemLabel: 'Widget',
   quantity: Decimal.one,
   price: Decimal.parse('10'),
 );
 
-final _postResult = SalesInvoicePostResult(
+final _postResult = ItemQtyPostResult(
   id: 99,
   voucherNo: 'SI-0001',
   total: Decimal.zero,
@@ -54,7 +54,7 @@ void main() {
   late _MockItemRepository itemRepository;
 
   setUpAll(() {
-    registerFallbackValue(SalesInvoiceDraft());
+    registerFallbackValue(ItemQtyDraft());
   });
 
   setUp(() {
@@ -88,7 +88,7 @@ void main() {
       ..add(const CustomerSelected(null)),
     verify: (bloc) {
       expect(bloc.state.customer, isNull);
-      expect(bloc.state.draft.customerLedgerId, isNull);
+      expect(bloc.state.draft.partyLedgerId, isNull);
     },
   );
 
@@ -137,7 +137,7 @@ void main() {
         ),
       ).thenAnswer(
         (_) async =>
-            Right(SalesInvoiceDetail(id: 5, status: 'Posted', lines: const [])),
+            Right(ItemQtyDetail(id: 5, status: 'Posted', lines: const [])),
       );
     },
     build: build,
@@ -164,6 +164,40 @@ void main() {
     verify: (bloc) {
       expect(bloc.state.status, FormSubmissionStatus.failure);
       expect(bloc.state.errorMessage, 'No connection');
+    },
+  );
+
+  blocTest<SalesInvoiceFormBloc, SalesInvoiceFormState>(
+    'a freshly-initialized form is not dirty (nothing to lose on back)',
+    build: build,
+    act: (bloc) => bloc.add(const FormInitialized()),
+    verify: (bloc) => expect(bloc.state.isDirty, isFalse),
+  );
+
+  blocTest<SalesInvoiceFormBloc, SalesInvoiceFormState>(
+    'changing any field marks the form dirty (guards against data loss)',
+    build: build,
+    act: (bloc) => bloc
+      ..add(const FormInitialized())
+      ..add(CustomerSelected(_customer)),
+    verify: (bloc) => expect(bloc.state.isDirty, isTrue),
+  );
+
+  blocTest<SalesInvoiceFormBloc, SalesInvoiceFormState>(
+    'a successful post clears dirty so navigating away never prompts',
+    setUp: () {
+      when(
+        () => repository.post(any()),
+      ).thenAnswer((_) async => Right(_postResult));
+    },
+    build: build,
+    act: (bloc) {
+      seedValidDraft(bloc);
+      bloc.add(const FormSubmitted(saveStatus: 'Posted'));
+    },
+    verify: (bloc) {
+      expect(bloc.state.status, FormSubmissionStatus.success);
+      expect(bloc.state.isDirty, isFalse);
     },
   );
 }

@@ -5,6 +5,13 @@
 > **Primary status doc:** [`STATUS.md`](./STATUS.md)  
 > **Feature inventory reference:** [`feature-inventory.md`](./feature-inventory.md)
 
+> **Note on "49".** The catalog holds ~49 distinct `ReportDefinition`s *and* this doc lists ~49
+> business report **names** — but these are two coincidentally-equal sets, not the same set.
+> Several names map to one shared definition id (e.g. `accounts-aging` is reused ×3,
+> `ledger-statement` ×4), and a few rows point at surfaces that aren't catalog entries at all
+> (`/reports/alerts`, `/reports/dashboard`, `organization_error_report`). Treat the code
+> (`report_catalog.dart`) as ground truth for the definition count.
+
 Legend:
 
 | Mark | Meaning |

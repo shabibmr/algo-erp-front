@@ -189,7 +189,7 @@ res.setHeader('X-Request-Id', requestId);
 - If the client sends `X-Request-Id`, it is **echoed back verbatim** (both as the response
   header and inside every `ApiResponse.requestId`). If omitted, the server mints a UUID v4.
 - This is a pure echo/log-correlation mechanism — it is **not** used anywhere as an
-  idempotency key (see `offline-sync-readiness.md`).
+  idempotency key (see `_archive/offline-sync-readiness.md`).
 
 ---
 

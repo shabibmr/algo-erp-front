@@ -1,9 +1,10 @@
+import 'package:algo_erp_front/core/domain/line_engine/line_engine.dart';
 import 'package:decimal/decimal.dart';
 import 'package:equatable/equatable.dart';
 
 const _unset = Object();
 
-/// Shared item + qty + price line for trading vouchers (Q/SO/DN/PO/RN/PI).
+/// Shared item + qty + price line for trading vouchers (SI/Q/SO/DN/PO/RN/PI/…).
 class ItemQtyLine extends Equatable {
   ItemQtyLine({
     this.itemId,
@@ -15,12 +16,23 @@ class ItemQtyLine extends Equatable {
     Decimal? price,
     Decimal? discountPercent,
     Decimal? taxRate,
+    int? uid,
   }) : quantity = quantity ?? Decimal.one,
        price = price ?? Decimal.zero,
        discountPercent = discountPercent ?? Decimal.zero,
-       taxRate = taxRate ?? Decimal.zero;
+       taxRate = taxRate ?? Decimal.zero,
+       uid = uid ?? _nextUid++;
+
+  static int _nextUid = 0;
+
+  /// Client-side row identity, stable across [copyWith], so the line grid can
+  /// key rows by the line rather than by position. Deliberately absent from
+  /// [props] (identity, not value) and never sent to the server.
+  final int uid;
 
   final int? itemId;
+
+  /// Display-only label from the item picker.
   final String? itemLabel;
   final int? skuId;
   final int? batchId;
@@ -32,6 +44,14 @@ class ItemQtyLine extends Equatable {
 
   bool get isComplete =>
       itemId != null && quantity > Decimal.zero && price >= Decimal.zero;
+
+  /// Input for [LineEngine] — single path for form totals and edit payloads.
+  LineInput toLineInput() => LineInput(
+    quantity: quantity,
+    price: price,
+    discountPercent: discountPercent,
+    taxRate: taxRate,
+  );
 
   ItemQtyLine copyWith({
     Object? itemId = _unset,
@@ -57,6 +77,7 @@ class ItemQtyLine extends Equatable {
     price: price ?? this.price,
     discountPercent: discountPercent ?? this.discountPercent,
     taxRate: taxRate ?? this.taxRate,
+    uid: uid,
   );
 
   @override
@@ -83,11 +104,17 @@ class ItemQtyDraft extends Equatable {
     this.partyLabel,
     this.godownId,
     this.godownLabel,
+    this.salespersonEmployeeId,
+    this.salespersonLabel,
+    this.voucherProjectId,
+    this.projectLabel,
     this.billingName,
     this.narration,
     this.creditDays = 30,
     this.sourceVoucherId,
+    this.sourceVoucherType,
     this.sourceVoucherLabel,
+    this.saveStatus = 'Posted',
     List<ItemQtyLine>? lines,
   }) : voucherDate = voucherDate ?? DateTime.now(),
        lines = lines ?? [ItemQtyLine()];
@@ -99,12 +126,33 @@ class ItemQtyDraft extends Equatable {
   final String? partyLabel;
   final int? godownId;
   final String? godownLabel;
+  final int? salespersonEmployeeId;
+  final String? salespersonLabel;
+  final int? voucherProjectId;
+  final String? projectLabel;
   final String? billingName;
   final String? narration;
   final int creditDays;
   final int? sourceVoucherId;
+  final String? sourceVoucherType;
   final String? sourceVoucherLabel;
+
+  /// `Draft` or `Posted` — used by SI post body (`status`).
+  final String saveStatus;
   final List<ItemQtyLine> lines;
+
+  /// Domain-level readiness for create/post (not edit).
+  bool get isReadyToPost =>
+      partyLedgerId != null &&
+      godownId != null &&
+      financialYear.trim().isNotEmpty &&
+      lines.any((l) => l.isComplete);
+
+  /// Ready for draft-only edit (party + godown + ≥1 line; FY may be absent).
+  bool get isReadyToSaveDraft =>
+      partyLedgerId != null &&
+      godownId != null &&
+      lines.any((l) => l.isComplete);
 
   ItemQtyDraft copyWith({
     String? voucherPrefix,
@@ -114,11 +162,17 @@ class ItemQtyDraft extends Equatable {
     Object? partyLabel = _unset,
     Object? godownId = _unset,
     Object? godownLabel = _unset,
+    Object? salespersonEmployeeId = _unset,
+    Object? salespersonLabel = _unset,
+    Object? voucherProjectId = _unset,
+    Object? projectLabel = _unset,
     Object? billingName = _unset,
     Object? narration = _unset,
     int? creditDays,
     Object? sourceVoucherId = _unset,
+    Object? sourceVoucherType = _unset,
     Object? sourceVoucherLabel = _unset,
+    String? saveStatus,
     List<ItemQtyLine>? lines,
   }) => ItemQtyDraft(
     voucherPrefix: voucherPrefix ?? this.voucherPrefix,
@@ -134,6 +188,18 @@ class ItemQtyDraft extends Equatable {
     godownLabel: identical(godownLabel, _unset)
         ? this.godownLabel
         : godownLabel as String?,
+    salespersonEmployeeId: identical(salespersonEmployeeId, _unset)
+        ? this.salespersonEmployeeId
+        : salespersonEmployeeId as int?,
+    salespersonLabel: identical(salespersonLabel, _unset)
+        ? this.salespersonLabel
+        : salespersonLabel as String?,
+    voucherProjectId: identical(voucherProjectId, _unset)
+        ? this.voucherProjectId
+        : voucherProjectId as int?,
+    projectLabel: identical(projectLabel, _unset)
+        ? this.projectLabel
+        : projectLabel as String?,
     billingName: identical(billingName, _unset)
         ? this.billingName
         : billingName as String?,
@@ -144,9 +210,13 @@ class ItemQtyDraft extends Equatable {
     sourceVoucherId: identical(sourceVoucherId, _unset)
         ? this.sourceVoucherId
         : sourceVoucherId as int?,
+    sourceVoucherType: identical(sourceVoucherType, _unset)
+        ? this.sourceVoucherType
+        : sourceVoucherType as String?,
     sourceVoucherLabel: identical(sourceVoucherLabel, _unset)
         ? this.sourceVoucherLabel
         : sourceVoucherLabel as String?,
+    saveStatus: saveStatus ?? this.saveStatus,
     lines: lines ?? this.lines,
   );
 
@@ -156,11 +226,20 @@ class ItemQtyDraft extends Equatable {
     voucherDate,
     financialYear,
     partyLedgerId,
+    partyLabel,
     godownId,
+    godownLabel,
+    salespersonEmployeeId,
+    salespersonLabel,
+    voucherProjectId,
+    projectLabel,
     billingName,
     narration,
     creditDays,
     sourceVoucherId,
+    sourceVoucherType,
+    sourceVoucherLabel,
+    saveStatus,
     lines,
   ];
 }
@@ -204,14 +283,20 @@ class ItemQtyPostResult extends Equatable {
     required this.id,
     required this.voucherNo,
     required this.total,
+    this.subtotal,
+    this.discount,
+    this.vat,
   });
 
   final int id;
   final String voucherNo;
   final Decimal total;
+  final Decimal? subtotal;
+  final Decimal? discount;
+  final Decimal? vat;
 
   @override
-  List<Object?> get props => [id, voucherNo, total];
+  List<Object?> get props => [id, voucherNo, total, subtotal, discount, vat];
 }
 
 class ItemQtyDetailLine extends Equatable {
@@ -254,6 +339,16 @@ class ItemQtyDetailLine extends Equatable {
     taxAmount: taxAmount,
   );
 
+  /// Map a persisted detail line into a draft line for create/edit forms.
+  ItemQtyLine toDraftLine() => ItemQtyLine(
+    itemId: itemId,
+    itemLabel: itemLabel,
+    quantity: quantity ?? Decimal.one,
+    price: price ?? Decimal.zero,
+    discountPercent: discountPercent ?? Decimal.zero,
+    taxRate: taxRate ?? Decimal.zero,
+  );
+
   @override
   List<Object?> get props => [
     id,
@@ -282,10 +377,15 @@ class ItemQtyDetail extends Equatable {
     this.partyLabel,
     this.godownId,
     this.godownLabel,
+    this.salespersonEmployeeId,
+    this.salespersonLabel,
+    this.voucherProjectId,
+    this.projectLabel,
     this.total,
     this.grossTotal,
     this.discount,
     this.vat,
+    this.rejectionReason,
     this.narration,
   });
 
@@ -299,10 +399,15 @@ class ItemQtyDetail extends Equatable {
   final String? partyLabel;
   final int? godownId;
   final String? godownLabel;
+  final int? salespersonEmployeeId;
+  final String? salespersonLabel;
+  final int? voucherProjectId;
+  final String? projectLabel;
   final Decimal? total;
   final Decimal? grossTotal;
   final Decimal? discount;
   final Decimal? vat;
+  final String? rejectionReason;
   final String? narration;
   final List<ItemQtyDetailLine> lines;
 
@@ -314,13 +419,27 @@ class ItemQtyDetail extends Equatable {
     return '$p$voucherNo';
   }
 
-  bool get canCancel =>
-      status == 'Posted' || status == 'Approved' || status == 'Draft';
+  /// Backend cancel allows Posted or Approved only.
+  bool get canCancel => status == 'Posted' || status == 'Approved';
+
+  /// Approve advances Draft → Approved/Posted (series-dependent).
+  bool get canApprove => status == 'Draft' || status == 'Approved';
+
+  bool get canReject => status == 'Draft' || status == 'Approved';
+
+  bool get canEditDraft => status == 'Draft';
+
+  /// Prefer Approve (SI books GL on backend when → Posted).
+  bool get canPostAndBook => false;
+
+  bool get isTerminal => status == 'Cancelled' || status == 'Rejected';
 
   ItemQtyDetail copyWith({
     String? status,
     Object? partyLabel = _unset,
     Object? godownLabel = _unset,
+    Object? salespersonLabel = _unset,
+    Object? projectLabel = _unset,
     List<ItemQtyDetailLine>? lines,
   }) => ItemQtyDetail(
     id: id,
@@ -337,10 +456,19 @@ class ItemQtyDetail extends Equatable {
     godownLabel: identical(godownLabel, _unset)
         ? this.godownLabel
         : godownLabel as String?,
+    salespersonEmployeeId: salespersonEmployeeId,
+    salespersonLabel: identical(salespersonLabel, _unset)
+        ? this.salespersonLabel
+        : salespersonLabel as String?,
+    voucherProjectId: voucherProjectId,
+    projectLabel: identical(projectLabel, _unset)
+        ? this.projectLabel
+        : projectLabel as String?,
     total: total,
     grossTotal: grossTotal,
     discount: discount,
     vat: vat,
+    rejectionReason: rejectionReason,
     narration: narration,
     lines: lines ?? this.lines,
   );
@@ -357,16 +485,21 @@ class ItemQtyDetail extends Equatable {
     partyLabel,
     godownId,
     godownLabel,
+    salespersonEmployeeId,
+    salespersonLabel,
+    voucherProjectId,
+    projectLabel,
     total,
     grossTotal,
     discount,
     vat,
+    rejectionReason,
     narration,
     lines,
   ];
 }
 
-/// Lightweight source voucher for conversion (SO → DN, PO → RN).
+/// Lightweight source voucher for conversion (Q/SO → SI, SO → DN, PO → RN).
 class ItemQtySourceLite extends Equatable {
   const ItemQtySourceLite({
     required this.id,
@@ -403,12 +536,18 @@ class ItemQtyLifecycleResult extends Equatable {
     required this.id,
     required this.status,
     this.message,
+    this.reason,
+    this.booked,
   });
 
   final int id;
   final String status;
   final String? message;
+  final String? reason;
+
+  /// True when approve also booked GL/stock (Sales Invoice → Posted).
+  final bool? booked;
 
   @override
-  List<Object?> get props => [id, status, message];
+  List<Object?> get props => [id, status, message, reason, booked];
 }

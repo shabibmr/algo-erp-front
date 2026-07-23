@@ -22,3 +22,15 @@ final class ItemQtyDetailRefreshed extends ItemQtyDetailEvent {
 final class ItemQtyDetailCancelled extends ItemQtyDetailEvent {
   const ItemQtyDetailCancelled();
 }
+
+final class ItemQtyDetailApproved extends ItemQtyDetailEvent {
+  const ItemQtyDetailApproved();
+}
+
+final class ItemQtyDetailRejected extends ItemQtyDetailEvent {
+  const ItemQtyDetailRejected(this.reason);
+  final String reason;
+
+  @override
+  List<Object?> get props => [reason];
+}

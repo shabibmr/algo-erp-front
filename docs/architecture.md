@@ -17,7 +17,7 @@ Backend        Express + Prisma — /auth · /organization · /accounts · /inve
                /employee · /transactions · /reports
 ```
 
-Parked (unwired): `lib/core/database/**`, `lib/core/sync/**` (offline-first pivot reversed).
+Parked (unwired): `lib/core/database/**` (drift tables, outbox, `sync_status.dart`; offline-first pivot reversed). `lib/core/sync/` is an empty placeholder.
 
 ## EMR (Entity Manifest Runtime)
 

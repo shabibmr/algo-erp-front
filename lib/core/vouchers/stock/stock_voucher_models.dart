@@ -233,6 +233,7 @@ class StockVoucherDetailLine extends Equatable {
     this.crQty,
     this.drQty,
     this.requestQty,
+    this.issueQty,
     this.narration,
   });
 
@@ -245,23 +246,27 @@ class StockVoucherDetailLine extends Equatable {
   final Decimal? crQty;
   final Decimal? drQty;
   final Decimal? requestQty;
+  final Decimal? issueQty;
   final String? narration;
 
-  StockVoucherDetailLine copyWith({Object? itemLabel = _unset}) =>
-      StockVoucherDetailLine(
-        id: id,
-        itemId: itemId,
-        itemLabel: identical(itemLabel, _unset)
-            ? this.itemLabel
-            : itemLabel as String?,
-        quantity: quantity,
-        price: price,
-        subtotal: subtotal,
-        crQty: crQty,
-        drQty: drQty,
-        requestQty: requestQty,
-        narration: narration,
-      );
+  StockVoucherDetailLine copyWith({
+    Object? itemLabel = _unset,
+    Decimal? issueQty,
+  }) => StockVoucherDetailLine(
+    id: id,
+    itemId: itemId,
+    itemLabel: identical(itemLabel, _unset)
+        ? this.itemLabel
+        : itemLabel as String?,
+    quantity: quantity,
+    price: price,
+    subtotal: subtotal,
+    crQty: crQty,
+    drQty: drQty,
+    requestQty: requestQty,
+    issueQty: issueQty ?? this.issueQty,
+    narration: narration,
+  );
 
   @override
   List<Object?> get props => [
@@ -274,6 +279,7 @@ class StockVoucherDetailLine extends Equatable {
     crQty,
     drQty,
     requestQty,
+    issueQty,
     narration,
   ];
 }
@@ -323,8 +329,14 @@ class StockVoucherDetail extends Equatable {
     return '$p$voucherNo';
   }
 
-  bool get canCancel =>
-      status == 'Posted' || status == 'Approved' || status == 'Draft';
+  bool get canCancel => status == 'Posted' || status == 'Approved';
+
+  bool get canApprove => status == 'Draft' || status == 'Approved';
+
+  bool get canReject => status == 'Draft' || status == 'Approved';
+
+  /// Stock request fulfill is available while still open (Draft).
+  bool get canFulfill => status == 'Draft' || status == 'Approved';
 
   StockVoucherDetail copyWith({
     String? status,

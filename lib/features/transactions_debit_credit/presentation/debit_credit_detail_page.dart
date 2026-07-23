@@ -82,6 +82,51 @@ class _DebitCreditDetailView extends StatelessWidget {
     }
   }
 
+  Future<void> _approve(BuildContext context, DebitCreditDetail doc) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: 'Approve ${kind.blueprint.label}?',
+      message: 'Approve ${doc.displayNo}?',
+      confirmLabel: 'Approve',
+    );
+    if (ok && context.mounted) {
+      context.read<DebitCreditDetailBloc>().add(
+        const DebitCreditDetailApproved(),
+      );
+    }
+  }
+
+  Future<void> _reject(BuildContext context, DebitCreditDetail doc) async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reject ${kind.blueprint.label}'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Reason'),
+          maxLines: 3,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+    if (reason != null && reason.isNotEmpty && context.mounted) {
+      context.read<DebitCreditDetailBloc>().add(
+        DebitCreditDetailRejected(reason),
+      );
+    }
+  }
+
   Future<Uint8List> _buildPdf(DebitCreditDetail doc) async {
     final company = await fetchCurrentCompanyHeader(
       getIt<DioClient>(),
@@ -172,7 +217,29 @@ class _DebitCreditDetailView extends StatelessWidget {
                     onPressed: () => _print(context, doc),
                     icon: const Icon(Icons.print_outlined),
                   ),
-                  if (doc.canCancel && doc.status != 'Cancelled')
+                  if (doc.canApprove)
+                    PermissionGate(
+                      module: 'Transactions',
+                      action: PermissionAction.update,
+                      child: FilledButton(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _approve(context, doc),
+                        child: const Text('Approve'),
+                      ),
+                    ),
+                  if (doc.canReject)
+                    PermissionGate(
+                      module: 'Transactions',
+                      action: PermissionAction.update,
+                      child: TextButton(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => _reject(context, doc),
+                        child: const Text('Reject'),
+                      ),
+                    ),
+                  if (doc.canCancel)
                     PermissionGate(
                       module: 'Transactions',
                       action: PermissionAction.update,

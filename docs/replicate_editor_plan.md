@@ -1,5 +1,11 @@
 # Sales Invoice editor — replicate `docs/images/invoice editor.png`
 
+> **Status (2026-07-23): partially implemented — active plan, not a completed record.**
+> **Phases 0–1 shipped** (2026-07-16): `_DocumentTopStrip`, header/breadcrumb tokens, Notes
+> counter, Attachments placeholder, `DocumentSurface` summary lines (taxable, Round Off), action
+> captions. **Phases 2–5 outstanding:** Items toolbar (Scan Barcode / Import Items / Quick
+> Filters / Add-another-line), full grid columns, summary polish, page shell, visual-system pass.
+
 ## Goal
 
 Replicate the layout and product density of `docs/images/invoice editor.png`. Earlier “Webby” iterations removed fields such as Project and Convert From and simplified chrome. The mock is a dense ERP document shell: dual top strips, Invoice Details card, full Items toolbar/grid, Notes + Attachments, right-rail Summary with sticky-ish actions, and page-level chrome (badge, breadcrumb, shortcuts footer).

@@ -1,5 +1,10 @@
 # algoERP Frontend — Manifest-Driven Execution Plan (v2)
 
+> ⚠️ **All wave checkboxes below are historical.** This file is kept for its EMR **doctrine and
+> wave narrative** (§0–§2, the reuse rules); its per-task `[x]/[~]/[ ]` state is frozen at
+> ~2026-07-12 and is **not** maintained. For current "what's done / what's left," the authoritative
+> source is [`docs/STATUS.md`](./STATUS.md). Where a checkbox here disagrees with STATUS, STATUS wins.
+
 > **Living completion matrix:** [`docs/STATUS.md`](./STATUS.md) (updated 2026-07-12) — entity-by-entity
 > checkboxes vs `feature-inventory.md`, scorecard, and recommended sprint build order. Prefer STATUS
 > for “what’s done / what’s left”; this file remains the wave narrative and EMR doctrine.
@@ -11,7 +16,7 @@
 > below were refreshed to match code; remaining wave checkboxes still use historical wording
 > where a task is only half-met.
 
-> **Curated successor to** `docs/BUILD_TASKS.md` **and** `PROMPT_EXECUTION_PLAN.md`.
+> **Curated successor to** `docs/BUILD_TASKS.md` **and** `docs/_archive/PROMPT_EXECUTION_PLAN.md`.
 > Date: 2026-07-11 · Architecture: **ONLINE-ONLY, INTERFACE-DRIVEN, MANIFEST-RENDERED**.
 >
 > Offline/sync (`lib/core/database/**`, drift, outbox, CRs 001–008) stays **PARKED**.
@@ -67,12 +72,12 @@ The original plan ships ~40 master slices and ~18 voucher slices by **stamping n
 
 ### 1.3 Status of the rest (2026-07-12)
 
-- **Track B — Identity & Access:** `[x]` DONE. `lib/features/auth/**`, fail-open RBAC, router guards.
+- **Track B — Identity & Access:** `[x]` DONE. `lib/features/auth/**`, **fail-closed RBAC** (`MatrixPermissionService`, BE-001), router guards.
 - **Track C — Widget library:** `[x]` DONE. `lib/core/widgets/**`, catalog, gallery.
-- **Wave A3 EMR core:** `[~]` **usable** — list + form surfaces, FieldRenderer, fk/int/decimal/bool; missing `selfFk`, `binary`, ManifestRegistry, command palette. See §7.
+- **Wave A3 EMR core:** `[x]` list + form surfaces, FieldRenderer (`fk`/`int`/`decimal`/`bool`/**`selfFk`**), **command palette shipped**; still deferred: `binary`, ManifestRegistry. See §7.
 - **Wave A4 gold path:** `[x]` Brand **full CRUD** + Designation **FK** + recipe (`manifest-spec.md`). See §8.
-- **Wave A5 masters:** `[~]` **16 of ~50+** registered (Org/Inventory flat + HR dept/designation). Accounts **0**. Exceptions in `manifest-exceptions.md`. Matrix: `STATUS.md`.
-- **Not started:** A6 DocumentSurface / Line Engine · A7 voucher blueprints · A8 dashboard/reports/palette · A9 polish/QA · offline (parked).
+- **Wave A5 masters:** `[x]` **30+ registered** (Org/Inventory flat + HR + Accounts). Exceptions in `manifest-exceptions.md`. Matrix: `STATUS.md`.
+- **Later waves (now shipped — see STATUS):** A6 DocumentSurface / Line Engine · A7 voucher blueprints · A8 dashboard/reports/palette. Offline (parked).
 
 ### 1.4 Backend frictions that shape the plan (from `backend-suggestions.md`)
 
@@ -131,7 +136,7 @@ The original plan ships ~40 master slices and ~18 voucher slices by **stamping n
 | Free OSS only if needed (e.g. `collection`, `fuzzy` pure Dart) | Embedding commercial chart/PDF engines that require keys |
 | Browser print / HTML→PDF where possible | Closed source report servers |
 
-Charts: prefer **CustomPainter / free chart primitives** or simple sparkline widgets we own.  
+Charts: **`fl_chart`** (free/OSS) is the shipped choice; CustomPainter/sparklines remain fine for bespoke marks. The boundary is *no paid/commercial* chart engines, not "no libraries."  
 PDF: start with **browser print layouts** + optional pure-Dart table export (CSV always free).
 
 ### What we deliberately keep from v1
@@ -235,7 +240,8 @@ masters    Sales Invoice  blueprints
 ### A3.1 Manifest model  `[~]`
 
 - [x] `FieldType`: `text`, `dateTime`, `int`, `decimal`, `bool`, `fk`
-- [ ] `selfFk`, `enum`, `json`, `binary` — still deferred (see STATUS Sprint A / exceptions)
+- [x] `selfFk` — shipped (`field_renderer.dart`; AccountGroup/InventoryGroup trees)
+- [ ] `enum`, `json`, `binary` — still deferred (see STATUS Sprint A / exceptions)
 - [x] `FieldSpec<E>` list columns
 - [x] `FormFieldSpec<E>` with wireKey, validators, FK triple
 - [x] `EntityManifest<E>`: list + form + hardDelete + supportsUpdate/Delete + emptyEntity
@@ -255,7 +261,7 @@ masters    Sales Invoice  blueprints
 - [x] `FieldRenderer`
 - [ ] Generic `/m/:manifestId` route factory — still per-entity routes
 
-### A3.4 ★ Command palette  `[ ]` stub in shell header only
+### A3.4 ★ Command palette  `[x]` shipped (`command_palette.dart`, Ctrl/Cmd+K)
 
 ### A3.5 Spec & tests  `[x]` / `[~]`
 
@@ -451,4 +457,3 @@ When execution switches fully to v2, add at the top of `docs/BUILD_TASKS.md`:
 ```
 
 Doctrine **R1–R7** remains binding. Only the **scale strategy** changes: from “stamp features” to “declare manifests / blueprints and render Surfaces.”
-)

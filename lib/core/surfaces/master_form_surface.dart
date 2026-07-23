@@ -13,6 +13,7 @@ import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
 import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_canvas.dart';
 import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -543,7 +544,9 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
         children: [
           PageHeader(eyebrow: widget.manifest.eyebrowText, title: _title),
           SizedBox(height: tokens.spacing.lg),
-          Expanded(child: _body(context, repo)),
+          // Desk Lamp: the card stack gets a soft lagoon focus rim — personal
+          // attention on this record. Lists deliberately stay unlit.
+          Expanded(child: WorkCanvas(child: _body(context, repo))),
         ],
       ),
     );
@@ -566,17 +569,6 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
             if (state is DetailDeleted<E>) widget.onDeleted?.call();
           },
         ),
-        BlocListener<DetailBloc<E, ID>, DetailState<E>>(
-          listenWhen: (previous, current) =>
-              current is DetailLoaded<E> && previous is! DetailLoaded<E>,
-          listener: (context, state) {
-            if (state is DetailLoaded<E>) {
-              context.read<MasterFormCubit<E, ID>>().seedFromEntity(
-                state.entity,
-              );
-            }
-          },
-        ),
       ],
       child: BlocBuilder<DetailBloc<E, ID>, DetailState<E>>(
         builder: (context, detailState) {
@@ -585,10 +577,23 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
             onRetry: () => context.read<DetailBloc<E, ID>>().add(
               const DetailLoadRequested(),
             ),
-            builder: (context, _) {
+            builder: (context, entity) {
               return BlocBuilder<MasterFormCubit<E, ID>, MasterFormState<E>>(
                 builder: (context, formState) {
                   final cubit = context.read<MasterFormCubit<E, ID>>();
+                  // Seed the draft from the loaded entity here rather than
+                  // via a BlocListener on DetailBloc: a listener only fires on
+                  // transitions after it subscribes, so if the detail load
+                  // reaches Loaded before this subtree mounts, the transition
+                  // is missed and the form never seeds. The builder always sees
+                  // the current loaded entity. Seeding is idempotent (guarded
+                  // by `seeded`); the post-frame defers the emit out of build.
+                  if (!formState.seeded) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (context.mounted) cubit.seedFromEntity(entity);
+                    });
+                    return const SizedBox.shrink();
+                  }
                   if (formState.draft == null) {
                     return const SizedBox.shrink();
                   }

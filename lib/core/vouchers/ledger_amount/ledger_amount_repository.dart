@@ -7,6 +7,7 @@ import 'package:algo_erp_front/core/network/paginated.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_dto.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_kind.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_models.dart';
+import 'package:decimal/decimal.dart';
 
 /// Online repository for Payment / Receipt ([LedgerAmountVoucherKind]).
 class LedgerAmountRepository {
@@ -119,10 +120,17 @@ class LedgerAmountRepository {
     });
   }
 
-  Future<Result<LedgerAmountLifecycleResult>> cancel(int id) {
+  Future<Result<LedgerAmountLifecycleResult>> cancel(int id) =>
+      _lifecycle('cancel', id);
+
+  Future<Result<LedgerAmountLifecycleResult>> approve(int id) =>
+      _lifecycle('approve', id);
+
+  Future<Result<LedgerAmountLifecycleResult>> reject(int id, String reason) {
     return safeCall(() async {
       final res = await _client.dio.post<Object?>(
-        '/transactions/${kind.lifecycleType}/$id/cancel',
+        '/transactions/${kind.lifecycleType}/$id/reject',
+        data: {'reason': reason},
       );
       final envelope = decodeApiResponse<JsonMap>(
         res.data,
@@ -133,6 +141,72 @@ class LedgerAmountRepository {
         throw const FormatException('Expected lifecycle result');
       }
       return LedgerAmountDto.lifecycleFromJson(data);
+    });
+  }
+
+  Future<Result<LedgerAmountLifecycleResult>> _lifecycle(
+    String action,
+    int id,
+  ) {
+    return safeCall(() async {
+      final res = await _client.dio.post<Object?>(
+        '/transactions/${kind.lifecycleType}/$id/$action',
+      );
+      final envelope = decodeApiResponse<JsonMap>(
+        res.data,
+        (j) => j! as JsonMap,
+      );
+      final data = envelope.data;
+      if (data == null) {
+        throw const FormatException('Expected lifecycle result');
+      }
+      return LedgerAmountDto.lifecycleFromJson(data);
+    });
+  }
+
+  /// Outstanding New-Ref bills for a party ledger (settlement UI).
+  Future<Result<List<OutstandingBill>>> listOutstanding(int ledgerId) {
+    return safeCall(() async {
+      final res = await _client.dio.get<Object?>(
+        '/accounts/outstanding/$ledgerId',
+      );
+      final envelope = decodeApiResponse<Object?>(res.data, (j) => j);
+      final data = envelope.data;
+      if (data is! List) return <OutstandingBill>[];
+      return [
+        for (final raw in data)
+          if (raw is Map<String, dynamic>) OutstandingBill.fromJson(raw),
+      ];
+    });
+  }
+
+  /// Write an Agst Ref billwise row after payment/receipt post.
+  Future<Result<void>> createBillwiseSettlement({
+    required int ledgerId,
+    required OutstandingBill bill,
+    required Decimal amount,
+    required String voucherPrefix,
+    required String voucherNo,
+    required String voucherType,
+    required bool isPayment,
+  }) {
+    return safeCall(() async {
+      final amt = double.tryParse(amount.toString()) ?? 0;
+      await _client.dio.post<Object?>(
+        '/accounts/billwise',
+        data: {
+          'voucher_prefix': voucherPrefix,
+          'voucher_type': voucherType,
+          'voucher_no': voucherNo,
+          'ledger_id': ledgerId.toString(),
+          'ref_type': 'Agst Ref',
+          'ref_no': bill.refNo,
+          if (bill.refPrefix != null && bill.refPrefix!.isNotEmpty)
+            'ref_prefix': bill.refPrefix,
+          // Payment reduces AR (credit); receipt reduces AP (debit).
+          if (isPayment) 'credit_amount': amt else 'debit_amount': amt,
+        },
+      );
     });
   }
 }

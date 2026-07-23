@@ -2,8 +2,9 @@
 
 Changes the **frontend** needs from the backend (`E:\work\algo-backend\models\backend`) to
 build a clean, fast, correct **online** ERP client. This is a running log — new items are
-appended as they are discovered during the build. Distinct from `docs/change-requests/`,
-which currently holds the **offline-sync** CRs (deferred while we ship online-only).
+appended as they are discovered during the build. Distinct from the archived
+`docs/_archive/change-requests/`, which holds the **offline-sync** CRs (parked while we ship
+online-only).
 
 **Legend:** P0 = blocks the frontend · P1 = major friction / correctness risk · P2 = quality/perf.
 **Status:** Open · Proposed · Accepted · Implemented · Rejected.
@@ -23,6 +24,8 @@ which currently holds the **offline-sync** CRs (deferred while we ship online-on
 | BE-011 | Two catalogued reports have no backend route at all | P1 | Open |
 | BE-012 | Financial-statement report params are unvalidated and inconsistently named | P2 | Open |
 | BE-013 | The 19 analytics report endpoints return hard-coded mock data | **P0** | Open |
+| BE-014 | No customer balance / AR summary endpoint for the party picker | P2 | Open |
+| BE-015 | No payment/receipt-against-invoice settlement allocation endpoint | P1 | Open |
 
 ---
 
@@ -344,7 +347,60 @@ were returned, the report viewer could render an honest "not yet available" stat
 
 ---
 
+## BE-014 — No customer balance / AR summary endpoint for the party picker  (P2)  — **Open**
+**Problem.** There is no endpoint returning a ledger's outstanding balance, available credit, or
+last invoice/payment. Only the static `creditSettings.creditLimit` is reachable, via the ledger
+record itself (`GET /accounts/ledgers/:id`).
+
+**Why it matters.** The sales-invoice form has a customer strip that is the natural place to warn
+"this party is over their credit limit" *before* the user keys twenty lines. Without a balance
+source, the panel can only show the static limit, which on its own doesn't tell the operator
+anything actionable.
+
+**Proposed change.** `GET /accounts/ledgers/:id/balance` returning at least
+`{ outstanding, availableCredit, lastInvoice: { voucherNo, date, amount }, lastPayment: {...} }`,
+with `Decimal` money as strings per the rest of the API.
+
+**Frontend impact.** `_CustomerMetricsBar` in
+`lib/features/transactions_sales_invoice/presentation/sales_invoice_form_page.dart` previously
+displayed **hardcoded demo figures** (outstanding `25450`, `INV-0478`, `AED 5,000.00`) behind an
+italic "Demo" disclaimer. Those were removed — showing fabricated AR numbers on a financial
+document is the same trap as BE-013. The panel now shows only the real credit limit and will
+expand again when this endpoint exists.
+
+---
+
+## BE-015 — No payment/receipt-against-invoice settlement allocation endpoint  (P1)  — **Open**
+**Problem.** Payment/Receipt voucher entry needs to let a user allocate the paid/received amount
+against one or more specific outstanding invoices (billwise settlement), not just against a
+ledger. No route exposes a "settle payment X against outstanding invoice Y" write operation.
+
+> Migrated from the archived offline change-request CR-007. Despite living in the offline CR set,
+> this is a genuinely-missing **online** endpoint that the billwise-settlement UI needs regardless
+> of offline — so it is tracked here as a live gap. See `docs/_archive/change-requests/`.
+
+**Evidence.**
+- `VoucherLineAllocation` (`phase4.schema.ts:10-30`, exposed read-only via
+  `GET /transactions/line-allocations/:detailLineId`) models `allocation_type` ∈
+  `EXPENSE|DISCOUNT|TAX|CHARGE|REBATE` — charge/discount/tax allocation, not
+  payment-against-invoice settlement.
+- `billwise_records` exist in the schema and are referenced in `voucherPosting.service.ts` /
+  `voucherLifecycle.service.ts`, confirming billwise tracking at the data layer, but no route
+  writes a settlement.
+- `GET /accounts/outstanding/:ledgerId` (`accounts.routes.ts:127-129`) reads outstanding
+  balances, but nothing writes a settlement allocation from a Payment/Receipt voucher.
+
+**Proposed change.** Add a settlement-allocation array to the Payment/Receipt create/edit payload
+(e.g. `allocations: [{ against_voucher_header_id, amount }]`) that writes matching
+`billwise_records` rows tying the payment to specific outstanding invoices, and expose it on read.
+
+**Frontend impact.** Until resolved, the Payment/Receipt screens render the settlement-allocation
+UI against a client-side abstraction (a no-op/local-only repository method) and post the voucher
+as ledger-only (unallocated), flagged in the UI as "not settled against specific invoices."
+
+---
+
 ## How to use this doc
 - When the build hits a backend limitation, **append a `BE-NNN` entry** here and add a table row.
 - Reference the exact `src/...:line` evidence so the backend team can act quickly.
-- If an item is offline-specific, file it under `docs/change-requests/` instead and link it here.
+- Offline-sync-specific CRs are archived under `docs/_archive/change-requests/` (offline is parked).

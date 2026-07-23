@@ -114,8 +114,8 @@ Rules that are easy to get wrong:
 - **FK fields** need the three closures (`fkSearch` / `fkDisplayOf` / `fkResolveById`), and the
   related repository must be built once at module level, not per keystroke.
 - **When an entity doesn't fit** (compound key, self-FK tree, binary field, missing list endpoint):
-  **do not fork the Surfaces.** Record it in `docs/manifest-exceptions.md` with the reason. About 16
-  entities are deferred there already.
+  **do not fork the Surfaces.** Record it in `docs/manifest-exceptions.md` with the reason. About a
+  dozen entities are deferred there already.
 
 ---
 
@@ -158,19 +158,113 @@ Full detail in `docs/api-contract.md`; live gaps and their status in `docs/backe
 - `docs/bloc-migration-checklist.md` — per-package work queue to retire hand-written master List/FormBlocs onto EMR.
 - `docs/manifest-exceptions.md` — entities that don't fit, and why.
 - `docs/api-contract.md` — the backend contract.
-- `docs/backend-suggestions.md` — living log of backend gaps (BE-001…BE-008) and their status.
+- `docs/backend-suggestions.md` — living log of backend gaps (BE-001…BE-015) and their status.
 - `docs/widget-catalog.md` — the core widget library.
-- `docs/BUILD_TASKS_V2.md` — the live execution plan, including the stack boundary (free/first-party
-  only: no paid UI kits, no commercial chart/PDF engines; charts via `CustomPainter`, CSV always).
-- `docs/UI_DESIGN_PLAN.md` — the "Ledger & Linen" design system.
+- `docs/BUILD_TASKS_V2.md` — the wave narrative + EMR doctrine, including the stack boundary
+  (free/first-party only: no paid UI kits, no commercial chart/PDF engines; charts via `fl_chart`
+  (free/OSS) or `CustomPainter`, CSV always). Its per-task checkboxes are historical — `STATUS.md`
+  is the authoritative status board.
+- `docs/UI_DESIGN_PLAN.md` — the "Ledger & Linen" design system (owns visual identity: color,
+  motion, the "desk" metaphor).
+- `docs/UI_UX_Design_Standard_v3.md` — the layout & interaction discipline standard (grid, spacing
+  scale, per-field-type width table, control heights, information hierarchy, forms/tables/action
+  rules, a11y, power-user features, review checklist, golden rules). Complements `UI_DESIGN_PLAN.md`:
+  that one owns *how it looks*, this one owns *how it's laid out and behaves*. Summarized inline
+  below under "UI/UX Design Standard (v3)".
 - `docs/feature-contract.md` — the interfaces core guarantees and the conventions every feature
   inherits. For the step-by-step mechanics of adding an entity, `manifest-spec.md` supersedes it.
 
-**Historical — do not follow:** `PROMPT_EXECUTION_PLAN.md` and `docs/BUILD_TASKS.md` (both superseded
-by `BUILD_TASKS_V2.md`), `docs/offline-sync-readiness.md`, and `docs/change-requests/*`. These all
-assume the **offline-first** architecture, which was reversed by an online-only pivot. Offline is
-parked, not abandoned: `lib/core/database/**` still exists but is unwired and excluded from analysis.
-Don't build against it.
+**Historical — do not follow:** the superseded pre-pivot documents now live under `docs/_archive/`
+(`PROMPT_EXECUTION_PLAN.md`, `offline-sync-readiness.md`, `change-requests/*`) with an index in
+`docs/_archive/README.md`. `docs/BUILD_TASKS.md` stays in place (its R1–R7 doctrine is still binding)
+but its status/wave content is historical — superseded by `BUILD_TASKS_V2.md`. These all assume the
+**offline-first** architecture, which was reversed by an online-only pivot. Offline is parked, not
+abandoned: `lib/core/database/**` still exists but is unwired and excluded from analysis. Don't build
+against it.
+
+---
+
+## UI/UX Design Standard (v3)
+
+Layout & interaction discipline layered **on top of** the Ledger & Linen visual identity. Applies to
+manifest-rendered Surfaces (`MasterListSurface`, `MasterFormSurface`, `DocumentSurface`) **and** any
+hand-built screen. Target: a dense transactional UI that operators can run at speed for 8+ hours.
+Full source: `docs/UI_UX_Design_Standard_v3.md`.
+
+Two of these rules are already partly encoded in `lib/core/manifest/form_field_spec.dart`
+(`FormFieldSpec.section` → business-group cards; `FormFieldSpec.half` → row sharing). Content-based
+field widths and the information-hierarchy tiers are **not yet an API** — treat them as guidance to
+honor when writing manifests and to encode later, not as something the engine enforces today.
+
+**Content width & grid.** Form content **1200–1400 px**, Dashboard **1440–1600 px**, Dialog
+**480–900 px**. Columns: desktop 12 · tablet 8 · mobile 1. Never stretch a form edge-to-edge on a
+wide monitor — widen the margins instead.
+
+**Spacing scale.** Use only `8, 12, 16, 24, 32, 48, 64`; no arbitrary values.
+⚠️ This **diverges** from the current `AppSpacing` tokens (`2, 4, 8, 16, 24, 32, 48`), which add the
+`2`/`4` micro-steps and lack `12`/`64`. v3 is the **target** for new work; reconciling the tokens is
+a deliberate follow-up, not a silent rewrite — don't "fix" `AppSpacing` to match without a decision.
+
+**Field width — size to expected content, never to available space.** Only Address, Description,
+Notes, Remarks, HTML editors, data grids, and attachments may take 100% width; everything else holds
+its preferred width (use `FormFieldSpec.half` to pair narrow fields on one desktop row). Min /
+Preferred / Max in px:
+
+| Field | Min | Pref | Max |  | Field | Min | Pref | Max |
+|---|---|---|---|---|---|---|---|---|
+| Date | 160 | 170 | 180 |  | Reference | 180 | 220 | 280 |
+| Time | 100 | 120 | 120 |  | Phone | 180 | 220 | 260 |
+| Date & Time | 200 | 220 | 240 |  | Email | 260 | 360 | 420 |
+| Currency | 140 | 160 | 180 |  | Customer | 300 | 420 | 600 |
+| Percentage | 100 | 120 | 120 |  | Warehouse | 240 | 320 | 400 |
+| Quantity | 120 | 140 | 160 |  | Employee | 280 | 360 | 500 |
+| Unit | 90 | 100 | 120 |  | Search | 320 | 420 | 600 |
+| Status | 120 | 140 | 180 |  | Description / Address / Remarks | — | full | — |
+| Invoice No | 180 | 220 | 240 |  |  |  |  |  |
+
+**Control heights.** Text field / dropdown / date picker / button **40–44 px** (date picker ~40).
+Text area **80–120 px**.
+
+**Labels.** Desktop label width **140–160 px**, left-aligned; inputs start on a shared vertical line.
+
+**Information hierarchy — classify every field:**
+- **Primary** — visible immediately.
+- **Secondary** — inside an expandable section (`FormFieldSpec.section`).
+- **Advanced** — overflow menu or an Advanced panel.
+- **System** — **hidden from users**: IDs, GUIDs, API-only fields, audit fields, sync metadata,
+  timestamps. (Reinforces the existing rule that `toJson()` must not send `id` or server-generated
+  fields — those are System-tier and never surface in a form or list.)
+
+**Forms.** Required fields first · intelligent defaults · reveal dependent fields only when needed ·
+validate **inline, only after interaction** (never on first paint). More than **eight** editable
+fields visible ⇒ break it up with a stepper, accordion, tabs, or progressive disclosure (sections).
+
+**Tables.** Optimize for scanning; hide rare columns. Numbers **right**-aligned, text **left**,
+status **centered**. Target column resize / reorder / pin / saved layouts.
+
+**Action hierarchy.** Exactly **one** primary action per screen; everything else is secondary, text,
+or overflow. Never multiple primary buttons.
+
+**Navigation.** Always: page title · breadcrumb · module · back action.
+
+**Feedback & empty states.** Every action emits feedback (Saved / Posted / Deleted / Submitted) —
+prefer toasts. Every empty state explains why it's empty, what to do, and offers the primary CTA.
+
+**Accessibility (WCAG AA).** Keyboard navigation, screen readers, visible focus indicators, high
+contrast, 44 px touch targets. (This is the concrete form of the doctrine's "adaptive layout by
+default, never optional.")
+
+**ERP power-user features.** Keyboard shortcuts · inline editing · auto-save drafts · sticky totals ·
+sticky action bar · recent selections · autocomplete · bulk actions · undo where practical.
+
+**Golden rules.** Never stretch small fields · never expose database structure · prefer whitespace
+over borders · prefer recognition over recall · minimize clicks · keep workflows predictable ·
+optimize for accountants/operators at 8+ hours a day · every pixel should improve productivity.
+
+**Pre-implementation checklist (per screen):** ① define the primary business task · ② classify every
+field · ③ remove duplicate info · ④ limit initial editable fields · ⑤ verify preferred widths ·
+⑥ verify labels align · ⑦ one primary action · ⑧ confirm responsive behavior · ⑨ confirm
+accessibility · ⑩ confirm performance with thousands of records.
 
 ---
 
@@ -188,6 +282,11 @@ Do not:
 - **Use `double` for money or quantity.** Use `Decimal`.
 - **Register a master repository as `@injectable`.** They're plain factory functions on purpose.
 - **Invent a backend API.** File a `BE-NNN` entry in `docs/backend-suggestions.md` and adapt around it.
+- **Stretch a small field to fill empty space.** Currency, Date, Status, Quantity, etc. hold fixed
+  preferred widths (see the v3 field-width table); only Address / Description / Notes / Remarks / HTML
+  editors / grids / attachments go full width.
+- **Expose System-tier fields** (IDs, GUIDs, audit / sync metadata, timestamps) in a form or list —
+  they're hidden-tier per the v3 information hierarchy.
 
 Tests mirror `lib/` under `test/`, using `bloc_test` + `mocktail` (no mockito/codegen mocks).
 `test/flutter_test_config.dart` is picked up automatically and disables Google Fonts runtime fetching.

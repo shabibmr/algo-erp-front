@@ -1,6 +1,6 @@
 # Master List/FormBloc → EMR migration checklist
 
-> **Last updated:** 2026-07-15  
+> **Last updated:** 2026-07-23  
 > **Ground truth:** `lib/features/**` list/form pages and `bloc/` folders  
 > **Done shape:** [`manifest-spec.md`](./manifest-spec.md) · reference package `employee_department`  
 > **Living status board:** [`STATUS.md`](./STATUS.md)
@@ -170,15 +170,14 @@ Do **not** convert these to master CrudBloc/list surface as this migration.
 
 ## Roll-up tracker
 
-### MIGRATE masters (12) — work queue
+### MIGRATE masters (7 remaining) — work queue
+
+> Wave A1–A5 (`inventory_brand`, `inventory_category`, `inventory_uom`, `inventory_godown`,
+> `inventory_item_property`) are **done** — migrated to `CrudBloc` + Surfaces, `bloc/` folders
+> removed. Only the packages below still run on hand-written blocs.
 
 | Wave | Package | List | Form | Bloc files to remove | Priority |
 |------|---------|------|------|----------------------|----------|
-| A1 | `inventory_brand` | ListBloc | FormBloc | 6 | **P0 — template** |
-| A2 | `inventory_category` | ListBloc | FormBloc | 6 | P1 |
-| A3 | `inventory_uom` | ListBloc | FormBloc | 6 | P1 |
-| A4 | `inventory_godown` | ListBloc | FormBloc | 6 | P1 |
-| A5 | `inventory_item_property` | ListBloc | FormBloc | 6 | P1 |
 | A6 | `organization_address_book` | ListBloc | FormBloc | 6 | P1 |
 | B1 | `inventory_sku` | ListBloc | FormBloc | 6 | P1 |
 | B2 | `inventory_group` | ListBloc | FormBloc | 6 | P1 |
@@ -189,11 +188,11 @@ Do **not** convert these to master CrudBloc/list surface as this migration.
 
 **Total debt:** ~42 hand-written bloc files across 7 remaining master packages (A6 + Wave B–C).
 
-### Counts (snapshot 2026-07-15, post-PR2)
+### Counts (snapshot 2026-07-23)
 
 | Bucket | Count |
 |--------|------:|
-| MIGRATE masters | 7 (A1–A5 code done) |
+| MIGRATE masters | 7 (A6 + Wave B–C) |
 | DONE masters | ~27 |
 | KEEP special (auth/desk/reports/vouchers/leave allocation/role matrix) | see Wave E |
 

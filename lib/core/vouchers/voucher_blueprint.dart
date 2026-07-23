@@ -124,7 +124,12 @@ abstract final class VoucherBlueprints {
     listPath: '/transactions/quotations',
     detailPathPattern: '/transactions/quotations/:id',
     affectsGl: false,
-    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    lifecycle: {
+      VoucherLifecycleAction.post,
+      VoucherLifecycleAction.cancel,
+      VoucherLifecycleAction.approve,
+      VoucherLifecycleAction.reject,
+    },
     defaultPrefix: 'QT',
   );
 
@@ -139,7 +144,12 @@ abstract final class VoucherBlueprints {
     detailPathPattern: '/transactions/sales-orders/:id',
     affectsGl: false,
     needsGodown: true,
-    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    lifecycle: {
+      VoucherLifecycleAction.post,
+      VoucherLifecycleAction.cancel,
+      VoucherLifecycleAction.approve,
+      VoucherLifecycleAction.reject,
+    },
     defaultPrefix: 'SO',
   );
 
@@ -217,7 +227,12 @@ abstract final class VoucherBlueprints {
     postPath: '/transactions/payment',
     listPath: '/transactions/payments',
     detailPathPattern: '/transactions/payments/:id',
-    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    lifecycle: {
+      VoucherLifecycleAction.post,
+      VoucherLifecycleAction.cancel,
+      VoucherLifecycleAction.approve,
+      VoucherLifecycleAction.reject,
+    },
     defaultPrefix: 'PV',
   );
 
@@ -230,7 +245,12 @@ abstract final class VoucherBlueprints {
     postPath: '/transactions/receipt',
     listPath: '/transactions/receipts',
     detailPathPattern: '/transactions/receipts/:id',
-    lifecycle: {VoucherLifecycleAction.post, VoucherLifecycleAction.cancel},
+    lifecycle: {
+      VoucherLifecycleAction.post,
+      VoucherLifecycleAction.cancel,
+      VoucherLifecycleAction.approve,
+      VoucherLifecycleAction.reject,
+    },
     defaultPrefix: 'RV',
   );
 

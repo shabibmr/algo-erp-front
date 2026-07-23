@@ -28,6 +28,11 @@ class ItemQtyVoucherKind {
     required this.requiresGodown,
     this.supportsCreditDays = false,
     this.supportsSource = false,
+    this.supportsSourceType = false,
+    this.supportsSalesperson = false,
+    this.supportsProject = false,
+    this.supportsPostStatus = false,
+    this.supportsDraftEdit = false,
     this.sourceLifecycleType,
     this.sourceListPath,
     this.sourceDetailPathPattern,
@@ -51,12 +56,25 @@ class ItemQtyVoucherKind {
 
   /// When true, form can convert from [sourceLifecycleType].
   final bool supportsSource;
+
+  /// When true, post body includes `source_voucher_type` (SI multi-source).
+  final bool supportsSourceType;
+
+  final bool supportsSalesperson;
+  final bool supportsProject;
+
+  /// When true, post body includes `status` (`Draft` | `Posted`).
+  final bool supportsPostStatus;
+
+  /// When true, UI may PUT draft header/lines via lifecycle edit.
+  final bool supportsDraftEdit;
+
   final String? sourceLifecycleType;
   final String? sourceListPath;
   final String? sourceDetailPathPattern;
   final String? sourceMainNestKey;
 
-  /// Phase-4 posts return `headerId`; PI returns `id`.
+  /// Phase-4 posts return `headerId`; PI/SI return `id`.
   final String postIdKey;
 
   final String createLabel;
@@ -72,8 +90,31 @@ class ItemQtyVoucherKind {
   }
 }
 
-/// Sprint D seeds — pre-sales + purchase trading chain.
+/// Trading voucher seeds — SI gold + pre-sales + purchase chain.
 abstract final class ItemQtyKinds {
+  static const salesInvoice = ItemQtyVoucherKind(
+    blueprint: VoucherBlueprints.salesInvoice,
+    lifecycleType: 'SalesInvoice',
+    mainNestKey: 'sales_invoice_main',
+    partyField: ItemQtyPartyField.customer,
+    partyLabel: 'Customer',
+    requiresGodown: true,
+    supportsCreditDays: true,
+    supportsSource: true,
+    supportsSourceType: true,
+    supportsSalesperson: true,
+    supportsProject: true,
+    supportsPostStatus: true,
+    supportsDraftEdit: true,
+    // Default conversion source; UI may also load Quotation.
+    sourceLifecycleType: 'SalesOrder',
+    sourceListPath: '/transactions/sales-orders',
+    sourceDetailPathPattern: '/transactions/sales-orders/:id',
+    sourceMainNestKey: 'sales_order_main',
+    postIdKey: 'id',
+    createLabel: 'Post sales invoice',
+  );
+
   static const quotation = ItemQtyVoucherKind(
     blueprint: VoucherBlueprints.quotation,
     lifecycleType: 'Quotation',
@@ -91,6 +132,8 @@ abstract final class ItemQtyKinds {
     partyField: ItemQtyPartyField.customer,
     partyLabel: 'Customer',
     requiresGodown: true,
+    // Convert-from UI ready; backend SO post may ignore source_voucher_id
+    // until phase4 schema is extended — still useful for line copy UX if wired.
     createLabel: 'Create sales order',
   );
 
@@ -169,6 +212,7 @@ abstract final class ItemQtyKinds {
   );
 
   static const all = <ItemQtyVoucherKind>[
+    salesInvoice,
     quotation,
     salesOrder,
     deliveryNote,

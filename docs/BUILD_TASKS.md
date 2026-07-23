@@ -201,4 +201,4 @@ Sequential (most complex screen; copied 17×). Depends on masters (FK lookups).
 ## 9. Parked (do not delete)
 - `lib/core/database/**` (sync_status, sync_columns, outbox) — reintroduce with the offline phase
 - `pubspec.yaml`: drift, drift_flutter, sqlite3_flutter_libs, workmanager — unused for now
-- `docs/change-requests/CR-001…CR-008` — offline-sync CRs, deferred
+- `docs/_archive/change-requests/CR-001…CR-008` — offline-sync CRs, deferred (archived)

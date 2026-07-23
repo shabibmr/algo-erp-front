@@ -185,9 +185,9 @@ class _SalesInvoiceDetailView extends StatelessWidget {
         dateStr: doc.voucherDate?.toDayString(),
         status: doc.status,
         partyLabel:
-            doc.customerLabel ??
+            doc.partyLabel ??
             doc.billingName ??
-            (doc.customerLedgerId != null ? '#${doc.customerLedgerId}' : '—'),
+            (doc.partyLedgerId != null ? '#${doc.partyLedgerId}' : '—'),
         narration: doc.narration,
       ),
       lines: [
@@ -348,13 +348,11 @@ class _DetailBody extends StatelessWidget {
           _kv('Date', doc.voucherDate?.toDayString() ?? '—'),
           _kv(
             'Customer',
-            doc.customerLabel ??
+            doc.partyLabel ??
                 doc.billingName ??
-                (doc.customerLedgerId != null
-                    ? '#${doc.customerLedgerId}'
-                    : '—'),
+                (doc.partyLedgerId != null ? '#${doc.partyLedgerId}' : '—'),
           ),
-          if (doc.billingName != null && doc.billingName != doc.customerLabel)
+          if (doc.billingName != null && doc.billingName != doc.partyLabel)
             _kv('Billing name', doc.billingName!),
           _kv(
             'Godown',

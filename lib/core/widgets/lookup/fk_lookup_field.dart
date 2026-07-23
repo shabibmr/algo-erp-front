@@ -42,6 +42,7 @@ class FkLookupField<T> extends StatelessWidget {
     this.hideLabel = false,
     this.isBorderless = false,
     this.textAlign,
+    this.autofocus = false,
   });
 
   final String label;
@@ -64,6 +65,12 @@ class FkLookupField<T> extends StatelessWidget {
   final bool enabled;
   final Duration debounce;
 
+  /// Focuses the field's trigger on first build (e.g. the primary field of a
+  /// fresh form). It's a tap-to-open control, so this shows the focus ring and
+  /// lets the keyboard open the picker with Enter/Space — it does not put a
+  /// cursor in an editable box.
+  final bool autofocus;
+
   Future<void> _openPicker(BuildContext context) async {
     final picked = await showDialog<T>(
       context: context,
@@ -84,6 +91,7 @@ class FkLookupField<T> extends StatelessWidget {
       validator: validator,
       builder: (state) {
         return InkWell(
+          autofocus: autofocus && enabled,
           onTap: enabled ? () => _openPicker(context) : null,
           child: InputDecorator(
             decoration: InputDecoration(

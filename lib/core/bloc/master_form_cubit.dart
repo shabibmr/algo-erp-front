@@ -15,7 +15,10 @@ class MasterFormCubit<E, ID> extends Cubit<MasterFormState<E>> with FormMixin {
     required this.mode,
     required this.idOf,
     this.formFields,
-  }) : super(const MasterFormState()) {
+    // Not `const MasterFormState()`: a const instance can't carry the type
+    // variable E, so it lands as MasterFormState<Null>, and copyWith's
+    // `E? Function()? draft` then rejects a real entity on seed (edit mode).
+  }) : super(MasterFormState<E>()) {
     if (mode == FormMode.create) {
       emit(MasterFormState<E>(draft: manifest.emptyEntity!(), seeded: true));
     }
