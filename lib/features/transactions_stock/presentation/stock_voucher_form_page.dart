@@ -11,6 +11,8 @@ import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
@@ -110,14 +112,17 @@ class _StockVoucherFormViewState extends State<_StockVoucherFormView> {
   Widget _header(StockVoucherFormCubit cubit, StockVoucherFormState state) {
     final draft = state.draft;
     final posting = state.posting;
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: AppTextField(
+              constrainFormField(
+                AppTextField(
                   label: 'Prefix',
                   value: draft.voucherPrefix,
                   enabled: !posting,
@@ -131,10 +136,11 @@ class _StockVoucherFormViewState extends State<_StockVoucherFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppTextField(
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppTextField(
                   label: 'Financial year',
                   value: draft.financialYear,
                   enabled: !posting,
@@ -143,59 +149,75 @@ class _StockVoucherFormViewState extends State<_StockVoucherFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
+              ),
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppDateField(
+                  label: 'Voucher date',
+                  value: draft.voucherDate,
+                  enabled: !posting,
+                  onChanged: (d) {
+                    if (d != null) {
+                      cubit.updateDraft(draft.copyWith(voucherDate: d));
+                    }
+                  },
+                ),
+                maxWidth: FieldWidths.date,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          AppDateField(
-            label: 'Voucher date',
-            value: draft.voucherDate,
-            enabled: !posting,
-            onChanged: (d) {
-              if (d != null) {
-                cubit.updateDraft(draft.copyWith(voucherDate: d));
-              }
-            },
-          ),
           if (kind.headerMode == StockHeaderMode.fromToGodown) ...[
-            const SizedBox(height: 12),
-            _godownField(
-              label: 'From godown',
-              value: state.fromGodown,
-              posting: posting,
-              onSelected: cubit.setFromGodown,
+            gap,
+            constrainFormField(
+              _godownField(
+                label: 'From godown',
+                value: state.fromGodown,
+                posting: posting,
+                onSelected: cubit.setFromGodown,
+              ),
+              maxWidth: FieldWidths.picker,
             ),
-            const SizedBox(height: 12),
-            _godownField(
-              label: 'To godown',
-              value: state.toGodown,
-              posting: posting,
-              onSelected: cubit.setToGodown,
+            gap,
+            constrainFormField(
+              _godownField(
+                label: 'To godown',
+                value: state.toGodown,
+                posting: posting,
+                onSelected: cubit.setToGodown,
+              ),
+              maxWidth: FieldWidths.picker,
             ),
           ],
           if (kind.headerMode == StockHeaderMode.optionalGodown) ...[
-            const SizedBox(height: 12),
-            _godownField(
-              label: 'Godown',
-              value: state.godown,
-              required: false,
-              posting: posting,
-              onSelected: cubit.setGodown,
+            gap,
+            constrainFormField(
+              _godownField(
+                label: 'Godown',
+                value: state.godown,
+                required: false,
+                posting: posting,
+                onSelected: cubit.setGodown,
+              ),
+              maxWidth: FieldWidths.picker,
             ),
           ],
           if (kind.supportsRequirementRef) ...[
-            const SizedBox(height: 12),
-            AppTextField(
-              label: 'Requirement voucher no',
-              value: draft.requirementVoucherNo,
-              enabled: !posting,
-              helperText: 'Optional link to a Requirement voucher_no',
-              onChanged: (v) => cubit.updateDraft(
-                draft.copyWith(requirementVoucherNo: v.isEmpty ? null : v),
+            gap,
+            constrainFormField(
+              AppTextField(
+                label: 'Requirement voucher no',
+                value: draft.requirementVoucherNo,
+                enabled: !posting,
+                helperText: 'Optional link to a Requirement voucher_no',
+                onChanged: (v) => cubit.updateDraft(
+                  draft.copyWith(requirementVoucherNo: v.isEmpty ? null : v),
+                ),
               ),
+              maxWidth: FieldWidths.textShort,
             ),
           ],
-          const SizedBox(height: 12),
+          gap,
           AppTextField(
             label: 'Narration',
             value: draft.narration,

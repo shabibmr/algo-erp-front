@@ -34,6 +34,21 @@ class ReportPage extends StatelessWidget {
       );
     }
 
+    if (!def.enabled) {
+      return DecoratedBox(
+        decoration: BoxDecoration(gradient: gradient),
+        child: AdaptiveLayout(
+          child: EmptyState(
+            message:
+                def.unavailableReason ?? 'This report is not available yet.',
+            icon: Icons.hourglass_empty_outlined,
+            actionLabel: 'Back to reports',
+            onAction: () => context.go('/reports'),
+          ),
+        ),
+      );
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(gradient: gradient),
       child: AdaptiveLayout(

@@ -4,8 +4,13 @@ import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -64,8 +69,11 @@ class _SkuMasterFormView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itemRepo = createInventoryItemRepository(getIt<DioClient>());
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
 
     return AdaptiveLayout(
+      maxContentWidth: FieldWidths.formContent,
       child: BlocBuilder<SkuMasterFormBloc, SkuMasterFormState>(
         builder: (context, state) {
           final bloc = context.read<SkuMasterFormBloc>();
@@ -85,38 +93,39 @@ class _SkuMasterFormView extends StatelessWidget {
           final title = state.isEdit ? 'Edit SKU' : 'New SKU';
 
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
+              PageHeader(
+                eyebrow: skuMasterManifest.eyebrowText,
+                title: title,
+                actions: [
                   IconButton(
                     tooltip: 'Back',
                     onPressed: () => context.go(skuMasterManifest.resourcePath),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: tokens.spacing.md),
               if (state.errorMessage != null) ...[
                 Text(
                   state.errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: tokens.semanticColors.danger),
                 ),
-                const SizedBox(height: 12),
+                gap,
               ],
               Expanded(
                 child: SingleChildScrollView(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
+                  child: WorkSheet(
+                    fill: false,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.spacing.md,
+                      vertical: tokens.spacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        constrainFormField(
                           FkLookupField<InventoryItem>(
                             label: 'Parent Inventory Item',
                             value: state.inventoryItem,
@@ -130,7 +139,10 @@ class _SkuMasterFormView extends StatelessWidget {
                             onSelected: (i) =>
                                 bloc.add(SkuMasterFormItemChanged(i)),
                           ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.picker,
+                        ),
+                        gap,
+                        constrainFormField(
                           AppTextField(
                             label: 'Legacy Item ID',
                             value: state.legacyItemId,
@@ -139,15 +151,18 @@ class _SkuMasterFormView extends StatelessWidget {
                             onChanged: (v) =>
                                 bloc.add(SkuMasterFormLegacyItemIdChanged(v)),
                           ),
-                          const SizedBox(height: 12),
-                          AppTextField(
-                            label: 'Name',
-                            value: state.name,
-                            hintText: 'e.g. Wireless Mouse - Red',
-                            onChanged: (v) =>
-                                bloc.add(SkuMasterFormNameChanged(v)),
-                          ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.code,
+                        ),
+                        gap,
+                        AppTextField(
+                          label: 'Name',
+                          value: state.name,
+                          hintText: 'e.g. Wireless Mouse - Red',
+                          onChanged: (v) =>
+                              bloc.add(SkuMasterFormNameChanged(v)),
+                        ),
+                        gap,
+                        constrainFormField(
                           AppTextField(
                             label: 'SKU Code',
                             value: state.code,
@@ -155,7 +170,10 @@ class _SkuMasterFormView extends StatelessWidget {
                             onChanged: (v) =>
                                 bloc.add(SkuMasterFormCodeChanged(v)),
                           ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.code,
+                        ),
+                        gap,
+                        constrainFormField(
                           AppTextField(
                             label: 'Barcode',
                             value: state.barcode,
@@ -163,7 +181,10 @@ class _SkuMasterFormView extends StatelessWidget {
                             onChanged: (v) =>
                                 bloc.add(SkuMasterFormBarcodeChanged(v)),
                           ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.textShort,
+                        ),
+                        gap,
+                        constrainFormField(
                           AppDecimalField(
                             label: 'Rate',
                             value: state.rate,
@@ -171,14 +192,17 @@ class _SkuMasterFormView extends StatelessWidget {
                               SkuMasterFormRateChanged(v ?? Decimal.zero),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          AppTextField(
-                            label: 'Description',
-                            value: state.description,
-                            onChanged: (v) =>
-                                bloc.add(SkuMasterFormDescriptionChanged(v)),
-                          ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.number,
+                        ),
+                        gap,
+                        AppTextField(
+                          label: 'Description',
+                          value: state.description,
+                          onChanged: (v) =>
+                              bloc.add(SkuMasterFormDescriptionChanged(v)),
+                        ),
+                        gap,
+                        constrainFormField(
                           DropdownButtonFormField<int?>(
                             initialValue: state.skuType,
                             decoration: const InputDecoration(
@@ -199,7 +223,10 @@ class _SkuMasterFormView extends StatelessWidget {
                             onChanged: (v) =>
                                 bloc.add(SkuMasterFormSkuTypeChanged(v)),
                           ),
-                          const SizedBox(height: 12),
+                          maxWidth: FieldWidths.dropdown,
+                        ),
+                        gap,
+                        constrainFormField(
                           AppTextField(
                             label: 'Value',
                             value: state.value,
@@ -207,47 +234,48 @@ class _SkuMasterFormView extends StatelessWidget {
                             onChanged: (v) =>
                                 bloc.add(SkuMasterFormValueChanged(v)),
                           ),
-                          const SizedBox(height: 12),
-                          AppTextField(
-                            label: 'Possible Values',
-                            value: state.possibleValues,
-                            hintText: 'e.g. Red, Blue, Green',
-                            onChanged: (v) =>
-                                bloc.add(SkuMasterFormPossibleValuesChanged(v)),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              OutlinedButton(
-                                onPressed: state.isSubmitting
-                                    ? null
-                                    : () => context.go(
-                                        skuMasterManifest.resourcePath,
+                          maxWidth: FieldWidths.textShort,
+                        ),
+                        gap,
+                        AppTextField(
+                          label: 'Possible Values',
+                          value: state.possibleValues,
+                          hintText: 'e.g. Red, Blue, Green',
+                          onChanged: (v) =>
+                              bloc.add(SkuMasterFormPossibleValuesChanged(v)),
+                        ),
+                        SizedBox(height: tokens.spacing.lg),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlinedButton(
+                              onPressed: state.isSubmitting
+                                  ? null
+                                  : () => context.go(
+                                      skuMasterManifest.resourcePath,
+                                    ),
+                              child: const Text('Cancel'),
+                            ),
+                            SizedBox(width: tokens.spacing.sm),
+                            FilledButton(
+                              onPressed: state.isSubmitting
+                                  ? null
+                                  : () => bloc.add(
+                                      const SkuMasterFormSubmitted(),
+                                    ),
+                              child: state.isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
                                       ),
-                                child: const Text('Cancel'),
-                              ),
-                              const SizedBox(width: 12),
-                              FilledButton(
-                                onPressed: state.isSubmitting
-                                    ? null
-                                    : () => bloc.add(
-                                        const SkuMasterFormSubmitted(),
-                                      ),
-                                child: state.isSubmitting
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Save'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                                    )
+                                  : const Text('Save'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -1,7 +1,12 @@
 import 'package:algo_erp_front/core/reports/report_definition.dart';
 
 /// Stamped report definitions (Sprint G2).
+///
+/// [all] is the live catalog (hub, nav search, category chips).
+/// [unavailable] holds definitions kept for reference / deep-link handling but
+/// not runnable (missing backend routes — BE-010 / BE-011).
 abstract final class ReportCatalog {
+  /// Runnable reports only — no phantom or dead backend endpoints.
   static const List<ReportDefinition> all = [
     salesRegister,
     purchaseRegister,
@@ -28,9 +33,6 @@ abstract final class ReportCatalog {
     materialRequirements,
     itemBatchesReport,
     payrollRegister,
-    attendanceSummaryReport,
-    salaryRevisionHistory,
-    cashFlowStatement,
     budgetVariance,
     collectionEfficiency,
     apCashForecast,
@@ -40,22 +42,35 @@ abstract final class ReportCatalog {
     priceVariance,
     stockMovement,
     bankReconciliation,
-    cashFlowStatementDetailed,
+    cashFlowStatement,
     fixedAssetsDepreciation,
     quotationConversionRatio,
     salespersonCommission,
-    inactiveCustomerAnalysis,
     vendorLeadtimeCompliance,
     ppvAudit,
     bomProductionCosting,
     binLocationStock,
     deadStockAnalysis,
     statutoryPayrollCompliance,
+  ];
+
+  /// Stamped but not offered in the hub until the backend ships a route.
+  ///
+  /// - Attendance / salary revision: only per-employee routes exist (BE-010).
+  /// - Inactive customers / leave balance: no route at all (BE-011).
+  /// The phantom `/reports/cash-flow` entry was removed; use [cashFlowStatement].
+  static const List<ReportDefinition> unavailable = [
+    attendanceSummaryReport,
+    salaryRevisionHistory,
+    inactiveCustomerAnalysis,
     leaveBalanceRegister,
   ];
 
   static ReportDefinition? byId(String id) {
     for (final r in all) {
+      if (r.id == id) return r;
+    }
+    for (final r in unavailable) {
       if (r.id == id) return r;
     }
     return null;
@@ -954,6 +969,7 @@ abstract final class ReportCatalog {
     ],
   );
 
+  /// Disabled: backend only has per-employee attendance summary (BE-010).
   static const attendanceSummaryReport = ReportDefinition(
     id: 'attendance-summary-report',
     title: 'Attendance summary',
@@ -961,6 +977,11 @@ abstract final class ReportCatalog {
     endpoint: '/employees/attendance-summary',
     requiredModule: 'Employee',
     autoRun: true,
+    enabled: false,
+    unavailableReason:
+        'Company-wide attendance summary is not available yet. '
+        'Backend only exposes per-employee attendance '
+        '(GET /employee/employees/:id/attendance-summary). See BE-010.',
     params: [
       ReportParamSpec(
         key: 'start_date',
@@ -994,6 +1015,7 @@ abstract final class ReportCatalog {
     ],
   );
 
+  /// Disabled: backend only has per-employee salary revisions (BE-010).
   static const salaryRevisionHistory = ReportDefinition(
     id: 'salary-revision-history',
     title: 'Salary revision history',
@@ -1001,6 +1023,11 @@ abstract final class ReportCatalog {
     endpoint: '/employees/salary-revisions',
     requiredModule: 'Employee',
     autoRun: true,
+    enabled: false,
+    unavailableReason:
+        'Company-wide salary revision history is not available yet. '
+        'Backend only exposes per-employee revisions '
+        '(GET /employee/employees/:id/salary-revisions). See BE-010.',
     rowsPath: 'items',
     columns: [
       ReportColumnSpec(
@@ -1021,41 +1048,6 @@ abstract final class ReportCatalog {
       ),
       ReportColumnSpec(key: 'new_salary', label: 'New Salary', mono: true),
       ReportColumnSpec(key: 'reason', label: 'Reason', flex: 2),
-    ],
-  );
-
-  static const cashFlowStatement = ReportDefinition(
-    id: 'cash-flow',
-    title: 'Cash flow statement',
-    category: ReportCategory.financial,
-    endpoint: '/reports/cash-flow',
-    requiredModule: 'JournalLedger',
-    autoRun: true,
-    params: [
-      ReportParamSpec(
-        key: 'start_date',
-        label: 'From',
-        type: ReportParamType.date,
-        defaultMonthStart: true,
-      ),
-      ReportParamSpec(
-        key: 'end_date',
-        label: 'To',
-        type: ReportParamType.date,
-        defaultToday: true,
-      ),
-    ],
-    rowsPath: 'entries',
-    columns: [
-      ReportColumnSpec(
-        key: 'category',
-        label: 'Activity Category',
-        primary: true,
-        flex: 2,
-      ),
-      ReportColumnSpec(key: 'inflow', label: 'Cash Inflow', mono: true),
-      ReportColumnSpec(key: 'outflow', label: 'Cash Outflow', mono: true),
-      ReportColumnSpec(key: 'net_change', label: 'Net Change', mono: true),
     ],
   );
 
@@ -1406,9 +1398,11 @@ abstract final class ReportCatalog {
     ],
   );
 
-  static const cashFlowStatementDetailed = ReportDefinition(
+  /// Real cash-flow report (`GET /reports/cash-flow-statement`).
+  /// The phantom `/reports/cash-flow` catalog entry was removed (BE-011).
+  static const cashFlowStatement = ReportDefinition(
     id: 'cash-flow-statement',
-    title: 'Cash flow statement (Direct/Indirect)',
+    title: 'Cash flow statement',
     category: ReportCategory.financial,
     endpoint: '/reports/cash-flow-statement',
     requiredModule: 'JournalLedger',
@@ -1580,6 +1574,7 @@ abstract final class ReportCatalog {
     ],
   );
 
+  /// Disabled: no backend route (BE-011).
   static const inactiveCustomerAnalysis = ReportDefinition(
     id: 'inactive-customer-analysis',
     title: 'Inactive customer analysis',
@@ -1587,6 +1582,10 @@ abstract final class ReportCatalog {
     endpoint: '/reports/inactive-customer-analysis',
     requiredModule: 'Transactions',
     autoRun: true,
+    enabled: false,
+    unavailableReason:
+        'Inactive customer analysis is not available yet — '
+        'no backend route serves this report. See BE-011.',
     params: [
       ReportParamSpec(
         key: 'as_of_date',
@@ -1868,6 +1867,7 @@ abstract final class ReportCatalog {
     ],
   );
 
+  /// Disabled: no backend route (BE-011).
   static const leaveBalanceRegister = ReportDefinition(
     id: 'leave-balance-register',
     title: 'Employee leave balance & accruals',
@@ -1875,6 +1875,10 @@ abstract final class ReportCatalog {
     endpoint: '/reports/leave-balance-register',
     requiredModule: 'Employee',
     autoRun: true,
+    enabled: false,
+    unavailableReason:
+        'Leave balance register is not available yet — '
+        'no backend route serves this report. See BE-011.',
     rowsPath: 'items',
     columns: [
       ReportColumnSpec(

@@ -10,6 +10,8 @@ import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_ledger/bloc/ledger_form_bloc.dart';
@@ -80,9 +82,6 @@ class _LedgerFormViewState extends State<_LedgerFormView>
   late final TabController _tabs;
   final _formKey = GlobalKey<FormState>();
 
-  List<FormFieldSpec<Ledger>> get _allFields =>
-      allLedgerFormFields(ledgerManifest.formFields);
-
   @override
   void initState() {
     super.initState();
@@ -130,11 +129,12 @@ class _LedgerFormViewState extends State<_LedgerFormView>
     final isReadOnlyEdit =
         widget.mode == FormMode.edit && !ledgerManifest.supportsUpdate;
 
-    return ListView(
-      padding: EdgeInsets.only(top: tokens.spacing.sm),
-      children: [
-        for (final field in fields) ...[
-          FieldRenderer.build<Ledger>(
+    final items = <FormFieldLayoutItem>[
+      for (final field in fields)
+        FormFieldLayoutItem(
+          type: field.type,
+          half: field.half,
+          child: FieldRenderer.build<Ledger>(
             field: field,
             value: field.getValue(state.currentEntity),
             onChanged: (value) =>
@@ -145,8 +145,24 @@ class _LedgerFormViewState extends State<_LedgerFormView>
                 ? (q) => field.fkSearch!(q)
                 : null,
           ),
-          SizedBox(height: tokens.spacing.sm),
-        ],
+        ),
+    ];
+
+    return ListView(
+      padding: EdgeInsets.only(top: tokens.spacing.sm),
+      children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: FieldWidths.formContent,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: FormFieldLayout.buildRows(context, items),
+            ),
+          ),
+        ),
       ],
     );
   }

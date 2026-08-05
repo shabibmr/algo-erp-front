@@ -1,7 +1,10 @@
 // Private fields fed by public named params cannot use initializing formals.
 // ignore_for_file: prefer_initializing_formals
 
+import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
+import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/vouchers/effective_price.dart';
 import 'package:algo_erp_front/core/vouchers/voucher_blueprint.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
@@ -55,6 +58,7 @@ class SalesInvoiceFormBloc
     on<FormSubmitted>(_onSubmitted, transformer: droppable());
     on<FormRowsChanged>(_onFormRowsChanged);
     on<LineItemUpdated>(_onLineItemUpdated);
+    on<PriceListSelected>(_onPriceListSelected, transformer: restartable());
   }
 
   final SalesInvoiceRepository _repository;
@@ -428,6 +432,65 @@ class SalesInvoiceFormBloc
       ),
     );
   }
+
+  Future<void> _onPriceListSelected(
+    PriceListSelected event,
+    Emitter<SalesInvoiceFormState> emit,
+  ) async {
+    final pl = event.priceList;
+    final draft = state.draft.copyWith(
+      priceListId: pl?.id,
+      priceListLabel: pl?.name,
+    );
+
+    // Reprice lines that have an item code when a list is chosen.
+    final lines = List<SalesInvoiceLine>.of(draft.lines);
+    if (pl != null) {
+      final dio = getIt<DioClient>();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        final code = line.itemCode;
+        if (code == null || code.isEmpty) continue;
+        final result = await fetchEffectivePrice(
+          dio,
+          itemCode: code,
+          priceListId: pl.id,
+          date: draft.voucherDate,
+        );
+        result.fold((_) {}, (price) {
+          lines[i] = line.copyWith(
+            price: price,
+            priceLevel: pl.name,
+          );
+        });
+      }
+    }
+
+    emit(
+      state.copyWith(
+        isDirty: true,
+        errorMessage: () => null,
+        draft: draft.copyWith(lines: lines),
+      ),
+    );
+  }
+
+  /// Resolve rate for an inventory item under the draft's price list.
+  Future<Decimal> resolveLinePrice(InventoryItem item) async {
+    final fallback = item.price;
+    final priceListId = state.draft.priceListId;
+    final code = item.code.trim();
+    if (priceListId == null || code.isEmpty) return fallback;
+    final result = await fetchEffectivePrice(
+      getIt<DioClient>(),
+      itemCode: code,
+      priceListId: priceListId,
+      date: state.draft.voucherDate,
+    );
+    return result.fold((_) => fallback, (p) => p);
+  }
+
+  String? priceLevelStamp() => state.draft.priceListLabel;
 
   Future<void> _onSubmitted(
     FormSubmitted event,

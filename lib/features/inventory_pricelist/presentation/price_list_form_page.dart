@@ -5,7 +5,10 @@ import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list_entry.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/presentation/price_list_entries_panel.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/price_list_di.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/price_list_manifest.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +23,16 @@ class PriceListFormPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<Repository<PriceList, int>>(
-      create: (_) => createPriceListRepository(getIt<DioClient>()),
+    final dio = getIt<DioClient>();
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<Repository<PriceList, int>>(
+          create: (_) => createPriceListRepository(dio),
+        ),
+        RepositoryProvider<Repository<PriceListEntry, int>>(
+          create: (_) => createPriceListEntryRepository(dio),
+        ),
+      ],
       child: Builder(
         builder: (context) {
           // The surface has already persisted through the repository by the
@@ -40,6 +51,44 @@ class PriceListFormPage extends StatelessWidget {
             onDeleted: refreshListAndReturn,
             onCancel: () => context.go(priceListManifest.resourcePath),
           );
+
+          // Edit mode stacks the nested entries panel under the header form.
+          // Both need a bounded height from AdaptiveLayout.
+          final body = mode == FormMode.edit && entityId != null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: surface),
+                    Flexible(
+                      flex: 0,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 360),
+                        child: SingleChildScrollView(
+                          child: Builder(
+                            builder: (context) {
+                              final s = context.tokens.spacing;
+                              return Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  s.md,
+                                  0,
+                                  s.md,
+                                  s.md,
+                                ),
+                                child: PriceListEntriesPanel(
+                                  priceListId: entityId!,
+                                  repository: context
+                                      .read<Repository<PriceListEntry, int>>(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : surface;
+
           return AdaptiveLayout(
             child: mode == FormMode.edit
                 ? BlocProvider<DetailBloc<PriceList, int>>(
@@ -47,9 +96,9 @@ class PriceListFormPage extends StatelessWidget {
                       repository: ctx.read<Repository<PriceList, int>>(),
                       id: entityId!,
                     )..add(const DetailLoadRequested()),
-                    child: surface,
+                    child: body,
                   )
-                : surface,
+                : body,
           );
         },
       ),

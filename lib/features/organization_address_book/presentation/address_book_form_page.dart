@@ -3,7 +3,12 @@ import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/organization_address_book/address_book_di.dart';
@@ -56,7 +61,11 @@ class _AddressBookFormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
+
     return AdaptiveLayout(
+      maxContentWidth: FieldWidths.formContent,
       child: BlocBuilder<AddressBookFormBloc, AddressBookFormState>(
         builder: (context, state) {
           final bloc = context.read<AddressBookFormBloc>();
@@ -78,39 +87,40 @@ class _AddressBookFormView extends StatelessWidget {
           final title = state.isEdit ? 'Edit Contact' : 'New Contact';
 
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
+              PageHeader(
+                eyebrow: addressBookManifest.eyebrowText,
+                title: title,
+                actions: [
                   IconButton(
                     tooltip: 'Back',
                     onPressed: () =>
                         context.go(addressBookManifest.resourcePath),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: tokens.spacing.md),
               if (state.errorMessage != null) ...[
                 Text(
                   state.errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: tokens.semanticColors.danger),
                 ),
-                const SizedBox(height: 12),
+                gap,
               ],
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
+              WorkSheet(
+                fill: false,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.md,
+                  vertical: tokens.spacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    constrainFormField(
                       DropdownButtonFormField<String>(
-                        value: state.contactType,
+                        initialValue: state.contactType,
                         decoration: const InputDecoration(
                           labelText: 'Contact Type',
                         ),
@@ -124,74 +134,81 @@ class _AddressBookFormView extends StatelessWidget {
                           }
                         },
                       ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        label: 'Name',
-                        value: state.name,
-                        onChanged: (v) =>
-                            bloc.add(AddressBookFormNameChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        label: 'Company Name',
-                        value: state.companyName,
-                        onChanged: (v) =>
-                            bloc.add(AddressBookFormCompanyNameChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        label: 'Email Address',
-                        value: state.email,
-                        onChanged: (v) =>
-                            bloc.add(AddressBookFormEmailChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
+                      maxWidth: FieldWidths.dropdown,
+                    ),
+                    gap,
+                    AppTextField(
+                      label: 'Name',
+                      value: state.name,
+                      onChanged: (v) =>
+                          bloc.add(AddressBookFormNameChanged(v)),
+                    ),
+                    gap,
+                    AppTextField(
+                      label: 'Company Name',
+                      value: state.companyName,
+                      onChanged: (v) =>
+                          bloc.add(AddressBookFormCompanyNameChanged(v)),
+                    ),
+                    gap,
+                    AppTextField(
+                      label: 'Email Address',
+                      value: state.email,
+                      onChanged: (v) =>
+                          bloc.add(AddressBookFormEmailChanged(v)),
+                    ),
+                    gap,
+                    constrainFormField(
                       AppTextField(
                         label: 'Phone Number',
                         value: state.phoneNumber,
                         onChanged: (v) =>
                             bloc.add(AddressBookFormPhoneChanged(v)),
                       ),
-                      const SizedBox(height: 12),
+                      maxWidth: FieldWidths.textShort,
+                    ),
+                    gap,
+                    constrainFormField(
                       AppTextField(
                         label: 'Mobile Number',
                         value: state.mobileNumber,
                         onChanged: (v) =>
                             bloc.add(AddressBookFormMobileChanged(v)),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => context.go(
-                                    addressBookManifest.resourcePath,
+                      maxWidth: FieldWidths.textShort,
+                    ),
+                    SizedBox(height: tokens.spacing.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => context.go(
+                                  addressBookManifest.resourcePath,
+                                ),
+                          child: const Text('Cancel'),
+                        ),
+                        SizedBox(width: tokens.spacing.sm),
+                        FilledButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => bloc.add(
+                                  const AddressBookFormSubmitted(),
+                                ),
+                          child: state.isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => bloc.add(
-                                    const AddressBookFormSubmitted(),
-                                  ),
-                            child: state.isSubmitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Save'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                                )
+                              : const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

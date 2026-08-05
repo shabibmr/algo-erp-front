@@ -227,7 +227,7 @@ Plus **Auth** (full) and **Today’s Desk** (shell).
 | Stock balance | stock-balance GETs | `[ ]` | |
 | UOMConversion | `/inventory/conversion` | `[x]` | `inventory_uom_conversion` |
 | PriceList | `/inventory/pricelist` | `[x]` | `inventory_pricelist` |
-| PriceListEntry | `/pricelist-entry` | `[!]` | No list endpoint |
+| PriceListEntry | `/pricelist-entry` | `[x]` | Nested panel on price list edit; list by `Price_List_ID` |
 | RouteMaster | `/inventory/route` | `[x]` | `inventory_route` |
 | RouteCustomerMapping | route/customer-mapping | `[!]` | Cross-module |
 | RouteMapping | route/mapping | `[!]` | Cross-module |

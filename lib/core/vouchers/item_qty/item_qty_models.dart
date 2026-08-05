@@ -9,9 +9,11 @@ class ItemQtyLine extends Equatable {
   ItemQtyLine({
     this.itemId,
     this.itemLabel,
+    this.itemCode,
     this.skuId,
     this.batchId,
     this.sourceLineId,
+    this.priceLevel,
     Decimal? quantity,
     Decimal? price,
     Decimal? discountPercent,
@@ -34,9 +36,15 @@ class ItemQtyLine extends Equatable {
 
   /// Display-only label from the item picker.
   final String? itemLabel;
+
+  /// Inventory `Item_Code` — needed for price-list effective-price lookup.
+  final String? itemCode;
   final int? skuId;
   final int? batchId;
   final int? sourceLineId;
+
+  /// Detail `PriceLevel` audit (price list name or id).
+  final String? priceLevel;
   final Decimal quantity;
   final Decimal price;
   final Decimal discountPercent;
@@ -56,9 +64,11 @@ class ItemQtyLine extends Equatable {
   ItemQtyLine copyWith({
     Object? itemId = _unset,
     Object? itemLabel = _unset,
+    Object? itemCode = _unset,
     Object? skuId = _unset,
     Object? batchId = _unset,
     Object? sourceLineId = _unset,
+    Object? priceLevel = _unset,
     Decimal? quantity,
     Decimal? price,
     Decimal? discountPercent,
@@ -68,11 +78,17 @@ class ItemQtyLine extends Equatable {
     itemLabel: identical(itemLabel, _unset)
         ? this.itemLabel
         : itemLabel as String?,
+    itemCode: identical(itemCode, _unset)
+        ? this.itemCode
+        : itemCode as String?,
     skuId: identical(skuId, _unset) ? this.skuId : skuId as int?,
     batchId: identical(batchId, _unset) ? this.batchId : batchId as int?,
     sourceLineId: identical(sourceLineId, _unset)
         ? this.sourceLineId
         : sourceLineId as int?,
+    priceLevel: identical(priceLevel, _unset)
+        ? this.priceLevel
+        : priceLevel as String?,
     quantity: quantity ?? this.quantity,
     price: price ?? this.price,
     discountPercent: discountPercent ?? this.discountPercent,
@@ -84,9 +100,11 @@ class ItemQtyLine extends Equatable {
   List<Object?> get props => [
     itemId,
     itemLabel,
+    itemCode,
     skuId,
     batchId,
     sourceLineId,
+    priceLevel,
     quantity,
     price,
     discountPercent,
@@ -114,6 +132,8 @@ class ItemQtyDraft extends Equatable {
     this.sourceVoucherId,
     this.sourceVoucherType,
     this.sourceVoucherLabel,
+    this.priceListId,
+    this.priceListLabel,
     this.saveStatus = 'Posted',
     List<ItemQtyLine>? lines,
   }) : voucherDate = voucherDate ?? DateTime.now(),
@@ -136,6 +156,10 @@ class ItemQtyDraft extends Equatable {
   final int? sourceVoucherId;
   final String? sourceVoucherType;
   final String? sourceVoucherLabel;
+
+  /// Optional header price list for rate lookup (SI / SO).
+  final int? priceListId;
+  final String? priceListLabel;
 
   /// `Draft` or `Posted` — used by SI post body (`status`).
   final String saveStatus;
@@ -172,6 +196,8 @@ class ItemQtyDraft extends Equatable {
     Object? sourceVoucherId = _unset,
     Object? sourceVoucherType = _unset,
     Object? sourceVoucherLabel = _unset,
+    Object? priceListId = _unset,
+    Object? priceListLabel = _unset,
     String? saveStatus,
     List<ItemQtyLine>? lines,
   }) => ItemQtyDraft(
@@ -216,6 +242,12 @@ class ItemQtyDraft extends Equatable {
     sourceVoucherLabel: identical(sourceVoucherLabel, _unset)
         ? this.sourceVoucherLabel
         : sourceVoucherLabel as String?,
+    priceListId: identical(priceListId, _unset)
+        ? this.priceListId
+        : priceListId as int?,
+    priceListLabel: identical(priceListLabel, _unset)
+        ? this.priceListLabel
+        : priceListLabel as String?,
     saveStatus: saveStatus ?? this.saveStatus,
     lines: lines ?? this.lines,
   );
@@ -239,6 +271,8 @@ class ItemQtyDraft extends Equatable {
     sourceVoucherId,
     sourceVoucherType,
     sourceVoucherLabel,
+    priceListId,
+    priceListLabel,
     saveStatus,
     lines,
   ];

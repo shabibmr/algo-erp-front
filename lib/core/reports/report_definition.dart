@@ -125,6 +125,8 @@ class ReportDefinition {
     this.sections = const [],
     this.supportsExport = true,
     this.autoRun = false,
+    this.enabled = true,
+    this.unavailableReason,
   });
 
   final String id;
@@ -149,6 +151,13 @@ class ReportDefinition {
 
   /// Run on open without waiting for the user to press Run.
   final bool autoRun;
+
+  /// When false, the report is stamped but hidden from hub/nav and cannot
+  /// be run (backend route missing or not company-wide). See BE-010 / BE-011.
+  final bool enabled;
+
+  /// Shown when a disabled report is opened via deep link / stale bookmark.
+  final String? unavailableReason;
 
   /// Whether the endpoint pages its rows.
   ///

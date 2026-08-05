@@ -14,6 +14,8 @@ import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/features/employee_employee/domain/employee.dart';
 import 'package:algo_erp_front/features/employee_employee/employee_di.dart';
 import 'package:algo_erp_front/features/employee_employee/employee_extension_fields.dart';
@@ -135,11 +137,12 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
     final draft = state.draft;
     if (draft == null) return const SizedBox.shrink();
 
-    return ListView(
-      padding: EdgeInsets.only(top: tokens.spacing.sm),
-      children: [
-        for (final field in fields) ...[
-          FieldRenderer.build<Employee>(
+    final items = <FormFieldLayoutItem>[
+      for (final field in fields)
+        FormFieldLayoutItem(
+          type: field.type,
+          half: field.half,
+          child: FieldRenderer.build<Employee>(
             field: field,
             value: MasterFormCubit.isFkType(field.type)
                 ? state.fkDisplayCache[field.key]
@@ -151,8 +154,24 @@ class _EmployeeTabbedFormState extends State<_EmployeeTabbedForm>
                 ? (q) => cubit.fkLoader(field, q)
                 : null,
           ),
-          SizedBox(height: tokens.spacing.sm),
-        ],
+        ),
+    ];
+
+    return ListView(
+      padding: EdgeInsets.only(top: tokens.spacing.sm),
+      children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: FieldWidths.formContent,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: FormFieldLayout.buildRows(context, items),
+            ),
+          ),
+        ),
       ],
     );
   }

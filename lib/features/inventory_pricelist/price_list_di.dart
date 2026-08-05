@@ -5,12 +5,16 @@ import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/di/repo_binding.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/data/price_list_dto.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/data/price_list_entry_dto.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/data/price_list_entry_mapper.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/data/price_list_mapper.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list_entry.dart';
 import 'package:algo_erp_front/features/inventory_pricelist/price_list_manifest.dart';
 import 'package:flutter/widgets.dart';
 
 const _priceListMapper = PriceListMapper();
+const _priceListEntryMapper = PriceListEntryMapper();
 
 RemoteRepository<PriceList, int> createPriceListRepository(DioClient client) {
   return buildRepository<PriceList, int>(
@@ -19,6 +23,20 @@ RemoteRepository<PriceList, int> createPriceListRepository(DioClient client) {
     decode: (json) => _priceListMapper.toEntity(PriceListDto.fromJson(json)),
     encode: (p) => _priceListMapper.toDto(p).toJson(),
     idOf: (p) => p.id,
+  );
+}
+
+/// Nested entry rows under a price list — not a top-level master.
+RemoteRepository<PriceListEntry, int> createPriceListEntryRepository(
+  DioClient client,
+) {
+  return buildRepository<PriceListEntry, int>(
+    client: client,
+    resourcePath: '/inventory/pricelist-entry',
+    decode: (json) =>
+        _priceListEntryMapper.toEntity(PriceListEntryDto.fromJson(json)),
+    encode: (e) => _priceListEntryMapper.toDto(e).toJson(),
+    idOf: (e) => e.id,
   );
 }
 

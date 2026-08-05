@@ -7,6 +7,9 @@ import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/features/employee_employee/domain/employee.dart';
 import 'package:algo_erp_front/features/employee_employee/employee_di.dart';
@@ -95,7 +98,10 @@ class _LeaveAllocationFormViewState extends State<_LeaveAllocationFormView> {
             );
           }
 
+          final gap = SizedBox(height: tokens.spacing.md);
+
           return AdaptiveLayout(
+            maxContentWidth: FieldWidths.formContent,
             child: Form(
               key: _formKey,
               child: ListView(
@@ -111,7 +117,7 @@ class _LeaveAllocationFormViewState extends State<_LeaveAllocationFormView> {
                       color: tokens.brand.inkMuted,
                     ),
                   ),
-                  SizedBox(height: tokens.spacing.lg),
+                  SizedBox(height: tokens.spacing.md),
                   if (state.error != null) ...[
                     Container(
                       padding: EdgeInsets.all(tokens.spacing.sm),
@@ -126,93 +132,126 @@ class _LeaveAllocationFormViewState extends State<_LeaveAllocationFormView> {
                         style: TextStyle(color: tokens.semanticColors.danger),
                       ),
                     ),
-                    SizedBox(height: tokens.spacing.md),
+                    gap,
                   ],
-                  FkLookupField<Employee>(
-                    label: 'Employee',
-                    value: state.employee,
-                    displayOf: _employeeLabel,
-                    loader: _searchEmployees,
-                    enabled: !state.submitting,
-                    validator: (v) => v == null ? 'Required' : null,
-                    onSelected: cubit.setEmployee,
-                  ),
-                  SizedBox(height: tokens.spacing.sm),
-                  FkLookupField<LeavePolicy>(
-                    label: 'Leave policy',
-                    value: state.policy,
-                    displayOf: (p) => p.displayName,
-                    loader: _searchPolicies,
-                    enabled: !state.submitting,
-                    validator: (v) => v == null ? 'Required' : null,
-                    onSelected: cubit.setPolicy,
-                  ),
-                  SizedBox(height: tokens.spacing.sm),
-                  AppNumberField(
-                    label: 'Year',
-                    value: state.year,
-                    enabled: !state.submitting,
-                    validator: (v) {
-                      if (v == null) return 'Required';
-                      if (v < 2000 || v > 2100) return 'Enter a valid year';
-                      return null;
-                    },
-                    onChanged: (v) {
-                      if (v != null) cubit.setYear(v);
-                    },
-                  ),
-                  SizedBox(height: tokens.spacing.sm),
-                  AppDecimalField(
-                    label: 'Allocated days',
-                    value: state.allocated,
-                    enabled: !state.submitting,
-                    onChanged: (v) {
-                      if (v != null) cubit.setAllocated(v);
-                    },
-                  ),
-                  SizedBox(height: tokens.spacing.sm),
-                  AppDecimalField(
-                    label: 'Carried forward',
-                    value: state.carried,
-                    enabled: !state.submitting,
-                    helperText: 'Days brought forward from prior year',
-                    onChanged: (v) {
-                      if (v != null) cubit.setCarried(v);
-                    },
-                  ),
-                  SizedBox(height: tokens.spacing.lg),
-                  Row(
-                    children: [
-                      PermissionGate(
-                        module: 'Employee',
-                        action: PermissionAction.create,
-                        child: FilledButton(
-                          onPressed: state.submitting
-                              ? null
-                              : () => cubit.submit(
-                                  formIsValid: () =>
-                                      _formKey.currentState?.validate() ??
-                                      false,
-                                ),
-                          child: Text(
-                            state.submitting ? 'Saving…' : 'Allocate',
+                  WorkSheet(
+                    fill: false,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.spacing.md,
+                      vertical: tokens.spacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        constrainFormField(
+                          FkLookupField<Employee>(
+                            label: 'Employee',
+                            value: state.employee,
+                            displayOf: _employeeLabel,
+                            loader: _searchEmployees,
+                            enabled: !state.submitting,
+                            validator: (v) => v == null ? 'Required' : null,
+                            onSelected: cubit.setEmployee,
                           ),
+                          maxWidth: FieldWidths.picker,
                         ),
-                      ),
-                      SizedBox(width: tokens.spacing.sm),
-                      TextButton(
-                        onPressed: state.submitting
-                            ? null
-                            : () {
-                                if (context.canPop()) {
-                                  context.pop(false);
-                                } else {
-                                  context.go('/employee/leave/allocations');
-                                }
-                              },
-                        child: const Text('Cancel'),
-                      ),
-                    ],
+                        gap,
+                        constrainFormField(
+                          FkLookupField<LeavePolicy>(
+                            label: 'Leave policy',
+                            value: state.policy,
+                            displayOf: (p) => p.displayName,
+                            loader: _searchPolicies,
+                            enabled: !state.submitting,
+                            validator: (v) => v == null ? 'Required' : null,
+                            onSelected: cubit.setPolicy,
+                          ),
+                          maxWidth: FieldWidths.picker,
+                        ),
+                        gap,
+                        constrainFormField(
+                          AppNumberField(
+                            label: 'Year',
+                            value: state.year,
+                            enabled: !state.submitting,
+                            validator: (v) {
+                              if (v == null) return 'Required';
+                              if (v < 2000 || v > 2100) {
+                                return 'Enter a valid year';
+                              }
+                              return null;
+                            },
+                            onChanged: (v) {
+                              if (v != null) cubit.setYear(v);
+                            },
+                          ),
+                          maxWidth: FieldWidths.number,
+                        ),
+                        gap,
+                        constrainFormField(
+                          AppDecimalField(
+                            label: 'Allocated days',
+                            value: state.allocated,
+                            enabled: !state.submitting,
+                            onChanged: (v) {
+                              if (v != null) cubit.setAllocated(v);
+                            },
+                          ),
+                          maxWidth: FieldWidths.number,
+                        ),
+                        gap,
+                        constrainFormField(
+                          AppDecimalField(
+                            label: 'Carried forward',
+                            value: state.carried,
+                            enabled: !state.submitting,
+                            helperText:
+                                'Days brought forward from prior year',
+                            onChanged: (v) {
+                              if (v != null) cubit.setCarried(v);
+                            },
+                          ),
+                          maxWidth: FieldWidths.number,
+                        ),
+                        SizedBox(height: tokens.spacing.lg),
+                        Row(
+                          children: [
+                            PermissionGate(
+                              module: 'Employee',
+                              action: PermissionAction.create,
+                              child: FilledButton(
+                                onPressed: state.submitting
+                                    ? null
+                                    : () => cubit.submit(
+                                        formIsValid: () =>
+                                            _formKey.currentState
+                                                ?.validate() ??
+                                            false,
+                                      ),
+                                child: Text(
+                                  state.submitting ? 'Saving…' : 'Allocate',
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: tokens.spacing.sm),
+                            TextButton(
+                              onPressed: state.submitting
+                                  ? null
+                                  : () {
+                                      if (context.canPop()) {
+                                        context.pop(false);
+                                      } else {
+                                        context.go(
+                                          '/employee/leave/allocations',
+                                        );
+                                      }
+                                    },
+                              child: const Text('Cancel'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -27,6 +27,8 @@ import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/price_list_di.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_form_bloc.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_form_event.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/bloc/sales_invoice_form_state.dart';
@@ -45,6 +47,7 @@ final _invoiceRepo = createSalesInvoiceRepository(_dio);
 final _ledgerRepo = createLedgerRepository(_dio);
 final _godownRepo = createGodownRepository(_dio);
 final _itemRepo = createInventoryItemRepository(_dio);
+final _priceListRepo = createPriceListRepository(_dio);
 
 /// Asks the user to confirm abandoning an in-progress invoice. Returns `true`
 /// when they choose to leave. Shared by the back button and the [PopScope]
@@ -162,18 +165,37 @@ class _SalesInvoiceFormView extends StatelessWidget {
           displayOf: (item) =>
               item.code.isEmpty ? item.name : '${item.code} — ${item.name}',
           loader: pagedLookup(_itemRepo),
-          onSelected: (item) {
-            final updatedLine = item == null
-                ? row.copyWith(itemId: null, itemLabel: null, batchId: null)
-                : row.copyWith(
-                    itemId: item.id,
-                    itemLabel: item.name,
+          onSelected: (item) async {
+            final bloc = cellCtx.read<SalesInvoiceFormBloc>();
+            if (item == null) {
+              bloc.add(
+                LineItemUpdated(
+                  index: i,
+                  line: row.copyWith(
+                    itemId: null,
+                    itemLabel: null,
+                    itemCode: null,
                     batchId: null,
-                    price: item.price,
-                    taxRate: item.vatRate,
-                  );
-            cellCtx.read<SalesInvoiceFormBloc>().add(
-              LineItemUpdated(index: i, line: updatedLine),
+                  ),
+                ),
+              );
+              return;
+            }
+            final price = await bloc.resolveLinePrice(item);
+            if (!cellCtx.mounted) return;
+            bloc.add(
+              LineItemUpdated(
+                index: i,
+                line: row.copyWith(
+                  itemId: item.id,
+                  itemLabel: item.name,
+                  itemCode: item.code,
+                  batchId: null,
+                  price: price,
+                  taxRate: item.vatRate,
+                  priceLevel: bloc.priceLevelStamp(),
+                ),
+              ),
             );
           },
         ),
@@ -248,7 +270,7 @@ class _SalesInvoiceFormView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const _TopHeaderBlock(),
-            const SizedBox(height: 12),
+            SizedBox(height: context.tokens.spacing.md),
             if (isLoading)
               const Expanded(child: LoadingState())
             else if (isFailure)
@@ -409,12 +431,12 @@ class _DocumentTopStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     if (!Breakpoints.isDesktop(context)) {
-      return const Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CustomerMetricsBar(),
-          SizedBox(height: 12),
-          _InvoiceDetailsCard(),
+          const _CustomerMetricsBar(),
+          SizedBox(height: tokens.spacing.md),
+          const _InvoiceDetailsCard(),
         ],
       );
     }
@@ -482,6 +504,8 @@ class _InvoiceDetailsCard extends StatelessWidget {
               SizedBox(height: tokens.spacing.md),
               row(const _ProjectField(), const _SourceTypeField()),
               SizedBox(height: tokens.spacing.md),
+              row(const _PriceListField(), const SizedBox.shrink()),
+              SizedBox(height: tokens.spacing.md),
               // A single FK field, held to the picker column's width rather
               // than stretched across the whole grid.
               ConstrainedBox(
@@ -492,6 +516,35 @@ class _InvoiceDetailsCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PriceListField extends StatelessWidget {
+  const _PriceListField();
+
+  @override
+  Widget build(BuildContext context) {
+    final draft = context.select((SalesInvoiceFormBloc b) => b.state.draft);
+    final isPosting = context.select(
+      (SalesInvoiceFormBloc b) => b.state.isSubmitting,
+    );
+    final value = draft.priceListId == null
+        ? null
+        : PriceList(
+            id: draft.priceListId!,
+            name: draft.priceListLabel ?? '',
+          );
+
+    return FkLookupField<PriceList>(
+      label: 'Price list',
+      value: value,
+      enabled: !isPosting,
+      displayOf: (p) => p.name,
+      loader: pagedLookup(_priceListRepo),
+      onSelected: (p) =>
+          context.read<SalesInvoiceFormBloc>().add(PriceListSelected(p)),
+      helperText: 'Rates use this list when items are added',
     );
   }
 }

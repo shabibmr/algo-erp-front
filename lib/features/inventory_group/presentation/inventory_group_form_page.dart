@@ -3,13 +3,17 @@ import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/inventory_group/bloc/inventory_group_form_bloc.dart';
 import 'package:algo_erp_front/features/inventory_group/bloc/inventory_group_form_event.dart';
 import 'package:algo_erp_front/features/inventory_group/bloc/inventory_group_form_state.dart';
-import 'package:algo_erp_front/features/inventory_group/domain/inventory_group.dart';
 import 'package:algo_erp_front/features/inventory_group/inventory_group_di.dart';
 import 'package:algo_erp_front/features/inventory_group/inventory_group_manifest.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +60,11 @@ class _InventoryGroupFormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
+
     return AdaptiveLayout(
+      maxContentWidth: FieldWidths.formContent,
       child: BlocBuilder<InventoryGroupFormBloc, InventoryGroupFormState>(
         builder: (context, state) {
           final bloc = context.read<InventoryGroupFormBloc>();
@@ -78,45 +86,46 @@ class _InventoryGroupFormView extends StatelessWidget {
           final title = state.isEdit ? 'Edit Group' : 'New Group';
 
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
+              PageHeader(
+                eyebrow: inventoryGroupManifest.eyebrowText,
+                title: title,
+                actions: [
                   IconButton(
                     tooltip: 'Back',
                     onPressed: () =>
                         context.go(inventoryGroupManifest.resourcePath),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: tokens.spacing.md),
               if (state.errorMessage != null) ...[
                 Text(
                   state.errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: tokens.semanticColors.danger),
                 ),
-                const SizedBox(height: 12),
+                gap,
               ],
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      AppTextField(
-                        label: 'Name',
-                        value: state.name,
-                        hintText: 'e.g. Peripherals',
-                        onChanged: (v) =>
-                            bloc.add(InventoryGroupFormNameChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
+              WorkSheet(
+                fill: false,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.md,
+                  vertical: tokens.spacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppTextField(
+                      label: 'Name',
+                      value: state.name,
+                      hintText: 'e.g. Peripherals',
+                      onChanged: (v) =>
+                          bloc.add(InventoryGroupFormNameChanged(v)),
+                    ),
+                    gap,
+                    constrainFormField(
                       AppTextField(
                         label: 'Code',
                         value: state.code,
@@ -124,15 +133,18 @@ class _InventoryGroupFormView extends StatelessWidget {
                         onChanged: (v) =>
                             bloc.add(InventoryGroupFormCodeChanged(v)),
                       ),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                        label: 'Name (Arabic)',
-                        value: state.nameArabic,
-                        hintText: 'Optional Arabic name',
-                        onChanged: (v) =>
-                            bloc.add(InventoryGroupFormNameArabicChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
+                      maxWidth: FieldWidths.code,
+                    ),
+                    gap,
+                    AppTextField(
+                      label: 'Name (Arabic)',
+                      value: state.nameArabic,
+                      hintText: 'Optional Arabic name',
+                      onChanged: (v) =>
+                          bloc.add(InventoryGroupFormNameArabicChanged(v)),
+                    ),
+                    gap,
+                    constrainFormField(
                       AppTextField(
                         label: 'Group Type',
                         value: state.groupType,
@@ -140,7 +152,10 @@ class _InventoryGroupFormView extends StatelessWidget {
                         onChanged: (v) =>
                             bloc.add(InventoryGroupFormGroupTypeChanged(v)),
                       ),
-                      const SizedBox(height: 12),
+                      maxWidth: FieldWidths.textShort,
+                    ),
+                    gap,
+                    constrainFormField(
                       DropdownButtonFormField<int?>(
                         initialValue: state.parentGroupId,
                         decoration: const InputDecoration(
@@ -160,39 +175,40 @@ class _InventoryGroupFormView extends StatelessWidget {
                         onChanged: (v) =>
                             bloc.add(InventoryGroupFormParentGroupIdChanged(v)),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => context.go(
-                                    inventoryGroupManifest.resourcePath,
+                      maxWidth: FieldWidths.picker,
+                    ),
+                    SizedBox(height: tokens.spacing.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => context.go(
+                                  inventoryGroupManifest.resourcePath,
+                                ),
+                          child: const Text('Cancel'),
+                        ),
+                        SizedBox(width: tokens.spacing.sm),
+                        FilledButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => bloc.add(
+                                  const InventoryGroupFormSubmitted(),
+                                ),
+                          child: state.isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => bloc.add(
-                                    const InventoryGroupFormSubmitted(),
-                                  ),
-                            child: state.isSubmitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Save'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                                )
+                              : const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -6,12 +6,13 @@ import 'package:algo_erp_front/core/bloc/master_form_state.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/manifest/entity_manifest.dart';
 import 'package:algo_erp_front/core/manifest/field_renderer.dart';
-import 'package:algo_erp_front/core/manifest/field_spec.dart';
 import 'package:algo_erp_front/core/manifest/form_field_spec.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
 import 'package:algo_erp_front/core/widgets/layout/work_canvas.dart';
 import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
@@ -22,7 +23,7 @@ export 'package:algo_erp_front/core/bloc/master_form_state.dart' show FormMode;
 
 /// Renders a manifest's create/edit form: fields from
 /// `manifest.formFields` via [FieldRenderer], server validation errors
-/// mapped back to fields by [FormMixin] inside [MasterFormCubit], and
+/// mapped back to fields by FormMixin inside [MasterFormCubit], and
 /// (edit mode) a delete action.
 ///
 /// **Update-event design**: submits call `Repository<E,ID>.create`/`.update`
@@ -181,67 +182,15 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
     List<FormFieldSpec<E>> fields, {
     required bool enabled,
   }) {
-    final tokens = context.tokens;
-    final pairUp = !context.isMobile;
-    final rows = <Widget>[];
-
-    for (var i = 0; i < fields.length; i++) {
-      final field = fields[i];
-      final next = i + 1 < fields.length ? fields[i + 1] : null;
-      final pairs = pairUp && next != null && _shouldPair(field, next);
-
-      rows.add(
-        Padding(
-          padding: EdgeInsets.only(top: rows.isEmpty ? 0 : tokens.spacing.lg),
-          child: pairs
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _field(
-                        context,
-                        cubit,
-                        state,
-                        field,
-                        enabled: enabled,
-                      ),
-                    ),
-                    SizedBox(width: tokens.spacing.lg),
-                    Expanded(
-                      child: _field(
-                        context,
-                        cubit,
-                        state,
-                        next,
-                        enabled: enabled,
-                      ),
-                    ),
-                  ],
-                )
-              : _field(context, cubit, state, field, enabled: enabled),
+    final items = <FormFieldLayoutItem>[
+      for (final field in fields)
+        FormFieldLayoutItem(
+          type: field.type,
+          half: field.half,
+          child: _field(context, cubit, state, field, enabled: enabled),
         ),
-      );
-      if (pairs) i++;
-    }
-    return rows;
-  }
-
-  bool _shouldPair(FormFieldSpec<E> a, FormFieldSpec<E> b) {
-    if (a.half && b.half) return true;
-    if (a.half || b.half) return false;
-    return _isCompactField(a) && _isCompactField(b);
-  }
-
-  bool _isCompactField(FormFieldSpec<E> field) {
-    return switch (field.type) {
-      FieldType.text ||
-      FieldType.int ||
-      FieldType.decimal ||
-      FieldType.dateTime ||
-      FieldType.fk ||
-      FieldType.selfFk ||
-      FieldType.bool => true,
-    };
+    ];
+    return FormFieldLayout.buildRows(context, items);
   }
 
   Widget _field(
@@ -264,6 +213,11 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
           ? (q) => cubit.fkLoader(field, q)
           : null,
     );
+  }
+
+  EdgeInsets _sheetPadding(BuildContext context) {
+    final s = context.tokens.spacing;
+    return EdgeInsets.symmetric(horizontal: s.md, vertical: s.sm);
   }
 
   Widget _buildForm(
@@ -323,10 +277,7 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
                       child: WorkSheet(
                         fill: false,
                         title: entry.key,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: tokens.spacing.lg,
-                          vertical: tokens.spacing.md,
-                        ),
+                        padding: _sheetPadding(context),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisSize: MainAxisSize.min,
@@ -357,10 +308,7 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
           child: WorkSheet(
             fill: false,
             title: entry.key,
-            padding: EdgeInsets.symmetric(
-              horizontal: tokens.spacing.lg,
-              vertical: tokens.spacing.md,
-            ),
+            padding: _sheetPadding(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -443,10 +391,7 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
               WorkSheet(
                 fill: false,
                 title: entry.key,
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.spacing.lg,
-                  vertical: tokens.spacing.md,
-                ),
+                padding: _sheetPadding(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
@@ -460,7 +405,7 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
                 ),
               ),
             ],
-            SizedBox(height: tokens.spacing.lg),
+            SizedBox(height: tokens.spacing.md),
           ],
         ),
       );
@@ -471,7 +416,17 @@ class _MasterFormViewState<E, ID> extends State<_MasterFormView<E, ID>> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: formBody),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: FieldWidths.formContent,
+                ),
+                child: formBody,
+              ),
+            ),
+          ),
           _Footer(
             children: [
               if (canDelete)

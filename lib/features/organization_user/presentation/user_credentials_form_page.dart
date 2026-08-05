@@ -10,6 +10,8 @@ import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/organization_user/bloc/user_credentials_form_bloc.dart';
@@ -180,25 +182,47 @@ class _UserCredentialsFormViewState extends State<_UserCredentialsFormView> {
                   child: ListView(
                     padding: EdgeInsets.only(top: tokens.spacing.sm),
                     children: [
-                      for (final field
-                          in userCredentialsManifest.formFields) ...[
-                        FieldRenderer.build<UserCredentials>(
-                          field: field,
-                          value: field.getValue(state.currentEntity),
-                          onChanged: (value) => _setField(
-                            context,
-                            state.currentEntity,
-                            field,
-                            value,
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: FieldWidths.formContent,
                           ),
-                          enabled: !state.isSubmitting && !isReadOnlyEdit,
-                          errorText: state.fieldErrors[field.errorKey],
-                          fkLoaderOverride: _isFkType(field.type)
-                              ? (q) => field.fkSearch!(q)
-                              : null,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: FormFieldLayout.buildRows(
+                              context,
+                              [
+                                for (final field
+                                    in userCredentialsManifest.formFields)
+                                  FormFieldLayoutItem(
+                                    type: field.type,
+                                    half: field.half,
+                                    child: FieldRenderer.build<UserCredentials>(
+                                      field: field,
+                                      value: field.getValue(
+                                        state.currentEntity,
+                                      ),
+                                      onChanged: (value) => _setField(
+                                        context,
+                                        state.currentEntity,
+                                        field,
+                                        value,
+                                      ),
+                                      enabled: !state.isSubmitting &&
+                                          !isReadOnlyEdit,
+                                      errorText:
+                                          state.fieldErrors[field.errorKey],
+                                      fkLoaderOverride: _isFkType(field.type)
+                                          ? (q) => field.fkSearch!(q)
+                                          : null,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
-                        SizedBox(height: tokens.spacing.sm),
-                      ],
+                      ),
                     ],
                   ),
                 ),

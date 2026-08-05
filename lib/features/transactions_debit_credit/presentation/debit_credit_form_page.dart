@@ -11,6 +11,8 @@ import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
@@ -62,14 +64,17 @@ class _DebitCreditFormViewState extends State<_DebitCreditFormView> {
   Widget _header(DebitCreditFormCubit cubit, DebitCreditFormState state) {
     final draft = state.draft;
     final posting = state.posting;
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: AppTextField(
+              constrainFormField(
+                AppTextField(
                   label: 'Prefix',
                   value: draft.voucherPrefix,
                   enabled: !posting,
@@ -83,10 +88,11 @@ class _DebitCreditFormViewState extends State<_DebitCreditFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppTextField(
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppTextField(
                   label: 'Financial year',
                   value: draft.financialYear,
                   enabled: !posting,
@@ -95,21 +101,25 @@ class _DebitCreditFormViewState extends State<_DebitCreditFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
+              ),
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppDateField(
+                  label: 'Voucher date',
+                  value: draft.voucherDate,
+                  enabled: !posting,
+                  onChanged: (d) {
+                    if (d != null) {
+                      cubit.updateDraft(draft.copyWith(voucherDate: d));
+                    }
+                  },
+                ),
+                maxWidth: FieldWidths.date,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          AppDateField(
-            label: 'Voucher date',
-            value: draft.voucherDate,
-            enabled: !posting,
-            onChanged: (d) {
-              if (d != null) {
-                cubit.updateDraft(draft.copyWith(voucherDate: d));
-              }
-            },
-          ),
-          const SizedBox(height: 12),
+          gap,
           AppTextField(
             label: 'Narration',
             value: draft.narration,

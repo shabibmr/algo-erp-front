@@ -35,7 +35,7 @@ make run-prod       # lib/main_prod.dart     → prod
 # add -d chrome | -d windows | -d android | ... to pick a device
 ```
 
-The dev backend listens on **port 5000**; seed login is `brand.tester` / `BrandTest123!`.
+The dev backend listens on **port 5000**; seed login is `user` / `123456`.
 
 ## Where to look
 

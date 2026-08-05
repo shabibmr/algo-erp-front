@@ -3,10 +3,13 @@ import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
-import 'package:decimal/decimal.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
@@ -27,6 +30,7 @@ import 'package:algo_erp_front/features/inventory_tax_category/domain/tax_catego
 import 'package:algo_erp_front/features/inventory_tax_category/tax_category_di.dart';
 import 'package:algo_erp_front/features/inventory_uom/domain/uom.dart';
 import 'package:algo_erp_front/features/inventory_uom/uom_di.dart';
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -85,7 +89,10 @@ class _InventoryItemFormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return AdaptiveLayout(
+      maxContentWidth: FieldWidths.formContent,
       child: BlocBuilder<InventoryItemFormBloc, InventoryItemFormState>(
         builder: (context, state) {
           final bloc = context.read<InventoryItemFormBloc>();
@@ -108,7 +115,7 @@ class _InventoryItemFormView extends StatelessWidget {
           return DefaultTabController(
             length: 6,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
@@ -126,15 +133,13 @@ class _InventoryItemFormView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: tokens.spacing.md),
                 if (state.errorMessage != null) ...[
                   Text(
                     state.errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: TextStyle(color: tokens.semanticColors.danger),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: tokens.spacing.md),
                 ],
                 const TabBar(
                   isScrollable: true,
@@ -148,28 +153,22 @@ class _InventoryItemFormView extends StatelessWidget {
                     Tab(text: 'Status & Toggles'),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: tokens.spacing.md),
                 Expanded(
                   child: TabBarView(
                     children: [
-                      // General Tab
-                      _buildGeneralTab(bloc, state),
-                      // Categorization Tab
-                      _buildCategorizationTab(bloc, state),
-                      // Pricing & Cost Tab
-                      _buildPricingTab(bloc, state),
-                      // Stock Settings Tab
-                      _buildStockTab(bloc, state),
-                      // GL Accounts Tab
-                      _buildGlAccountsTab(bloc, state),
-                      // Status & Toggles Tab
-                      _buildStatusTab(bloc, state),
+                      _buildGeneralTab(context, bloc, state),
+                      _buildCategorizationTab(context, bloc, state),
+                      _buildPricingTab(context, bloc, state),
+                      _buildStockTab(context, bloc, state),
+                      _buildGlAccountsTab(context, bloc, state),
+                      _buildStatusTab(context, bloc, state),
                     ],
                   ),
                 ),
-                const Divider(),
+                Divider(color: tokens.brand.mist),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: EdgeInsets.symmetric(vertical: tokens.spacing.md),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -181,7 +180,7 @@ class _InventoryItemFormView extends StatelessWidget {
                               ),
                         child: const Text('Cancel'),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: tokens.spacing.sm),
                       FilledButton(
                         onPressed: state.isSubmitting
                             ? null
@@ -208,264 +207,307 @@ class _InventoryItemFormView extends StatelessWidget {
     );
   }
 
+  Widget _sheet(
+    BuildContext context, {
+    required List<Widget> children,
+  }) {
+    final tokens = context.tokens;
+    return SingleChildScrollView(
+      child: WorkSheet(
+        fill: false,
+        padding: EdgeInsets.symmetric(
+          horizontal: tokens.spacing.md,
+          vertical: tokens.spacing.sm,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _spaced(BuildContext context, List<Widget> fields) {
+    final gap = SizedBox(height: context.tokens.spacing.md);
+    final out = <Widget>[];
+    for (var i = 0; i < fields.length; i++) {
+      if (i > 0) out.add(gap);
+      out.add(fields[i]);
+    }
+    return out;
+  }
+
   Widget _buildGeneralTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              AppTextField(
-                label: 'Name',
-                value: state.name,
-                hintText: 'e.g. Wireless Mouse',
-                onChanged: (v) => bloc.add(InventoryItemFormNameChanged(v)),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Code',
-                value: state.code,
-                hintText: 'e.g. WM-01',
-                onChanged: (v) => bloc.add(InventoryItemFormCodeChanged(v)),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Alias',
-                value: state.alias,
-                hintText: 'e.g. Mouse Wireless',
-                onChanged: (v) => bloc.add(InventoryItemFormAliasChanged(v)),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Part Number',
-                value: state.partNumber,
-                hintText: 'Optional part number',
-                onChanged: (v) =>
-                    bloc.add(InventoryItemFormPartNumberChanged(v)),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Description',
-                value: state.description,
-                hintText: 'Optional description',
-                onChanged: (v) =>
-                    bloc.add(InventoryItemFormDescriptionChanged(v)),
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                label: 'Name (Arabic)',
-                value: state.nameArabic,
-                hintText: 'Optional Arabic name',
-                onChanged: (v) =>
-                    bloc.add(InventoryItemFormNameArabicChanged(v)),
-              ),
-            ],
-          ),
+    return _sheet(
+      context,
+      children: _spaced(context, [
+        AppTextField(
+          label: 'Name',
+          value: state.name,
+          hintText: 'e.g. Wireless Mouse',
+          onChanged: (v) => bloc.add(InventoryItemFormNameChanged(v)),
         ),
-      ),
+        constrainFormField(
+          AppTextField(
+            label: 'Code',
+            value: state.code,
+            hintText: 'e.g. WM-01',
+            onChanged: (v) => bloc.add(InventoryItemFormCodeChanged(v)),
+          ),
+          maxWidth: FieldWidths.code,
+        ),
+        constrainFormField(
+          AppTextField(
+            label: 'Alias',
+            value: state.alias,
+            hintText: 'e.g. Mouse Wireless',
+            onChanged: (v) => bloc.add(InventoryItemFormAliasChanged(v)),
+          ),
+          maxWidth: FieldWidths.textShort,
+        ),
+        constrainFormField(
+          AppTextField(
+            label: 'Part Number',
+            value: state.partNumber,
+            hintText: 'Optional part number',
+            onChanged: (v) =>
+                bloc.add(InventoryItemFormPartNumberChanged(v)),
+          ),
+          maxWidth: FieldWidths.code,
+        ),
+        AppTextField(
+          label: 'Description',
+          value: state.description,
+          hintText: 'Optional description',
+          onChanged: (v) =>
+              bloc.add(InventoryItemFormDescriptionChanged(v)),
+        ),
+        AppTextField(
+          label: 'Name (Arabic)',
+          value: state.nameArabic,
+          hintText: 'Optional Arabic name',
+          onChanged: (v) =>
+              bloc.add(InventoryItemFormNameArabicChanged(v)),
+        ),
+      ]),
     );
   }
 
   Widget _buildCategorizationTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              FkLookupField<InventoryGroup>(
-                label: 'Item Group',
-                value: state.inventoryGroup,
-                displayOf: (g) => g.fullPath ?? g.name,
-                loader: (q) async {
-                  final res = await _groupRepo.list(PageQuery(search: q));
-                  return res.fold((_) => const [], (p) => p.items);
-                },
-                onSelected: (g) => bloc.add(InventoryItemFormGroupChanged(g)),
-              ),
-              const SizedBox(height: 12),
-              FkLookupField<Uom>(
-                label: 'UOM',
-                value: state.uom,
-                displayOf: (u) => (u.code == null || u.code!.isEmpty)
-                    ? u.name
-                    : '${u.code} — ${u.name}',
-                loader: (q) async {
-                  final res = await _uomRepo.list(PageQuery(search: q));
-                  return res.fold((_) => const [], (p) => p.items);
-                },
-                onSelected: (u) => bloc.add(InventoryItemFormUomChanged(u)),
-              ),
-              const SizedBox(height: 12),
-              FkLookupField<Brand>(
-                label: 'Brand',
-                value: state.brand,
-                displayOf: (b) => b.name,
-                loader: (q) async {
-                  final res = await _brandRepo.list(PageQuery(search: q));
-                  return res.fold((_) => const [], (p) => p.items);
-                },
-                onSelected: (b) => bloc.add(InventoryItemFormBrandChanged(b)),
-              ),
-              const SizedBox(height: 12),
-              FkLookupField<Category>(
-                label: 'Category',
-                value: state.category,
-                displayOf: (c) => c.name,
-                loader: (q) async {
-                  final res = await _categoryRepo.list(PageQuery(search: q));
-                  return res.fold((_) => const [], (p) => p.items);
-                },
-                onSelected: (c) =>
-                    bloc.add(InventoryItemFormCategoryChanged(c)),
-              ),
-              const SizedBox(height: 12),
-              FkLookupField<TaxCategory>(
-                label: 'Tax Category',
-                value: state.taxCategory,
-                displayOf: (t) => '${t.name} (${t.rate}%)',
-                loader: (q) async {
-                  final res = await _taxCategoryRepo.list(PageQuery(search: q));
-                  return res.fold((_) => const [], (p) => p.items);
-                },
-                onSelected: (t) =>
-                    bloc.add(InventoryItemFormTaxCategoryChanged(t)),
-              ),
-            ],
+    return _sheet(
+      context,
+      children: _spaced(context, [
+        constrainFormField(
+          FkLookupField<InventoryGroup>(
+            label: 'Item Group',
+            value: state.inventoryGroup,
+            displayOf: (g) => g.fullPath ?? g.name,
+            loader: (q) async {
+              final res = await _groupRepo.list(PageQuery(search: q));
+              return res.fold((_) => const [], (p) => p.items);
+            },
+            onSelected: (g) => bloc.add(InventoryItemFormGroupChanged(g)),
           ),
+          maxWidth: FieldWidths.picker,
         ),
-      ),
+        constrainFormField(
+          FkLookupField<Uom>(
+            label: 'UOM',
+            value: state.uom,
+            displayOf: (u) => (u.code == null || u.code!.isEmpty)
+                ? u.name
+                : '${u.code} — ${u.name}',
+            loader: (q) async {
+              final res = await _uomRepo.list(PageQuery(search: q));
+              return res.fold((_) => const [], (p) => p.items);
+            },
+            onSelected: (u) => bloc.add(InventoryItemFormUomChanged(u)),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+        constrainFormField(
+          FkLookupField<Brand>(
+            label: 'Brand',
+            value: state.brand,
+            displayOf: (b) => b.name,
+            loader: (q) async {
+              final res = await _brandRepo.list(PageQuery(search: q));
+              return res.fold((_) => const [], (p) => p.items);
+            },
+            onSelected: (b) => bloc.add(InventoryItemFormBrandChanged(b)),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+        constrainFormField(
+          FkLookupField<Category>(
+            label: 'Category',
+            value: state.category,
+            displayOf: (c) => c.name,
+            loader: (q) async {
+              final res = await _categoryRepo.list(PageQuery(search: q));
+              return res.fold((_) => const [], (p) => p.items);
+            },
+            onSelected: (c) =>
+                bloc.add(InventoryItemFormCategoryChanged(c)),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+        constrainFormField(
+          FkLookupField<TaxCategory>(
+            label: 'Tax Category',
+            value: state.taxCategory,
+            displayOf: (t) => '${t.name} (${t.rate}%)',
+            loader: (q) async {
+              final res = await _taxCategoryRepo.list(PageQuery(search: q));
+              return res.fold((_) => const [], (p) => p.items);
+            },
+            onSelected: (t) =>
+                bloc.add(InventoryItemFormTaxCategoryChanged(t)),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+      ]),
     );
   }
 
   Widget _buildPricingTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              AppDecimalField(
-                label: 'Price',
-                value: state.price,
-                onChanged: (v) =>
-                    bloc.add(InventoryItemFormPriceChanged(v ?? Decimal.zero)),
-              ),
-              const SizedBox(height: 12),
-              AppDecimalField(
-                label: 'Base Price',
-                value: state.basePrice,
-                onChanged: (v) => bloc.add(
-                  InventoryItemFormBasePriceChanged(v ?? Decimal.zero),
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppDecimalField(
-                label: 'Standard Cost',
-                value: state.standardCost,
-                onChanged: (v) => bloc.add(
-                  InventoryItemFormStandardCostChanged(v ?? Decimal.zero),
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppDecimalField(
-                label: 'VAT Rate %',
-                value: state.vatRate,
-                onChanged: (v) => bloc.add(
-                  InventoryItemFormVatRateChanged(v ?? Decimal.zero),
-                ),
-              ),
-            ],
+    return _sheet(
+      context,
+      children: _spaced(context, [
+        constrainFormField(
+          AppDecimalField(
+            label: 'Price',
+            value: state.price,
+            onChanged: (v) =>
+                bloc.add(InventoryItemFormPriceChanged(v ?? Decimal.zero)),
           ),
+          maxWidth: FieldWidths.number,
         ),
-      ),
+        constrainFormField(
+          AppDecimalField(
+            label: 'Base Price',
+            value: state.basePrice,
+            onChanged: (v) => bloc.add(
+              InventoryItemFormBasePriceChanged(v ?? Decimal.zero),
+            ),
+          ),
+          maxWidth: FieldWidths.number,
+        ),
+        constrainFormField(
+          AppDecimalField(
+            label: 'Standard Cost',
+            value: state.standardCost,
+            onChanged: (v) => bloc.add(
+              InventoryItemFormStandardCostChanged(v ?? Decimal.zero),
+            ),
+          ),
+          maxWidth: FieldWidths.number,
+        ),
+        constrainFormField(
+          AppDecimalField(
+            label: 'VAT Rate %',
+            value: state.vatRate,
+            onChanged: (v) => bloc.add(
+              InventoryItemFormVatRateChanged(v ?? Decimal.zero),
+            ),
+          ),
+          maxWidth: FieldWidths.number,
+        ),
+      ]),
     );
   }
 
   Widget _buildStockTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              AppDecimalField(
-                label: 'Opening Stock',
-                value: state.openingStock,
-                onChanged: (v) => bloc.add(
-                  InventoryItemFormOpeningStockChanged(v ?? Decimal.zero),
-                ),
-              ),
-              const SizedBox(height: 12),
-              AppDecimalField(
-                label: 'Reorder Level',
-                value: state.reorderLevel,
-                onChanged: (v) => bloc.add(
-                  InventoryItemFormReorderLevelChanged(v ?? Decimal.zero),
-                ),
-              ),
-            ],
+    return _sheet(
+      context,
+      children: _spaced(context, [
+        constrainFormField(
+          AppDecimalField(
+            label: 'Opening Stock',
+            value: state.openingStock,
+            onChanged: (v) => bloc.add(
+              InventoryItemFormOpeningStockChanged(v ?? Decimal.zero),
+            ),
           ),
+          maxWidth: FieldWidths.number,
         ),
-      ),
+        constrainFormField(
+          AppDecimalField(
+            label: 'Reorder Level',
+            value: state.reorderLevel,
+            onChanged: (v) => bloc.add(
+              InventoryItemFormReorderLevelChanged(v ?? Decimal.zero),
+            ),
+          ),
+          maxWidth: FieldWidths.number,
+        ),
+      ]),
     );
   }
 
   Widget _buildGlAccountsTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildLedgerLookup(
-                label: 'Sales GL Ledger',
-                value: state.salesGlLedger,
-                onSelected: (l) =>
-                    bloc.add(InventoryItemFormSalesGlLedgerChanged(l)),
-              ),
-              const SizedBox(height: 12),
-              _buildLedgerLookup(
-                label: 'Purchase Ledger',
-                value: state.defaultPurchaseLedger,
-                onSelected: (l) =>
-                    bloc.add(InventoryItemFormDefaultPurchaseLedgerChanged(l)),
-              ),
-              const SizedBox(height: 12),
-              _buildLedgerLookup(
-                label: 'Sales Return Ledger',
-                value: state.defaultSalesReturnLedger,
-                onSelected: (l) => bloc.add(
-                  InventoryItemFormDefaultSalesReturnLedgerChanged(l),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildLedgerLookup(
-                label: 'Purchase Return Ledger',
-                value: state.defaultPurchaseReturnLedger,
-                onSelected: (l) => bloc.add(
-                  InventoryItemFormDefaultPurchaseReturnLedgerChanged(l),
-                ),
-              ),
-            ],
+    return _sheet(
+      context,
+      children: _spaced(context, [
+        constrainFormField(
+          _buildLedgerLookup(
+            label: 'Sales GL Ledger',
+            value: state.salesGlLedger,
+            onSelected: (l) =>
+                bloc.add(InventoryItemFormSalesGlLedgerChanged(l)),
           ),
+          maxWidth: FieldWidths.picker,
         ),
-      ),
+        constrainFormField(
+          _buildLedgerLookup(
+            label: 'Purchase Ledger',
+            value: state.defaultPurchaseLedger,
+            onSelected: (l) =>
+                bloc.add(InventoryItemFormDefaultPurchaseLedgerChanged(l)),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+        constrainFormField(
+          _buildLedgerLookup(
+            label: 'Sales Return Ledger',
+            value: state.defaultSalesReturnLedger,
+            onSelected: (l) => bloc.add(
+              InventoryItemFormDefaultSalesReturnLedgerChanged(l),
+            ),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+        constrainFormField(
+          _buildLedgerLookup(
+            label: 'Purchase Return Ledger',
+            value: state.defaultPurchaseReturnLedger,
+            onSelected: (l) => bloc.add(
+              InventoryItemFormDefaultPurchaseReturnLedgerChanged(l),
+            ),
+          ),
+          maxWidth: FieldWidths.picker,
+        ),
+      ]),
     );
   }
 
@@ -489,66 +531,69 @@ class _InventoryItemFormView extends StatelessWidget {
   }
 
   Widget _buildStatusTab(
+    BuildContext context,
     InventoryItemFormBloc bloc,
     InventoryItemFormState state,
   ) {
-    return SingleChildScrollView(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
+    return _sheet(
+      context,
+      children: [
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Purchase Item'),
                 value: state.isPurchaseItem,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsPurchaseItemChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Sales Item'),
                 value: state.isSalesItem,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsSalesItemChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Stock Item'),
                 value: state.isStockItem,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsStockItemChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Serialized'),
                 value: state.isSerialized,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsSerializedChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Batch Tracked'),
                 value: state.isBatchTracked,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsBatchTrackedChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Service'),
                 value: state.isService,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsServiceChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Perishable'),
                 value: state.isPerishable,
                 onChanged: (v) =>
                     bloc.add(InventoryItemFormIsPerishableChanged(v)),
               ),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Active'),
                 value: state.isActive,
                 onChanged: (v) => bloc.add(InventoryItemFormIsActiveChanged(v)),
               ),
-            ],
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

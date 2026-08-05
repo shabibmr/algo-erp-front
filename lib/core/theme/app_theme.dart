@@ -190,10 +190,15 @@ abstract final class AppTheme {
           backgroundColor: brand.lagoon,
           foregroundColor: isLight ? Colors.white : const Color(0xFF052E2C),
           elevation: tokens.elevation.level1,
+          // Content-sized actions — avoid M3's wide min + large horizontal pad
+          // making "Save" / "Create" look like full-width chips on dense forms.
           padding: EdgeInsets.symmetric(
-            horizontal: tokens.spacing.lg,
-            vertical: tokens.spacing.sm + 2,
+            horizontal: tokens.spacing.md,
+            vertical: tokens.spacing.sm,
           ),
+          minimumSize: const Size(64, 36),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(tokens.radii.lg),
           ),
@@ -206,13 +211,29 @@ abstract final class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: brand.ink,
           side: BorderSide(color: brand.mist),
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.spacing.md,
+            vertical: tokens.spacing.sm,
+          ),
+          minimumSize: const Size(64, 36),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(tokens.radii.lg),
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: brand.lagoon),
+        style: TextButton.styleFrom(
+          foregroundColor: brand.lagoon,
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.spacing.sm,
+            vertical: tokens.spacing.xs,
+          ),
+          minimumSize: const Size(48, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: brand.paper,

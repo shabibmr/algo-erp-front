@@ -1,10 +1,15 @@
+import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
 import 'package:algo_erp_front/core/error/failure.dart';
+import 'package:algo_erp_front/core/network/dio_client.dart';
+import 'package:algo_erp_front/core/vouchers/effective_price.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_repository.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
+import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
 import 'package:decimal/decimal.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,6 +124,55 @@ class ItemQtyFormCubit extends Cubit<ItemQtyFormState> {
     lines[index] = line;
     setLines(lines);
   }
+
+  Future<void> setPriceList(PriceList? pl) async {
+    final draft = state.draft.copyWith(
+      priceListId: pl?.id,
+      priceListLabel: pl?.name,
+    );
+    final lines = List<ItemQtyLine>.of(draft.lines);
+    if (pl != null && kind.supportsPriceList) {
+      final dio = getIt<DioClient>();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        final code = line.itemCode;
+        if (code == null || code.isEmpty) continue;
+        final result = await fetchEffectivePrice(
+          dio,
+          itemCode: code,
+          priceListId: pl.id,
+          date: draft.voucherDate,
+        );
+        if (isClosed) return;
+        result.fold((_) {}, (price) {
+          lines[i] = line.copyWith(price: price, priceLevel: pl.name);
+        });
+      }
+    }
+    emit(
+      state.copyWith(
+        draft: draft.copyWith(lines: lines),
+        error: () => null,
+      ),
+    );
+  }
+
+  Future<Decimal> resolveLinePrice(InventoryItem item) async {
+    final fallback = item.price;
+    if (!kind.supportsPriceList) return fallback;
+    final priceListId = state.draft.priceListId;
+    final code = item.code.trim();
+    if (priceListId == null || code.isEmpty) return fallback;
+    final result = await fetchEffectivePrice(
+      getIt<DioClient>(),
+      itemCode: code,
+      priceListId: priceListId,
+      date: state.draft.voucherDate,
+    );
+    return result.fold((_) => fallback, (p) => p);
+  }
+
+  String? priceLevelStamp() => state.draft.priceListLabel;
 
   Future<void> clearSource() async {
     emit(

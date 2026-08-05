@@ -4,6 +4,7 @@ import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/document_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
@@ -11,6 +12,8 @@ import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
@@ -18,6 +21,8 @@ import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
 import 'package:algo_erp_front/features/inventory_godown/godown_di.dart';
 import 'package:algo_erp_front/features/inventory_item/domain/inventory_item.dart';
 import 'package:algo_erp_front/features/inventory_item/inventory_item_di.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/price_list_di.dart';
 import 'package:algo_erp_front/features/transactions_item_qty/cubit/item_qty_form_cubit.dart';
 import 'package:algo_erp_front/features/transactions_item_qty/item_qty_di.dart';
 import 'package:decimal/decimal.dart';
@@ -59,6 +64,7 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
   late final _ledgerRepo = createLedgerRepository(getIt<DioClient>());
   late final _godownRepo = createGodownRepository(getIt<DioClient>());
   late final _itemRepo = createInventoryItemRepository(getIt<DioClient>());
+  late final _priceListRepo = createPriceListRepository(getIt<DioClient>());
 
   ItemQtyVoucherKind get kind => widget.kind;
 
@@ -87,14 +93,17 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
   Widget _header(ItemQtyFormCubit cubit, ItemQtyFormState state) {
     final draft = state.draft;
     final posting = state.posting;
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: AppTextField(
+              constrainFormField(
+                AppTextField(
                   label: 'Prefix',
                   value: draft.voucherPrefix,
                   enabled: !posting,
@@ -108,10 +117,11 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppTextField(
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppTextField(
                   label: 'Financial year',
                   value: draft.financialYear,
                   enabled: !posting,
@@ -120,70 +130,84 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
+              ),
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppDateField(
+                  label: 'Voucher date',
+                  value: draft.voucherDate,
+                  enabled: !posting,
+                  onChanged: (d) {
+                    if (d != null) {
+                      cubit.updateDraft(draft.copyWith(voucherDate: d));
+                    }
+                  },
+                ),
+                maxWidth: FieldWidths.date,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          AppDateField(
-            label: 'Voucher date',
-            value: draft.voucherDate,
-            enabled: !posting,
-            onChanged: (d) {
-              if (d != null) {
-                cubit.updateDraft(draft.copyWith(voucherDate: d));
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          FkLookupField<Ledger>(
-            label: kind.partyLabel,
-            value: state.party,
-            enabled: !posting,
-            displayOf: (l) {
-              final code = l.code;
-              return (code == null || code.isEmpty)
-                  ? l.name
-                  : '$code — ${l.name}';
-            },
-            loader: (q) async {
-              final r = await _ledgerRepo.list(PageQuery(search: q));
-              return r.fold((_) => const [], (p) => p.items);
-            },
-            onSelected: cubit.setParty,
-            validator: (v) =>
-                v == null ? '${kind.partyLabel} is required' : null,
-          ),
-          if (kind.requiresGodown) ...[
-            const SizedBox(height: 12),
-            FkLookupField<Godown>(
-              label: 'Godown',
-              value: state.godown,
+          gap,
+          constrainFormField(
+            FkLookupField<Ledger>(
+              label: kind.partyLabel,
+              value: state.party,
               enabled: !posting,
-              displayOf: (g) => g.name,
+              displayOf: (l) {
+                final code = l.code;
+                return (code == null || code.isEmpty)
+                    ? l.name
+                    : '$code — ${l.name}';
+              },
               loader: (q) async {
-                final r = await _godownRepo.list(PageQuery(search: q));
+                final r = await _ledgerRepo.list(PageQuery(search: q));
                 return r.fold((_) => const [], (p) => p.items);
               },
-              onSelected: cubit.setGodown,
-              validator: (v) => v == null ? 'Godown is required' : null,
+              onSelected: cubit.setParty,
+              validator: (v) =>
+                  v == null ? '${kind.partyLabel} is required' : null,
+            ),
+            maxWidth: FieldWidths.picker,
+          ),
+          if (kind.requiresGodown) ...[
+            gap,
+            constrainFormField(
+              FkLookupField<Godown>(
+                label: 'Godown',
+                value: state.godown,
+                enabled: !posting,
+                displayOf: (g) => g.name,
+                loader: (q) async {
+                  final r = await _godownRepo.list(PageQuery(search: q));
+                  return r.fold((_) => const [], (p) => p.items);
+                },
+                onSelected: cubit.setGodown,
+                validator: (v) => v == null ? 'Godown is required' : null,
+              ),
+              maxWidth: FieldWidths.picker,
             ),
           ],
           if (kind.supportsSource) ...[
-            const SizedBox(height: 12),
-            FkLookupField<ItemQtySourceLite>(
-              label: 'Convert from ${kind.sourceLifecycleType}',
-              value: state.source,
-              enabled: !posting,
-              helperText: 'Optional — loads party, godown, and lines',
-              displayOf: (s) => '${s.type} ${s.displayNo}',
-              loader: (q) async {
-                final r = await cubit.repository.searchSourceVouchers(query: q);
-                return r.fold((_) => const [], (list) => list);
-              },
-              onSelected: cubit.applySource,
+            gap,
+            constrainFormField(
+              FkLookupField<ItemQtySourceLite>(
+                label: 'Convert from ${kind.sourceLifecycleType}',
+                value: state.source,
+                enabled: !posting,
+                helperText: 'Optional — loads party, godown, and lines',
+                displayOf: (s) => '${s.type} ${s.displayNo}',
+                loader: (q) async {
+                  final r =
+                      await cubit.repository.searchSourceVouchers(query: q);
+                  return r.fold((_) => const [], (list) => list);
+                },
+                onSelected: cubit.applySource,
+              ),
+              maxWidth: FieldWidths.picker,
             ),
           ],
-          const SizedBox(height: 12),
+          gap,
           AppTextField(
             label: 'Billing name',
             value: draft.billingName,
@@ -192,17 +216,43 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
               draft.copyWith(billingName: v.isEmpty ? null : v),
             ),
           ),
-          if (kind.supportsCreditDays) ...[
-            const SizedBox(height: 12),
-            AppNumberField(
-              label: 'Credit days',
-              value: draft.creditDays,
-              enabled: !posting,
-              onChanged: (v) =>
-                  cubit.updateDraft(draft.copyWith(creditDays: v ?? 30)),
+          if (kind.supportsPriceList) ...[
+            gap,
+            constrainFormField(
+              FkLookupField<PriceList>(
+                label: 'Price list',
+                value: draft.priceListId == null
+                    ? null
+                    : PriceList(
+                        id: draft.priceListId!,
+                        name: draft.priceListLabel ?? '',
+                      ),
+                enabled: !posting,
+                displayOf: (p) => p.name,
+                loader: (q) async {
+                  final r = await _priceListRepo.list(PageQuery(search: q));
+                  return r.fold((_) => const [], (p) => p.items);
+                },
+                onSelected: cubit.setPriceList,
+                helperText: 'Rates use this list when items are added',
+              ),
+              maxWidth: FieldWidths.picker,
             ),
           ],
-          const SizedBox(height: 12),
+          if (kind.supportsCreditDays) ...[
+            gap,
+            constrainFormField(
+              AppNumberField(
+                label: 'Credit days',
+                value: draft.creditDays,
+                enabled: !posting,
+                onChanged: (v) =>
+                    cubit.updateDraft(draft.copyWith(creditDays: v ?? 30)),
+              ),
+              maxWidth: FieldWidths.number,
+            ),
+          ],
+          gap,
           AppTextField(
             label: 'Narration',
             value: draft.narration,
@@ -235,18 +285,29 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
             final r = await _itemRepo.list(PageQuery(search: q));
             return r.fold((_) => const [], (p) => p.items);
           },
-          onSelected: (item) {
+          onSelected: (item) async {
             if (item == null) {
-              cubit.updateLine(i, row.copyWith(itemId: null, itemLabel: null));
+              cubit.updateLine(
+                i,
+                row.copyWith(
+                  itemId: null,
+                  itemLabel: null,
+                  itemCode: null,
+                ),
+              );
               return;
             }
+            final price = await cubit.resolveLinePrice(item);
+            if (!context.mounted) return;
             cubit.updateLine(
               i,
               row.copyWith(
                 itemId: item.id,
                 itemLabel: item.name,
-                price: item.price,
+                itemCode: item.code,
+                price: price,
                 taxRate: item.vatRate,
+                priceLevel: cubit.priceLevelStamp(),
               ),
             );
           },

@@ -3,7 +3,12 @@ import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/features/accounts_account_group/account_group_di.dart';
@@ -55,7 +60,11 @@ class _AccountGroupFormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
+
     return AdaptiveLayout(
+      maxContentWidth: FieldWidths.formContent,
       child: BlocBuilder<AccountGroupFormBloc, AccountGroupFormState>(
         builder: (context, state) {
           final bloc = context.read<AccountGroupFormBloc>();
@@ -79,45 +88,46 @@ class _AccountGroupFormView extends StatelessWidget {
               : 'New Account Group';
 
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
+              PageHeader(
+                eyebrow: accountGroupManifest.eyebrowText,
+                title: title,
+                actions: [
                   IconButton(
                     tooltip: 'Back',
                     onPressed: () =>
                         context.go(accountGroupManifest.resourcePath),
                     icon: const Icon(Icons.arrow_back),
                   ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: tokens.spacing.md),
               if (state.errorMessage != null) ...[
                 Text(
                   state.errorMessage!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: TextStyle(color: tokens.semanticColors.danger),
                 ),
-                const SizedBox(height: 12),
+                gap,
               ],
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      AppTextField(
-                        label: 'Name',
-                        value: state.name,
-                        hintText: 'e.g. Current Assets',
-                        onChanged: (v) =>
-                            bloc.add(AccountGroupFormNameChanged(v)),
-                      ),
-                      const SizedBox(height: 12),
+              WorkSheet(
+                fill: false,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.md,
+                  vertical: tokens.spacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppTextField(
+                      label: 'Name',
+                      value: state.name,
+                      hintText: 'e.g. Current Assets',
+                      onChanged: (v) =>
+                          bloc.add(AccountGroupFormNameChanged(v)),
+                    ),
+                    gap,
+                    constrainFormField(
                       AppTextField(
                         label: 'Code',
                         value: state.code,
@@ -125,9 +135,12 @@ class _AccountGroupFormView extends StatelessWidget {
                         onChanged: (v) =>
                             bloc.add(AccountGroupFormCodeChanged(v)),
                       ),
-                      const SizedBox(height: 12),
+                      maxWidth: FieldWidths.code,
+                    ),
+                    gap,
+                    constrainFormField(
                       DropdownButtonFormField<int?>(
-                        value: state.parentGroupId,
+                        initialValue: state.parentGroupId,
                         decoration: const InputDecoration(
                           labelText: 'Parent Group',
                         ),
@@ -145,39 +158,40 @@ class _AccountGroupFormView extends StatelessWidget {
                         onChanged: (v) =>
                             bloc.add(AccountGroupFormParentGroupIdChanged(v)),
                       ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => context.go(
-                                    accountGroupManifest.resourcePath,
+                      maxWidth: FieldWidths.picker,
+                    ),
+                    SizedBox(height: tokens.spacing.lg),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => context.go(
+                                  accountGroupManifest.resourcePath,
+                                ),
+                          child: const Text('Cancel'),
+                        ),
+                        SizedBox(width: tokens.spacing.sm),
+                        FilledButton(
+                          onPressed: state.isSubmitting
+                              ? null
+                              : () => bloc.add(
+                                  const AccountGroupFormSubmitted(),
+                                ),
+                          child: state.isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: state.isSubmitting
-                                ? null
-                                : () => bloc.add(
-                                    const AccountGroupFormSubmitted(),
-                                  ),
-                            child: state.isSubmitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Save'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                                )
+                              : const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

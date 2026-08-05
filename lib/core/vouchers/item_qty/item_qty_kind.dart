@@ -33,6 +33,7 @@ class ItemQtyVoucherKind {
     this.supportsProject = false,
     this.supportsPostStatus = false,
     this.supportsDraftEdit = false,
+    this.supportsPriceList = false,
     this.sourceLifecycleType,
     this.sourceListPath,
     this.sourceDetailPathPattern,
@@ -68,6 +69,9 @@ class ItemQtyVoucherKind {
 
   /// When true, UI may PUT draft header/lines via lifecycle edit.
   final bool supportsDraftEdit;
+
+  /// When true, form shows a price-list picker and rates use effective price.
+  final bool supportsPriceList;
 
   final String? sourceLifecycleType;
   final String? sourceListPath;
@@ -106,6 +110,7 @@ abstract final class ItemQtyKinds {
     supportsProject: true,
     supportsPostStatus: true,
     supportsDraftEdit: true,
+    supportsPriceList: true,
     // Default conversion source; UI may also load Quotation.
     sourceLifecycleType: 'SalesOrder',
     sourceListPath: '/transactions/sales-orders',
@@ -132,6 +137,7 @@ abstract final class ItemQtyKinds {
     partyField: ItemQtyPartyField.customer,
     partyLabel: 'Customer',
     requiresGodown: true,
+    supportsPriceList: true,
     // Convert-from UI ready; backend SO post may ignore source_voucher_id
     // until phase4 schema is extended — still useful for line copy UX if wired.
     createLabel: 'Create sales order',

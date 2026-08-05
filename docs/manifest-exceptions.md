@@ -17,7 +17,7 @@ rule, these are named here rather than forced through the recipe or used to just
 | RouteCustomerMapping | `/inventory/route/customer-mapping` | No `PUT` route; `customer_ledger_id` FK is cross-module (Accounts). |
 | RouteMapping | `/inventory/route/mapping` | No `PUT` route; `salesperson_employee_id` FK is cross-module (Employee). |
 | LedgerItemMapping | `/inventory/ledger-item-mapping` | No `PUT` route; PK is Prisma `@map("_id")`-mapped with no real int FK enforced in the schema. |
-| PriceListEntry | `/inventory/pricelist-entry` | Backend has no list endpoint at all (only get-by-id/create/update/delete) — `MasterListSurface` needs a working `.list()`. |
+| ~~PriceListEntry~~ | `/inventory/pricelist-entry` | **Shipped** as nested panel on Price List edit form (`inventory_pricelist`). Backend now has `GET /pricelist-entry?Price_List_ID=`. Not a top-level menu master. |
 
 ## Employee module (Sprint F)
 

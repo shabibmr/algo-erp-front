@@ -10,6 +10,9 @@ import 'package:algo_erp_front/core/surfaces/master_form_surface.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/view_state_x.dart';
 import 'package:algo_erp_front/core/widgets/async_state_view.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/page_header.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/features/employee_leave_request/cubit/leave_request_action_cubit.dart';
 import 'package:algo_erp_front/features/employee_leave_request/data/leave_request_repository.dart';
 import 'package:algo_erp_front/features/employee_leave_request/domain/leave_request.dart';
@@ -149,9 +152,17 @@ class _LeaveRequestDetail extends StatelessWidget {
                         final cubit = context.read<LeaveRequestActionCubit>();
                         return ListView(
                           children: [
-                            Text(
-                              'Leave request #${request.id}',
-                              style: Theme.of(context).textTheme.headlineMedium,
+                            PageHeader(
+                              eyebrow: leaveRequestManifest.eyebrowText,
+                              title: 'Leave request #${request.id}',
+                              actions: [
+                                TextButton(
+                                  onPressed: () => context.go(
+                                    leaveRequestManifest.resourcePath,
+                                  ),
+                                  child: const Text('Back to list'),
+                                ),
+                              ],
                             ),
                             SizedBox(height: tokens.spacing.md),
                             if (action.error != null) ...[
@@ -163,74 +174,106 @@ class _LeaveRequestDetail extends StatelessWidget {
                               ),
                               SizedBox(height: tokens.spacing.sm),
                             ],
-                            _row(context, 'Employee', empLabel),
-                            _row(context, 'Policy', policyLabel),
-                            _row(
-                              context,
-                              'From',
-                              request.fromDate
-                                  .toIso8601String()
-                                  .split('T')
-                                  .first,
-                            ),
-                            _row(
-                              context,
-                              'To',
-                              request.toDate.toIso8601String().split('T').first,
-                            ),
-                            _row(
-                              context,
-                              'Days',
-                              request.numberOfDays.toString(),
-                            ),
-                            _row(context, 'Status', request.status),
-                            if (request.reason != null &&
-                                request.reason!.isNotEmpty)
-                              _row(context, 'Reason', request.reason!),
-                            if (request.rejectionReason != null &&
-                                request.rejectionReason!.isNotEmpty)
-                              _row(
-                                context,
-                                'Rejection reason',
-                                request.rejectionReason!,
-                              ),
-                            SizedBox(height: tokens.spacing.lg),
-                            if (pending)
-                              PermissionGate(
-                                module: leaveRequestManifest.rbacModule,
-                                action: PermissionAction.update,
-                                child: Wrap(
-                                  spacing: tokens.spacing.sm,
-                                  runSpacing: tokens.spacing.sm,
-                                  children: [
-                                    FilledButton(
-                                      onPressed: action.busy
-                                          ? null
-                                          : () => cubit.setStatus('Approved'),
-                                      child: Text(
-                                        action.busy ? 'Working…' : 'Approve',
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: FieldWidths.formContent,
+                                ),
+                                child: WorkSheet(
+                                  fill: false,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: tokens.spacing.md,
+                                    vertical: tokens.spacing.sm,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _row(context, 'Employee', empLabel),
+                                      _row(context, 'Policy', policyLabel),
+                                      _row(
+                                        context,
+                                        'From',
+                                        request.fromDate
+                                            .toIso8601String()
+                                            .split('T')
+                                            .first,
                                       ),
-                                    ),
-                                    OutlinedButton(
-                                      onPressed: action.busy
-                                          ? null
-                                          : () => _reject(context),
-                                      child: const Text('Reject'),
-                                    ),
-                                    TextButton(
-                                      onPressed: action.busy
-                                          ? null
-                                          : () => cubit.setStatus('Cancelled'),
-                                      child: const Text('Cancel request'),
-                                    ),
-                                  ],
+                                      _row(
+                                        context,
+                                        'To',
+                                        request.toDate
+                                            .toIso8601String()
+                                            .split('T')
+                                            .first,
+                                      ),
+                                      _row(
+                                        context,
+                                        'Days',
+                                        request.numberOfDays.toString(),
+                                      ),
+                                      _row(context, 'Status', request.status),
+                                      if (request.reason != null &&
+                                          request.reason!.isNotEmpty)
+                                        _row(
+                                          context,
+                                          'Reason',
+                                          request.reason!,
+                                        ),
+                                      if (request.rejectionReason != null &&
+                                          request.rejectionReason!.isNotEmpty)
+                                        _row(
+                                          context,
+                                          'Rejection reason',
+                                          request.rejectionReason!,
+                                        ),
+                                      if (pending) ...[
+                                        SizedBox(height: tokens.spacing.md),
+                                        PermissionGate(
+                                          module:
+                                              leaveRequestManifest.rbacModule,
+                                          action: PermissionAction.update,
+                                          child: Wrap(
+                                            spacing: tokens.spacing.sm,
+                                            runSpacing: tokens.spacing.sm,
+                                            children: [
+                                              FilledButton(
+                                                onPressed: action.busy
+                                                    ? null
+                                                    : () => cubit.setStatus(
+                                                        'Approved',
+                                                      ),
+                                                child: Text(
+                                                  action.busy
+                                                      ? 'Working…'
+                                                      : 'Approve',
+                                                ),
+                                              ),
+                                              OutlinedButton(
+                                                onPressed: action.busy
+                                                    ? null
+                                                    : () => _reject(context),
+                                                child: const Text('Reject'),
+                                              ),
+                                              TextButton(
+                                                onPressed: action.busy
+                                                    ? null
+                                                    : () => cubit.setStatus(
+                                                        'Cancelled',
+                                                      ),
+                                                child: const Text(
+                                                  'Cancel request',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            SizedBox(height: tokens.spacing.md),
-                            TextButton(
-                              onPressed: () =>
-                                  context.go(leaveRequestManifest.resourcePath),
-                              child: const Text('Back to list'),
                             ),
                           ],
                         );

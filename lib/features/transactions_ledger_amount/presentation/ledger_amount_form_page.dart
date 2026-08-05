@@ -4,6 +4,7 @@ import 'package:algo_erp_front/core/domain/page_query.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/responsive/adaptive_layout.dart';
 import 'package:algo_erp_front/core/surfaces/document_surface.dart';
+import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/utils/extensions/format_x.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_kind.dart';
 import 'package:algo_erp_front/core/vouchers/ledger_amount/ledger_amount_models.dart';
@@ -11,6 +12,9 @@ import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
+import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
+import 'package:algo_erp_front/core/widgets/layout/form_field_layout.dart';
+import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
@@ -67,14 +71,17 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
   Widget _header(LedgerAmountFormCubit cubit, LedgerAmountFormState state) {
     final draft = state.draft;
     final posting = state.posting;
+    final tokens = context.tokens;
+    final gap = SizedBox(height: tokens.spacing.md);
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: AppTextField(
+              constrainFormField(
+                AppTextField(
                   label: 'Prefix',
                   value: draft.voucherPrefix,
                   enabled: !posting,
@@ -88,10 +95,11 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppTextField(
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppTextField(
                   label: 'Financial year',
                   value: draft.financialYear,
                   enabled: !posting,
@@ -100,36 +108,43 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
+                maxWidth: FieldWidths.code,
+              ),
+              SizedBox(width: tokens.spacing.md),
+              constrainFormField(
+                AppDateField(
+                  label: 'Voucher date',
+                  value: draft.voucherDate,
+                  enabled: !posting,
+                  onChanged: (d) {
+                    if (d != null) {
+                      cubit.updateDraft(draft.copyWith(voucherDate: d));
+                    }
+                  },
+                ),
+                maxWidth: FieldWidths.date,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          AppDateField(
-            label: 'Voucher date',
-            value: draft.voucherDate,
-            enabled: !posting,
-            onChanged: (d) {
-              if (d != null) {
-                cubit.updateDraft(draft.copyWith(voucherDate: d));
-              }
-            },
+          gap,
+          constrainFormField(
+            FkLookupField<Ledger>(
+              label: 'Cash / Bank ledger',
+              value: state.cashBank,
+              enabled: !posting,
+              helperText:
+                  'Source of funds (payment) or deposit account (receipt)',
+              displayOf: _ledgerLabel,
+              loader: (q) async {
+                final r = await _ledgerRepo.list(PageQuery(search: q));
+                return r.fold((_) => const [], (p) => p.items);
+              },
+              onSelected: (l) => cubit.setCashBank(l, _ledgerLabel),
+              validator: (v) => v == null ? 'Cash/Bank is required' : null,
+            ),
+            maxWidth: FieldWidths.picker,
           ),
-          const SizedBox(height: 12),
-          FkLookupField<Ledger>(
-            label: 'Cash / Bank ledger',
-            value: state.cashBank,
-            enabled: !posting,
-            helperText:
-                'Source of funds (payment) or deposit account (receipt)',
-            displayOf: _ledgerLabel,
-            loader: (q) async {
-              final r = await _ledgerRepo.list(PageQuery(search: q));
-              return r.fold((_) => const [], (p) => p.items);
-            },
-            onSelected: (l) => cubit.setCashBank(l, _ledgerLabel),
-            validator: (v) => v == null ? 'Cash/Bank is required' : null,
-          ),
-          const SizedBox(height: 12),
+          gap,
           AppTextField(
             label: 'Narration',
             value: draft.narration,
@@ -239,10 +254,10 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
           'Leave blank for on-account.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: context.tokens.spacing.sm),
         for (final ledgerId in ledgerIds) ...[
           _ledgerSettlementCard(cubit, state, ledgerId),
-          const SizedBox(height: 8),
+          SizedBox(height: context.tokens.spacing.sm),
         ],
       ],
     );
@@ -253,6 +268,7 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
     LedgerAmountFormState state,
     int ledgerId,
   ) {
+    final tokens = context.tokens;
     LedgerAmountLine? line;
     for (final l in state.draft.lines) {
       if (l.ledgerId == ledgerId) {
@@ -274,10 +290,10 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
       (s, a) => s + a,
     );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
+    return WorkSheet(
+      fill: false,
+      padding: EdgeInsets.all(tokens.spacing.md),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
@@ -303,9 +319,9 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
               ],
             ),
             if (loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: tokens.spacing.sm),
+                child: const LinearProgressIndicator(),
               )
             else if (bills == null)
               TextButton(
@@ -320,7 +336,7 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
               ...bills.map((bill) {
                 final current = allocs[bill.refNo] ?? Decimal.zero;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: EdgeInsets.only(bottom: tokens.spacing.sm),
                   child: Row(
                     children: [
                       Expanded(
@@ -341,7 +357,7 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
                         ),
                       ),
                       SizedBox(
-                        width: 120,
+                        width: FieldWidths.number,
                         child: AppDecimalField(
                           label: 'Allocate',
                           value: current,
@@ -370,7 +386,6 @@ class _LedgerAmountFormViewState extends State<_LedgerAmountFormView> {
                 );
               }),
           ],
-        ),
       ),
     );
   }

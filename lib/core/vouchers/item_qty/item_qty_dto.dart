@@ -127,6 +127,9 @@ abstract final class ItemQtyDto {
           kind.supportsSourceType &&
           draft.sourceVoucherType != null)
         'source_voucher_type': draft.sourceVoucherType,
+      if (draft.priceListId != null) 'price_list_id': draft.priceListId,
+      if (draft.priceListLabel != null && draft.priceListLabel!.isNotEmpty)
+        'price_list_name': draft.priceListLabel,
       'lines': [
         for (final line in draft.lines.where((l) => l.isComplete))
           {
@@ -138,6 +141,12 @@ abstract final class ItemQtyDto {
             'price': decimalToWire(line.price),
             'discount_percent': decimalToWire(line.discountPercent),
             'tax_rate': decimalToWire(line.taxRate),
+            if (line.priceLevel != null && line.priceLevel!.isNotEmpty)
+              'price_level': line.priceLevel,
+            if ((line.priceLevel == null || line.priceLevel!.isEmpty) &&
+                draft.priceListLabel != null &&
+                draft.priceListLabel!.isNotEmpty)
+              'price_level': draft.priceListLabel,
           },
       ],
     };
@@ -160,6 +169,12 @@ abstract final class ItemQtyDto {
         if (line.skuId != null) 'voucher_sku_id': line.skuId,
         'Quantity': decimalToWire(line.quantity),
         'Price': decimalToWire(line.price),
+        if (line.priceLevel != null && line.priceLevel!.isNotEmpty)
+          'PriceLevel': line.priceLevel,
+        if ((line.priceLevel == null || line.priceLevel!.isEmpty) &&
+            draft.priceListLabel != null &&
+            draft.priceListLabel!.isNotEmpty)
+          'PriceLevel': draft.priceListLabel,
         'Discount_Percent': decimalToWire(line.discountPercent),
         'Discount_Amount': decimalToWire(computed.discountAmount),
         'Subtotal': decimalToWire(computed.subtotal),

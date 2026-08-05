@@ -1,5 +1,6 @@
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/inventory_godown/domain/godown.dart';
+import 'package:algo_erp_front/features/inventory_pricelist/domain/price_list.dart';
 import 'package:algo_erp_front/features/transactions_sales_invoice/domain/sales_invoice.dart';
 import 'package:equatable/equatable.dart';
 
@@ -113,6 +114,14 @@ final class LineItemUpdated extends SalesInvoiceFormEvent {
 
   @override
   List<Object?> get props => [index, line];
+}
+
+final class PriceListSelected extends SalesInvoiceFormEvent {
+  const PriceListSelected(this.priceList);
+  final PriceList? priceList;
+
+  @override
+  List<Object?> get props => [priceList];
 }
 
 final class FormSubmitted extends SalesInvoiceFormEvent {
