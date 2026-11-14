@@ -1,0 +1,36 @@
+{
+  "name": "algoERP Flutter Dev",
+  "user": "ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "repositoryDependencies": [
+    "github.com/shabibmr/algo-backend-backend"
+  ],
+  "ports": [
+    {
+      "name": "api",
+      "port": 5000
+    },
+    {
+      "name": "flutter-web",
+      "port": 8080
+    }
+  ],
+  "install": "bash .cursor/scripts/install.sh",
+  "start": "bash .cursor/scripts/start.sh",
+  "terminals": [
+    {
+      "name": "backend-api",
+      "command": "bash -lc 'BACKEND_DIR=\"$(bash .cursor/scripts/resolve-backend.sh)\" && cd \"$BACKEND_DIR\" && npm run dev'",
+      "description": "algoERP TypeScript API on http://localhost:5000"
+    },
+    {
+      "name": "flutter-web",
+      "command": "bash -lc 'export PATH=\"/opt/flutter/bin:$PATH\" && cd /workspace && flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8080 -t lib/main_dev.dart --dart-define=API_BASE_URL=http://localhost:5000'",
+      "description": "Flutter web dev server on http://localhost:8080 (dev flavor → local API)"
+    }
+  ],
+  "chromeExecutablePath": "/usr/bin/chromium-browser"
+}
