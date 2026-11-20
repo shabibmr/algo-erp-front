@@ -76,9 +76,8 @@ final productAttributeManifest = EntityManifest<ProductAttribute>(
           .map((t) => (value: t.wireValue, label: t.label))
           .toList(),
       getValue: (attr) => attr.type.wireValue,
-      setValue: (attr, v) => attr.copyWith(
-        type: AttributeType.fromWire(v as String?),
-      ),
+      setValue: (attr, v) =>
+          attr.copyWith(type: AttributeType.fromWire(v as String?)),
     ),
     FormFieldSpec<ProductAttribute>(
       key: 'unit',

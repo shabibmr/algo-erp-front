@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:algo_erp_front/core/data/mapper.dart';
 import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_dto.dart';
 import 'package:algo_erp_front/features/inventory_attribute/domain/product_attribute.dart';
@@ -65,3 +66,24 @@ class ProductAttributeMapper
     subAttributes: entity.subAttributes.map(toDto).toList(),
   );
 }
+
+const _attributeMapper = ProductAttributeMapper();
+
+ItemAttributeAssignment mapAssignment(ItemAttributeAssignmentDto dto) =>
+    ItemAttributeAssignment(
+      attributeId: dto.attributeId,
+      attribute: _attributeMapper.toEntity(dto.attribute),
+      isRequired: dto.isRequired,
+      displayOrder: dto.displayOrder,
+    );
+
+ItemSku mapItemSku(ItemSkuDto dto) => ItemSku(
+  id: dto.id,
+  skuCode: dto.skuCode ?? '',
+  skuName: dto.skuName ?? '',
+  attributeSummary: dto.attributeSummary ?? '',
+  rate: dto.rate == null ? null : Decimal.tryParse(dto.rate!),
+);
+
+ResolvedVariant mapResolvedVariant(ResolvedVariantDto dto) =>
+    ResolvedVariant(sku: mapItemSku(dto.sku), isNew: dto.isNew);

@@ -24,6 +24,7 @@ class AppTextField extends StatefulWidget {
     required this.label,
     super.key,
     this.controller,
+    this.focusNode,
     this.value,
     this.hintText,
     this.helperText,
@@ -53,6 +54,7 @@ class AppTextField extends StatefulWidget {
   final bool isBorderless;
   final TextAlign? textAlign;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final String? value;
   final String? hintText;
   final String? helperText;
@@ -109,6 +111,7 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
+      focusNode: widget.focusNode,
       style: Theme.of(context).textTheme.bodyMedium,
       textAlign: widget.textAlign ?? TextAlign.start,
       enabled: widget.enabled,

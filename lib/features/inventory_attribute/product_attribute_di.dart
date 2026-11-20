@@ -6,6 +6,7 @@ import 'package:algo_erp_front/core/di/repo_binding.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_dto.dart';
 import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_mapper.dart';
+import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_repository.dart';
 import 'package:algo_erp_front/features/inventory_attribute/domain/product_attribute.dart';
 import 'package:algo_erp_front/features/inventory_attribute/product_attribute_manifest.dart';
 import 'package:flutter/widgets.dart';
@@ -43,3 +44,6 @@ CrudBloc<ProductAttribute, int, void> productAttributeCrudBloc(
     () => createProductAttributeCrudBloc(getIt<DioClient>()),
   );
 }
+
+ItemAttributeRepository itemAttributeRepository() =>
+    ItemAttributeRepository(getIt<DioClient>());

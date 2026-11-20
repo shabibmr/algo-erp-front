@@ -1,9 +1,10 @@
-import 'package:algo_erp_front/core/di/injection.dart';
-import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_dropdown_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_text_field.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
+import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_repository.dart';
+import 'package:algo_erp_front/features/inventory_attribute/domain/product_attribute.dart';
+import 'package:algo_erp_front/features/inventory_attribute/product_attribute_di.dart';
 import 'package:flutter/material.dart';
 
 class ResolvedVariantResult {
@@ -62,15 +63,15 @@ class VariantPickerDialog extends StatefulWidget {
 }
 
 class _VariantPickerDialogState extends State<VariantPickerDialog> {
-  final DioClient _dio = getIt<DioClient>();
+  late final ItemAttributeRepository _repo = itemAttributeRepository();
 
   bool _loading = true;
   String? _error;
-  List<Map<String, dynamic>> _assignedAttributes = [];
+  List<ItemAttributeAssignment> _assigned = [];
   Map<int, List<String>> _suggestions = {};
 
-  // Form state: attributeId -> { 'value': String, 'valueId': int? }
-  final Map<int, Map<String, dynamic>> _selectedValues = {};
+  // Form state: attributeId -> chosen value (valueId set for predetermined options)
+  final Map<int, VariantAttributeInput> _selectedValues = {};
   bool _submitting = false;
 
   @override
@@ -85,52 +86,41 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
       _error = null;
     });
 
-    try {
-      final attrRes = await _dio.get<Map<String, dynamic>>(
-        '/inventory/item/${widget.itemId}/attributes',
-      );
-      final rawAttrs = attrRes.data?['data'] as List<dynamic>? ?? [];
-      _assignedAttributes = rawAttrs.cast<Map<String, dynamic>>();
+    final assigned = await _repo.getAssignments(widget.itemId);
+    final suggestions = await _repo.getSuggestions(widget.itemId);
+    if (!mounted) return;
 
-      final suggRes = await _dio.get<Map<String, dynamic>>(
-        '/inventory/item/${widget.itemId}/attribute-suggestions',
+    setState(() {
+      _loading = false;
+      assigned.fold(
+        (f) => _error = failureText(f, 'Failed to load item attributes'),
+        (v) => _assigned = v,
       );
-      final rawSugg = suggRes.data?['data'] as Map<String, dynamic>? ?? {};
-      _suggestions = rawSugg.map((k, v) => MapEntry(
-            int.parse(k),
-            (v as List<dynamic>).map((e) => e.toString()).toList(),
-          ));
-
-      setState(() {
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _loading = false;
-        _error = 'Failed to load item attributes: $e';
-      });
-    }
+      if (_error == null) {
+        suggestions.fold(
+          (f) => _error = failureText(f, 'Failed to load item attributes'),
+          (v) => _suggestions = v,
+        );
+      }
+    });
   }
 
   Future<void> _resolveAndConfirm() async {
-    final attributesPayload = <Map<String, dynamic>>[];
+    final inputs = [
+      for (final e in _selectedValues.values)
+        if (e.value.trim().isNotEmpty)
+          VariantAttributeInput(
+            attributeId: e.attributeId,
+            value: e.value.trim(),
+            valueId: e.valueId,
+          ),
+    ];
 
-    for (final entry in _selectedValues.entries) {
-      final attrId = entry.key;
-      final valMap = entry.value;
-      final val = valMap['value']?.toString().trim();
-      if (val != null && val.isNotEmpty) {
-        attributesPayload.add({
-          'attributeId': attrId,
-          'value': val,
-          if (valMap['valueId'] != null) 'valueId': valMap['valueId'],
-        });
-      }
-    }
-
-    if (attributesPayload.isEmpty) {
+    if (inputs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select or enter at least one attribute value')),
+        const SnackBar(
+          content: Text('Please select or enter at least one attribute value'),
+        ),
       );
       return;
     }
@@ -139,40 +129,31 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
       _submitting = true;
     });
 
-    try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        '/inventory/sku/resolve-variant',
-        data: {
-          'itemId': widget.itemId,
-          'attributes': attributesPayload,
-        },
-      );
+    final res = await _repo.resolveVariant(widget.itemId, inputs);
+    if (!mounted) return;
 
-      final data = res.data?['data'] as Map<String, dynamic>? ?? {};
-      final skuData = data['sku'] as Map<String, dynamic>? ?? {};
-      final isNew = data['isNew'] as bool? ?? false;
-
-      final result = ResolvedVariantResult(
-        skuId: skuData['id'] as int? ?? 0,
-        skuCode: skuData['sku_code'] as String? ?? '',
-        skuName: skuData['sku_name'] as String? ?? '',
-        attributeSummary: skuData['attribute_summary'] as String? ?? '',
-        rate: (skuData['rate'] != null)
-            ? double.tryParse(skuData['rate'].toString())
-            : null,
-        isNew: isNew,
-      );
-
-      if (!mounted) return;
-      Navigator.of(context).pop(result);
-    } catch (e) {
-      setState(() {
-        _submitting = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to resolve variant SKU: $e')),
-      );
-    }
+    res.fold(
+      (f) {
+        setState(() {
+          _submitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failureText(f, 'Failed to resolve variant SKU')),
+          ),
+        );
+      },
+      (r) => Navigator.of(context).pop(
+        ResolvedVariantResult(
+          skuId: r.sku.id,
+          skuCode: r.sku.skuCode,
+          skuName: r.sku.skuName,
+          attributeSummary: r.sku.attributeSummary,
+          rate: r.sku.rate?.toDouble(),
+          isNew: r.isNew,
+        ),
+      ),
+    );
   }
 
   @override
@@ -203,7 +184,7 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
                         Text(
                           widget.itemName,
                           style: TextStyle(
-                            color: tokens.brand.slate,
+                            color: tokens.brand.inkMuted,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -221,36 +202,42 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
                 child: _loading
                     ? const Center(child: LoadingState())
                     : _error != null
-                        ? Center(child: Text(_error!, style: TextStyle(color: tokens.semanticColors.danger)))
-                        : _assignedAttributes.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No attributes configured for this item.\nAssign attributes in Item Master first.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: tokens.brand.slate),
-                                ),
-                              )
-                            : ListView.separated(
-                                itemCount: _assignedAttributes.length,
-                                separatorBuilder: (_, __) => SizedBox(height: tokens.spacing.md),
-                                itemBuilder: (ctx, i) {
-                                  final assign = _assignedAttributes[i];
-                                  final attr = assign['attribute'] as Map<String, dynamic>? ?? {};
-                                  return _buildAttributeField(attr);
-                                },
-                              ),
+                    ? Center(
+                        child: Text(
+                          _error!,
+                          style: TextStyle(color: tokens.semanticColors.danger),
+                        ),
+                      )
+                    : _assigned.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No attributes configured for this item.\nAssign attributes in Item Master first.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: tokens.brand.inkMuted),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: _assigned.length,
+                        separatorBuilder: (_, __) =>
+                            SizedBox(height: tokens.spacing.md),
+                        itemBuilder: (ctx, i) {
+                          return _buildAttributeField(_assigned[i].attribute);
+                        },
+                      ),
               ),
               Divider(height: tokens.spacing.lg, color: tokens.brand.mist),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton(
-                    onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   SizedBox(width: tokens.spacing.sm),
                   FilledButton.icon(
-                    onPressed: _submitting || _assignedAttributes.isEmpty
+                    onPressed: _submitting || _assigned.isEmpty
                         ? null
                         : _resolveAndConfirm,
                     icon: _submitting
@@ -260,7 +247,9 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.check, size: 18),
-                    label: Text(_submitting ? 'Resolving...' : 'Confirm & Apply SKU'),
+                    label: Text(
+                      _submitting ? 'Resolving...' : 'Confirm & Apply SKU',
+                    ),
                   ),
                 ],
               ),
@@ -271,24 +260,18 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
     );
   }
 
-  Widget _buildAttributeField(Map<String, dynamic> attr) {
+  Widget _buildAttributeField(ProductAttribute attr) {
     final tokens = context.tokens;
-    final attrId = attr['id'] as int? ?? 0;
-    final attrName = attr['attribute_name'] as String? ?? '';
-    final attrType = attr['attribute_type'] as String? ?? 'PREDETERMINED';
-    final unit = attr['unit'] as String?;
 
-    if (attrType == 'GROUP') {
-      final subAttrs = (attr['sub_attributes'] as List<dynamic>? ?? [])
-          .cast<Map<String, dynamic>>();
-
+    if (attr.isGroup) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: tokens.brand.mist),
         ),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withValues(alpha: 0.3),
         child: Padding(
           padding: EdgeInsets.all(tokens.spacing.md),
           child: Column(
@@ -296,19 +279,31 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.folder_outlined, size: 18, color: tokens.brand.primary),
+                  Icon(
+                    Icons.folder_outlined,
+                    size: 18,
+                    color: tokens.brand.lagoon,
+                  ),
                   SizedBox(width: tokens.spacing.xs),
                   Text(
-                    attrName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    attr.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
               SizedBox(height: tokens.spacing.sm),
-              ...subAttrs.map((sub) => Padding(
-                    padding: EdgeInsets.only(top: tokens.spacing.xs, bottom: tokens.spacing.xs),
-                    child: _buildLeafAttributeInput(sub),
-                  )),
+              ...attr.subAttributes.map(
+                (sub) => Padding(
+                  padding: EdgeInsets.only(
+                    top: tokens.spacing.xs,
+                    bottom: tokens.spacing.xs,
+                  ),
+                  child: _buildLeafAttributeInput(sub),
+                ),
+              ),
             ],
           ),
         ),
@@ -318,45 +313,38 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
     return _buildLeafAttributeInput(attr);
   }
 
-  Widget _buildLeafAttributeInput(Map<String, dynamic> attr) {
-    final tokens = context.tokens;
-    final attrId = attr['id'] as int? ?? 0;
-    final attrName = attr['attribute_name'] as String? ?? '';
-    final attrType = attr['attribute_type'] as String? ?? 'PREDETERMINED';
-    final unit = attr['unit'] as String?;
-    final labelWithUnit = unit != null ? '$attrName ($unit)' : attrName;
+  Widget _buildLeafAttributeInput(ProductAttribute attr) {
+    final attrId = attr.id;
+    final labelWithUnit = attr.unit != null
+        ? '${attr.name} (${attr.unit})'
+        : attr.name;
 
-    if (attrType == 'PREDETERMINED') {
-      final options = (attr['values'] as List<dynamic>? ?? [])
-          .cast<Map<String, dynamic>>();
+    if (attr.isPredetermined) {
+      final options = attr.options;
+      final currentValue = _selectedValues[attrId]?.value;
 
-      final currentValue = _selectedValues[attrId]?['value'] as String?;
+      final labels = {
+        for (final opt in options)
+          opt.value: opt.valueCode != null && opt.valueCode != opt.value
+              ? '${opt.value} (${opt.valueCode})'
+              : opt.value,
+      };
 
       return AppDropdownField<String>(
         label: labelWithUnit,
         value: currentValue,
-        items: options
-            .map((opt) => DropdownMenuItem<String>(
-                  value: opt['attribute_value'] as String,
-                  child: Text(
-                    opt['value_code'] != null && opt['value_code'] != opt['attribute_value']
-                        ? '${opt['attribute_value']} (${opt['value_code']})'
-                        : opt['attribute_value'] as String,
-                  ),
-                ))
-            .toList(),
+        items: options.map((o) => o.value).toList(),
+        labelOf: (v) => labels[v] ?? v,
         onChanged: (val) {
           if (val == null) {
             _selectedValues.remove(attrId);
           } else {
-            final matched = options.firstWhere(
-              (o) => o['attribute_value'] == val,
-              orElse: () => {},
+            final matched = options.where((o) => o.value == val).firstOrNull;
+            _selectedValues[attrId] = VariantAttributeInput(
+              attributeId: attrId,
+              value: val,
+              valueId: matched?.id,
             );
-            _selectedValues[attrId] = {
-              'value': val,
-              'valueId': matched['id'],
-            };
           }
           setState(() {});
         },
@@ -365,23 +353,26 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
 
     // EDITABLE: Combobox ("Dropdown + Add New")
     final suggestions = _suggestions[attrId] ?? [];
-    final currentValue = _selectedValues[attrId]?['value'] as String? ?? '';
+    final currentValue = _selectedValues[attrId]?.value ?? '';
 
     return Autocomplete<String>(
       initialValue: TextEditingValue(text: currentValue),
       optionsBuilder: (textEditingValue) {
         final query = textEditingValue.text.trim().toLowerCase();
-        final filtered = suggestions.where((s) => s.toLowerCase().contains(query)).toList();
-        if (textEditingValue.text.isNotEmpty && !suggestions.contains(textEditingValue.text)) {
+        final filtered = suggestions
+            .where((s) => s.toLowerCase().contains(query))
+            .toList();
+        if (textEditingValue.text.isNotEmpty &&
+            !suggestions.contains(textEditingValue.text)) {
           return [textEditingValue.text, ...filtered];
         }
         return filtered;
       },
       onSelected: (selection) {
-        _selectedValues[attrId] = {
-          'value': selection,
-          'valueId': null,
-        };
+        _selectedValues[attrId] = VariantAttributeInput(
+          attributeId: attrId,
+          value: selection,
+        );
         setState(() {});
       },
       fieldViewBuilder: (ctx, controller, focusNode, onFieldSubmitted) {
@@ -391,12 +382,12 @@ class _VariantPickerDialogState extends State<VariantPickerDialog> {
           label: labelWithUnit,
           hintText: suggestions.isNotEmpty
               ? 'Select past (${suggestions.take(2).join(', ')}) or type new...'
-              : 'Enter $attrName...',
+              : 'Enter ${attr.name}...',
           onChanged: (val) {
-            _selectedValues[attrId] = {
-              'value': val,
-              'valueId': null,
-            };
+            _selectedValues[attrId] = VariantAttributeInput(
+              attributeId: attrId,
+              value: val,
+            );
           },
         );
       },

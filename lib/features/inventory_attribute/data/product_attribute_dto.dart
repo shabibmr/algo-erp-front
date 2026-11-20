@@ -87,8 +87,7 @@ class ProductAttributeDto extends Equatable {
       subAttributes:
           rawSub
               ?.map(
-                (s) =>
-                    ProductAttributeDto.fromJson(s as Map<String, dynamic>),
+                (s) => ProductAttributeDto.fromJson(s as Map<String, dynamic>),
               )
               .toList() ??
           const [],
@@ -132,4 +131,77 @@ class ProductAttributeDto extends Equatable {
     values,
     subAttributes,
   ];
+}
+
+class ItemAttributeAssignmentDto extends Equatable {
+  const ItemAttributeAssignmentDto({
+    required this.attributeId,
+    required this.attribute,
+    this.isRequired = false,
+    this.displayOrder = 0,
+  });
+
+  factory ItemAttributeAssignmentDto.fromJson(Map<String, dynamic> json) =>
+      ItemAttributeAssignmentDto(
+        attributeId: json['attribute_id'] as int? ?? 0,
+        attribute: ProductAttributeDto.fromJson(
+          json['attribute'] as Map<String, dynamic>? ?? const {},
+        ),
+        isRequired: json['is_required'] as bool? ?? false,
+        displayOrder: json['display_order'] as int? ?? 0,
+      );
+
+  final int attributeId;
+  final ProductAttributeDto attribute;
+  final bool isRequired;
+  final int displayOrder;
+
+  @override
+  List<Object?> get props => [attributeId, attribute, isRequired, displayOrder];
+}
+
+class ItemSkuDto extends Equatable {
+  const ItemSkuDto({
+    required this.id,
+    this.skuCode,
+    this.skuName,
+    this.attributeSummary,
+    this.rate,
+  });
+
+  factory ItemSkuDto.fromJson(Map<String, dynamic> json) => ItemSkuDto(
+    id: json['id'] as int? ?? 0,
+    skuCode: json['sku_code'] as String?,
+    skuName: json['sku_name'] as String?,
+    attributeSummary: json['attribute_summary'] as String?,
+    // Prisma serialises decimals as strings.
+    rate: json['rate']?.toString(),
+  );
+
+  final int id;
+  final String? skuCode;
+  final String? skuName;
+  final String? attributeSummary;
+  final String? rate;
+
+  @override
+  List<Object?> get props => [id, skuCode, skuName, attributeSummary, rate];
+}
+
+class ResolvedVariantDto extends Equatable {
+  const ResolvedVariantDto({required this.sku, required this.isNew});
+
+  factory ResolvedVariantDto.fromJson(Map<String, dynamic> json) =>
+      ResolvedVariantDto(
+        sku: ItemSkuDto.fromJson(
+          json['sku'] as Map<String, dynamic>? ?? const {},
+        ),
+        isNew: json['isNew'] as bool? ?? false,
+      );
+
+  final ItemSkuDto sku;
+  final bool isNew;
+
+  @override
+  List<Object?> get props => [sku, isNew];
 }

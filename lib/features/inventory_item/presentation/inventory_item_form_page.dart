@@ -16,6 +16,9 @@ import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/variant_picker_dialog.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
+import 'package:algo_erp_front/features/inventory_attribute/data/product_attribute_repository.dart';
+import 'package:algo_erp_front/features/inventory_attribute/domain/product_attribute.dart';
+import 'package:algo_erp_front/features/inventory_attribute/product_attribute_di.dart';
 import 'package:algo_erp_front/features/inventory_brand/brand_di.dart';
 import 'package:algo_erp_front/features/inventory_brand/domain/brand.dart';
 import 'package:algo_erp_front/features/inventory_category/category_di.dart';
@@ -617,10 +620,10 @@ class _ItemAttributesTab extends StatefulWidget {
 }
 
 class _ItemAttributesTabState extends State<_ItemAttributesTab> {
-  final DioClient _dio = getIt<DioClient>();
+  late final ItemAttributeRepository _repo = itemAttributeRepository();
   bool _loading = true;
   String? _error;
-  List<Map<String, dynamic>> _assignments = [];
+  List<ItemAttributeAssignment> _assignments = [];
 
   @override
   void initState() {
@@ -635,44 +638,31 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
       _loading = true;
       _error = null;
     });
-    try {
-      final res = await _dio.get<Map<String, dynamic>>(
-        '/inventory/item/${widget.itemId}/attributes',
+    final res = await _repo.getAssignments(widget.itemId!);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      res.fold(
+        (f) => _error = failureText(f, 'Failed to load attributes'),
+        (v) => _assignments = v,
       );
-      final raw = res.data?['data'] as List<dynamic>? ?? [];
-      setState(() {
-        _assignments = raw.cast<Map<String, dynamic>>();
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to load attributes: $e';
-        _loading = false;
-      });
-    }
+    });
   }
 
   Future<void> _showManageDialog() async {
     if (widget.itemId == null) return;
 
-    // Load available product attributes tree
-    List<Map<String, dynamic>> allAttrs = [];
-    try {
-      final res = await _dio.get<Map<String, dynamic>>('/inventory/attribute/tree');
-      final raw = res.data?['data'] as List<dynamic>? ?? [];
-      allAttrs = raw.cast<Map<String, dynamic>>();
-    } catch (e) {
+    final treeRes = await _repo.getAttributeTree();
+    if (!mounted) return;
+    final allAttrs = treeRes.getOrElse((_) => const <ProductAttribute>[]);
+    if (treeRes.isLeft()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load attributes master: $e')),
+        const SnackBar(content: Text('Failed to load attributes master')),
       );
       return;
     }
 
-    final currentSelectedIds = _assignments
-        .map((a) => a['attribute_id'] as int)
-        .toSet();
-
-    if (!mounted) return;
+    final currentSelectedIds = _assignments.map((a) => a.attributeId).toSet();
 
     final selected = await showDialog<Set<int>>(
       context: context,
@@ -691,21 +681,18 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
                         itemCount: allAttrs.length,
                         itemBuilder: (ctx, i) {
                           final a = allAttrs[i];
-                          final id = a['id'] as int;
-                          final name = a['attribute_name'] as String;
-                          final type = a['attribute_type'] as String;
-                          final isChecked = tempSelected.contains(id);
+                          final isChecked = tempSelected.contains(a.id);
 
                           return CheckboxListTile(
-                            title: Text(name),
-                            subtitle: Text('Type: $type'),
+                            title: Text(a.name),
+                            subtitle: Text('Type: ${a.type.wireValue}'),
                             value: isChecked,
                             onChanged: (v) {
                               setDialogState(() {
                                 if (v == true) {
-                                  tempSelected.add(id);
+                                  tempSelected.add(a.id);
                                 } else {
-                                  tempSelected.remove(id);
+                                  tempSelected.remove(a.id);
                                 }
                               });
                             },
@@ -730,21 +717,21 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
     );
 
     if (selected != null) {
-      try {
-        final payload = selected
-            .map((id) => {'attribute_id': id, 'is_required': false, 'display_order': 0})
-            .toList();
-        await _dio.post(
-          '/inventory/item/${widget.itemId}/attributes',
-          data: {'attributes': payload},
-        );
-        _loadAttributes();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save attribute assignments: $e')),
-        );
-      }
+      final byId = {for (final a in allAttrs) a.id: a};
+      final res = await _repo.saveAssignments(widget.itemId!, [
+        for (final id in selected)
+          ItemAttributeAssignment(
+            attributeId: id,
+            attribute: byId[id]!,
+          ),
+      ]);
+      if (!mounted) return;
+      res.fold(
+        (f) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(failureText(f, 'Failed to save attribute assignments'))),
+        ),
+        (_) => _loadAttributes(),
+      );
     }
   }
 
@@ -759,7 +746,7 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.style_outlined, size: 48, color: tokens.brand.slate),
+              Icon(Icons.style_outlined, size: 48, color: tokens.brand.inkMuted),
               SizedBox(height: tokens.spacing.md),
               const Text(
                 'Save this item first before assigning attributes.',
@@ -812,7 +799,7 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
                 padding: EdgeInsets.all(tokens.spacing.xl),
                 child: Column(
                   children: [
-                    Icon(Icons.info_outline, size: 36, color: tokens.brand.slate),
+                    Icon(Icons.info_outline, size: 36, color: tokens.brand.inkMuted),
                     SizedBox(height: tokens.spacing.sm),
                     const Text(
                       'No attributes currently assigned to this item.\nClick "Manage Attributes" to assign Size, Color, Measurements, etc.',
@@ -824,12 +811,11 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
             )
           else
             ...List.generate(_assignments.length, (i) {
-              final a = _assignments[i];
-              final attr = a['attribute'] as Map<String, dynamic>? ?? {};
-              final name = attr['attribute_name'] as String? ?? '';
-              final type = attr['attribute_type'] as String? ?? '';
-              final subAttrs = (attr['sub_attributes'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
-              final options = (attr['values'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+              final attr = _assignments[i].attribute;
+              final name = attr.name;
+              final type = attr.type.wireValue;
+              final subAttrs = attr.subAttributes;
+              final options = attr.options;
 
               return Card(
                 elevation: 0,
@@ -851,7 +837,7 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
                               Icon(
                                 type == 'GROUP' ? Icons.folder_outlined : Icons.tag,
                                 size: 18,
-                                color: tokens.brand.primary,
+                                color: tokens.brand.lagoon,
                               ),
                               SizedBox(width: tokens.spacing.xs),
                               Text(
@@ -870,15 +856,15 @@ class _ItemAttributesTabState extends State<_ItemAttributesTab> {
                       if (options.isNotEmpty) ...[
                         SizedBox(height: tokens.spacing.xs),
                         Text(
-                          'Pre-determined Options: ${options.map((o) => o['attribute_value']).join(', ')}',
-                          style: TextStyle(color: tokens.brand.slate, fontSize: 13),
+                          'Pre-determined Options: ${options.map((o) => o.value).join(', ')}',
+                          style: TextStyle(color: tokens.brand.inkMuted, fontSize: 13),
                         ),
                       ],
                       if (subAttrs.isNotEmpty) ...[
                         SizedBox(height: tokens.spacing.xs),
                         Text(
-                          'Sub-attributes: ${subAttrs.map((s) => s['attribute_name']).join(', ')}',
-                          style: TextStyle(color: tokens.brand.slate, fontSize: 13),
+                          'Sub-attributes: ${subAttrs.map((s) => s.name).join(', ')}',
+                          style: TextStyle(color: tokens.brand.inkMuted, fontSize: 13),
                         ),
                       ],
                     ],
@@ -909,10 +895,11 @@ class _ItemVariantsTab extends StatefulWidget {
 }
 
 class _ItemVariantsTabState extends State<_ItemVariantsTab> {
-  final DioClient _dio = getIt<DioClient>();
+  late final ItemAttributeRepository _repo = itemAttributeRepository();
   bool _loading = true;
   String? _error;
-  List<Map<String, dynamic>> _skus = [];
+  List<ItemSku> _skus = [];
+  int _total = 0;
 
   @override
   void initState() {
@@ -927,21 +914,18 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
       _loading = true;
       _error = null;
     });
-    try {
-      final res = await _dio.get<Map<String, dynamic>>(
-        '/inventory/item/${widget.itemId}/skus',
+    final res = await _repo.getSkus(widget.itemId!);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      res.fold(
+        (f) => _error = failureText(f, 'Failed to load SKUs'),
+        (page) {
+          _skus = page.items;
+          _total = page.meta.total;
+        },
       );
-      final raw = res.data?['data'] as List<dynamic>? ?? [];
-      setState(() {
-        _skus = raw.cast<Map<String, dynamic>>();
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to load SKUs: $e';
-        _loading = false;
-      });
-    }
+    });
   }
 
   Future<void> _createVariant() async {
@@ -979,7 +963,7 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.inventory_2_outlined, size: 48, color: tokens.brand.slate),
+              Icon(Icons.inventory_2_outlined, size: 48, color: tokens.brand.inkMuted),
               SizedBox(height: tokens.spacing.md),
               const Text(
                 'Save this item first before creating or viewing variants.',
@@ -1010,7 +994,7 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Item Variants (${_skus.length} SKUs)',
+                'Item Variants ($_total SKUs)',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               FilledButton.icon(
@@ -1032,7 +1016,7 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
                 padding: EdgeInsets.all(tokens.spacing.xl),
                 child: Column(
                   children: [
-                    Icon(Icons.inventory_2_outlined, size: 36, color: tokens.brand.slate),
+                    Icon(Icons.inventory_2_outlined, size: 36, color: tokens.brand.inkMuted),
                     SizedBox(height: tokens.spacing.sm),
                     const Text(
                       'No variant SKUs generated yet for this item.\nClick "New Variant SKU" to create one.',
@@ -1045,9 +1029,9 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
           else
             ...List.generate(_skus.length, (i) {
               final sku = _skus[i];
-              final code = sku['sku_code'] as String? ?? '—';
-              final summary = sku['attribute_summary'] as String? ?? sku['sku_name'] as String? ?? '';
-              final rate = sku['rate']?.toString() ?? '—';
+              final code = sku.skuCode.isEmpty ? '—' : sku.skuCode;
+              final summary = sku.attributeSummary.isNotEmpty ? sku.attributeSummary : sku.skuName;
+              final rate = sku.rate?.toString() ?? '—';
 
               return Card(
                 elevation: 0,
@@ -1061,7 +1045,7 @@ class _ItemVariantsTabState extends State<_ItemVariantsTab> {
                     backgroundColor: tokens.brand.mist,
                     child: Text(
                       '${i + 1}',
-                      style: TextStyle(color: tokens.brand.primary, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: tokens.brand.lagoon, fontWeight: FontWeight.bold),
                     ),
                   ),
                   title: Text(code, style: const TextStyle(fontWeight: FontWeight.bold)),

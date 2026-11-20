@@ -13,7 +13,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class ProductAttributeFormPage extends StatelessWidget {
-  const ProductAttributeFormPage({required this.mode, super.key, this.entityId});
+  const ProductAttributeFormPage({
+    required this.mode,
+    super.key,
+    this.entityId,
+  });
 
   final FormMode mode;
   final int? entityId;
