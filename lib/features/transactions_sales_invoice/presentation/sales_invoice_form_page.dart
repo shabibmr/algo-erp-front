@@ -12,6 +12,7 @@ import 'package:algo_erp_front/core/widgets/chips/status_chip.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_columns.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
 import 'package:algo_erp_front/core/widgets/dialogs/confirm_dialog.dart';
+import 'package:algo_erp_front/core/widgets/dialogs/variant_picker_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_dropdown_field.dart';
 import 'package:algo_erp_front/core/widgets/layout/field_widths.dart';
@@ -199,6 +200,83 @@ class _SalesInvoiceFormView extends StatelessWidget {
             );
           },
         ),
+      ),
+
+      LineItemColumn(
+        label: 'Variant / SKU',
+        flex: 2,
+        cellBuilder: (cellCtx, row, i) {
+          if (row.itemId == null) {
+            return const SizedBox.shrink();
+          }
+          final hasVariant = row.skuId != null;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: isPosting
+                      ? null
+                      : () async {
+                          final result = await VariantPickerDialog.show(
+                            cellCtx,
+                            itemId: row.itemId!,
+                            itemName: row.itemLabel ?? 'Item',
+                            itemCode: row.itemCode,
+                            currentSkuId: row.skuId,
+                          );
+                          if (result != null) {
+                            cellCtx.read<SalesInvoiceFormBloc>().add(
+                              LineItemUpdated(
+                                index: i,
+                                line: row.copyWith(
+                                  skuId: result.skuId,
+                                  skuCode: result.skuCode,
+                                  skuLabel: result.attributeSummary.isNotEmpty
+                                      ? result.attributeSummary
+                                      : result.skuCode,
+                                  price: result.rate != null
+                                      ? Decimal.parse(result.rate!.toString())
+                                      : row.price,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  icon: Icon(
+                    hasVariant ? Icons.check_circle : Icons.tune,
+                    size: 14,
+                    color: hasVariant ? Colors.green : null,
+                  ),
+                  label: Text(
+                    row.skuLabel ?? row.skuCode ?? 'Select Variant',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+              if (hasVariant)
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 14),
+                  tooltip: 'Clear variant',
+                  onPressed: isPosting
+                      ? null
+                      : () {
+                          cellCtx.read<SalesInvoiceFormBloc>().add(
+                            LineItemUpdated(
+                              index: i,
+                              line: row.copyWith(
+                                skuId: null,
+                                skuCode: null,
+                                skuLabel: null,
+                              ),
+                            ),
+                          );
+                        },
+                ),
+            ],
+          );
+        },
       ),
 
       decimalColumn<SalesInvoiceLine>(

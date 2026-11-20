@@ -11,6 +11,8 @@ class ItemQtyLine extends Equatable {
     this.itemLabel,
     this.itemCode,
     this.skuId,
+    this.skuCode,
+    this.skuLabel,
     this.batchId,
     this.sourceLineId,
     this.priceLevel,
@@ -40,6 +42,8 @@ class ItemQtyLine extends Equatable {
   /// Inventory `Item_Code` — needed for price-list effective-price lookup.
   final String? itemCode;
   final int? skuId;
+  final String? skuCode;
+  final String? skuLabel;
   final int? batchId;
   final int? sourceLineId;
 
@@ -66,6 +70,8 @@ class ItemQtyLine extends Equatable {
     Object? itemLabel = _unset,
     Object? itemCode = _unset,
     Object? skuId = _unset,
+    Object? skuCode = _unset,
+    Object? skuLabel = _unset,
     Object? batchId = _unset,
     Object? sourceLineId = _unset,
     Object? priceLevel = _unset,
@@ -82,6 +88,8 @@ class ItemQtyLine extends Equatable {
         ? this.itemCode
         : itemCode as String?,
     skuId: identical(skuId, _unset) ? this.skuId : skuId as int?,
+    skuCode: identical(skuCode, _unset) ? this.skuCode : skuCode as String?,
+    skuLabel: identical(skuLabel, _unset) ? this.skuLabel : skuLabel as String?,
     batchId: identical(batchId, _unset) ? this.batchId : batchId as int?,
     sourceLineId: identical(sourceLineId, _unset)
         ? this.sourceLineId
@@ -102,6 +110,8 @@ class ItemQtyLine extends Equatable {
     itemLabel,
     itemCode,
     skuId,
+    skuCode,
+    skuLabel,
     batchId,
     sourceLineId,
     priceLevel,

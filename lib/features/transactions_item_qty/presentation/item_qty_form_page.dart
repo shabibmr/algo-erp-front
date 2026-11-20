@@ -8,6 +8,7 @@ import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_models.dart';
 import 'package:algo_erp_front/core/widgets/data_display/line_item_grid.dart';
+import 'package:algo_erp_front/core/widgets/dialogs/variant_picker_dialog.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_date_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_decimal_field.dart';
 import 'package:algo_erp_front/core/widgets/fields/app_number_field.dart';
@@ -312,6 +313,78 @@ class _ItemQtyFormViewState extends State<_ItemQtyFormView> {
             );
           },
         ),
+      ),
+      LineItemColumn(
+        label: 'Variant / SKU',
+        flex: 2,
+        cellBuilder: (context, row, i) {
+          if (row.itemId == null) {
+            return const SizedBox.shrink();
+          }
+          final hasVariant = row.skuId != null;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: posting
+                      ? null
+                      : () async {
+                          final result = await VariantPickerDialog.show(
+                            context,
+                            itemId: row.itemId!,
+                            itemName: row.itemLabel ?? 'Item',
+                            itemCode: row.itemCode,
+                            currentSkuId: row.skuId,
+                          );
+                          if (result != null) {
+                            cubit.updateLine(
+                              i,
+                              row.copyWith(
+                                skuId: result.skuId,
+                                skuCode: result.skuCode,
+                                skuLabel: result.attributeSummary.isNotEmpty
+                                    ? result.attributeSummary
+                                    : result.skuCode,
+                                price: result.rate != null
+                                    ? Decimal.parse(result.rate!.toString())
+                                    : row.price,
+                              ),
+                            );
+                          }
+                        },
+                  icon: Icon(
+                    hasVariant ? Icons.check_circle : Icons.tune,
+                    size: 14,
+                    color: hasVariant ? Colors.green : null,
+                  ),
+                  label: Text(
+                    row.skuLabel ?? row.skuCode ?? 'Select Variant',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+              if (hasVariant)
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 14),
+                  tooltip: 'Clear variant',
+                  onPressed: posting
+                      ? null
+                      : () {
+                          cubit.updateLine(
+                            i,
+                            row.copyWith(
+                              skuId: null,
+                              skuCode: null,
+                              skuLabel: null,
+                            ),
+                          );
+                        },
+                ),
+            ],
+          );
+        },
       ),
       LineItemColumn(
         label: 'Qty',

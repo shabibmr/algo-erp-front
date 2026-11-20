@@ -37,6 +37,8 @@ import 'package:algo_erp_front/features/inventory_batch/presentation/item_batch_
 import 'package:algo_erp_front/features/inventory_batch/presentation/item_batch_list_page.dart';
 import 'package:algo_erp_front/features/inventory_brand/presentation/brand_form_page.dart';
 import 'package:algo_erp_front/features/inventory_brand/presentation/brand_list_page.dart';
+import 'package:algo_erp_front/features/inventory_attribute/presentation/product_attribute_form_page.dart';
+import 'package:algo_erp_front/features/inventory_attribute/presentation/product_attribute_list_page.dart';
 import 'package:algo_erp_front/features/inventory_category/presentation/category_form_page.dart';
 import 'package:algo_erp_front/features/inventory_category/presentation/category_list_page.dart';
 import 'package:algo_erp_front/features/inventory_godown/presentation/godown_form_page.dart';
@@ -790,6 +792,23 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
           ),
         ),
         GoRoute(
+          path: '/inventory/attribute/new',
+          pageBuilder: (context, state) => buildPageWithMotion(
+            state: state,
+            child: const ProductAttributeFormPage(mode: FormMode.create),
+          ),
+        ),
+        GoRoute(
+          path: '/inventory/attribute/:id',
+          pageBuilder: (context, state) => buildPageWithMotion(
+            state: state,
+            child: ProductAttributeFormPage(
+              mode: FormMode.edit,
+              entityId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+        ),
+        GoRoute(
           path: '/employee/department/new',
           pageBuilder: (context, state) => buildPageWithMotion(
             state: state,
@@ -1014,6 +1033,7 @@ Widget shellListPageFor(String route, {required String fallbackTitle}) {
     '/inventory/conversion' => const UomConversionListPage(),
     '/inventory/pricelist' => const PriceListListPage(),
     '/inventory/property' => const ItemPropertyListPage(),
+    '/inventory/attribute' => const ProductAttributeListPage(),
     // Employee
     '/employee/employees' => const EmployeeListPage(),
     '/employee/department' => const DepartmentListPage(),

@@ -13,6 +13,7 @@ import 'package:algo_erp_front/core/widgets/layout/work_sheet.dart';
 import 'package:algo_erp_front/core/widgets/lookup/fk_lookup_field.dart';
 import 'package:algo_erp_front/core/widgets/states/error_state.dart';
 import 'package:algo_erp_front/core/widgets/states/loading_state.dart';
+import 'package:algo_erp_front/core/widgets/dialogs/variant_picker_dialog.dart';
 import 'package:algo_erp_front/features/accounts_ledger/domain/ledger.dart';
 import 'package:algo_erp_front/features/accounts_ledger/ledger_di.dart';
 import 'package:algo_erp_front/features/inventory_brand/brand_di.dart';
@@ -113,7 +114,7 @@ class _InventoryItemFormView extends StatelessWidget {
           final title = state.isEdit ? 'Edit Item' : 'New Item';
 
           return DefaultTabController(
-            length: 6,
+            length: 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -151,6 +152,8 @@ class _InventoryItemFormView extends StatelessWidget {
                     Tab(text: 'Stock Settings'),
                     Tab(text: 'GL Accounts'),
                     Tab(text: 'Status & Toggles'),
+                    Tab(text: 'Attributes'),
+                    Tab(text: 'Variants / SKUs'),
                   ],
                 ),
                 SizedBox(height: tokens.spacing.md),
@@ -163,6 +166,12 @@ class _InventoryItemFormView extends StatelessWidget {
                       _buildStockTab(context, bloc, state),
                       _buildGlAccountsTab(context, bloc, state),
                       _buildStatusTab(context, bloc, state),
+                      _ItemAttributesTab(itemId: state.entityId),
+                      _ItemVariantsTab(
+                        itemId: state.entityId,
+                        itemName: state.name,
+                        itemCode: state.code,
+                      ),
                     ],
                   ),
                 ),
@@ -594,6 +603,475 @@ class _InventoryItemFormView extends StatelessWidget {
                 onChanged: (v) => bloc.add(InventoryItemFormIsActiveChanged(v)),
               ),
       ],
+    );
+  }
+}
+
+// ── Attributes Tab for Item Master ───────────────────────────
+class _ItemAttributesTab extends StatefulWidget {
+  const _ItemAttributesTab({this.itemId});
+  final int? itemId;
+
+  @override
+  State<_ItemAttributesTab> createState() => _ItemAttributesTabState();
+}
+
+class _ItemAttributesTabState extends State<_ItemAttributesTab> {
+  final DioClient _dio = getIt<DioClient>();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _assignments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.itemId != null) {
+      _loadAttributes();
+    }
+  }
+
+  Future<void> _loadAttributes() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/inventory/item/${widget.itemId}/attributes',
+      );
+      final raw = res.data?['data'] as List<dynamic>? ?? [];
+      setState(() {
+        _assignments = raw.cast<Map<String, dynamic>>();
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load attributes: $e';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _showManageDialog() async {
+    if (widget.itemId == null) return;
+
+    // Load available product attributes tree
+    List<Map<String, dynamic>> allAttrs = [];
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/inventory/attribute/tree');
+      final raw = res.data?['data'] as List<dynamic>? ?? [];
+      allAttrs = raw.cast<Map<String, dynamic>>();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load attributes master: $e')),
+      );
+      return;
+    }
+
+    final currentSelectedIds = _assignments
+        .map((a) => a['attribute_id'] as int)
+        .toSet();
+
+    if (!mounted) return;
+
+    final selected = await showDialog<Set<int>>(
+      context: context,
+      builder: (ctx) {
+        final tempSelected = Set<int>.from(currentSelectedIds);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Assign Product Attributes'),
+              content: SizedBox(
+                width: 480,
+                height: 380,
+                child: allAttrs.isEmpty
+                    ? const Center(child: Text('No attributes defined in Product Attributes master'))
+                    : ListView.builder(
+                        itemCount: allAttrs.length,
+                        itemBuilder: (ctx, i) {
+                          final a = allAttrs[i];
+                          final id = a['id'] as int;
+                          final name = a['attribute_name'] as String;
+                          final type = a['attribute_type'] as String;
+                          final isChecked = tempSelected.contains(id);
+
+                          return CheckboxListTile(
+                            title: Text(name),
+                            subtitle: Text('Type: $type'),
+                            value: isChecked,
+                            onChanged: (v) {
+                              setDialogState(() {
+                                if (v == true) {
+                                  tempSelected.add(id);
+                                } else {
+                                  tempSelected.remove(id);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(tempSelected),
+                  child: const Text('Save Assignments'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      try {
+        final payload = selected
+            .map((id) => {'attribute_id': id, 'is_required': false, 'display_order': 0})
+            .toList();
+        await _dio.post(
+          '/inventory/item/${widget.itemId}/attributes',
+          data: {'attributes': payload},
+        );
+        _loadAttributes();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save attribute assignments: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    if (widget.itemId == null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(tokens.spacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.style_outlined, size: 48, color: tokens.brand.slate),
+              SizedBox(height: tokens.spacing.md),
+              const Text(
+                'Save this item first before assigning attributes.',
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_loading) {
+      return const Center(child: LoadingState());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(_error!, style: TextStyle(color: tokens.semanticColors.danger)),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(tokens.spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Configured Item Attributes',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              FilledButton.icon(
+                onPressed: _showManageDialog,
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text('Manage Attributes'),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.spacing.md),
+          if (_assignments.isEmpty)
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: tokens.brand.mist),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(tokens.spacing.xl),
+                child: Column(
+                  children: [
+                    Icon(Icons.info_outline, size: 36, color: tokens.brand.slate),
+                    SizedBox(height: tokens.spacing.sm),
+                    const Text(
+                      'No attributes currently assigned to this item.\nClick "Manage Attributes" to assign Size, Color, Measurements, etc.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...List.generate(_assignments.length, (i) {
+              final a = _assignments[i];
+              final attr = a['attribute'] as Map<String, dynamic>? ?? {};
+              final name = attr['attribute_name'] as String? ?? '';
+              final type = attr['attribute_type'] as String? ?? '';
+              final subAttrs = (attr['sub_attributes'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+              final options = (attr['values'] as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
+
+              return Card(
+                elevation: 0,
+                margin: EdgeInsets.only(bottom: tokens.spacing.sm),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: tokens.brand.mist),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(tokens.spacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                type == 'GROUP' ? Icons.folder_outlined : Icons.tag,
+                                size: 18,
+                                color: tokens.brand.primary,
+                              ),
+                              SizedBox(width: tokens.spacing.xs),
+                              Text(
+                                name,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                            ],
+                          ),
+                          Chip(
+                            label: Text(type),
+                            padding: EdgeInsets.zero,
+                            labelStyle: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                      if (options.isNotEmpty) ...[
+                        SizedBox(height: tokens.spacing.xs),
+                        Text(
+                          'Pre-determined Options: ${options.map((o) => o['attribute_value']).join(', ')}',
+                          style: TextStyle(color: tokens.brand.slate, fontSize: 13),
+                        ),
+                      ],
+                      if (subAttrs.isNotEmpty) ...[
+                        SizedBox(height: tokens.spacing.xs),
+                        Text(
+                          'Sub-attributes: ${subAttrs.map((s) => s['attribute_name']).join(', ')}',
+                          style: TextStyle(color: tokens.brand.slate, fontSize: 13),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Variants / SKUs Tab for Item Master ───────────────────────
+class _ItemVariantsTab extends StatefulWidget {
+  const _ItemVariantsTab({
+    this.itemId,
+    this.itemName = '',
+    this.itemCode = '',
+  });
+
+  final int? itemId;
+  final String itemName;
+  final String itemCode;
+
+  @override
+  State<_ItemVariantsTab> createState() => _ItemVariantsTabState();
+}
+
+class _ItemVariantsTabState extends State<_ItemVariantsTab> {
+  final DioClient _dio = getIt<DioClient>();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _skus = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.itemId != null) {
+      _loadSkus();
+    }
+  }
+
+  Future<void> _loadSkus() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/inventory/item/${widget.itemId}/skus',
+      );
+      final raw = res.data?['data'] as List<dynamic>? ?? [];
+      setState(() {
+        _skus = raw.cast<Map<String, dynamic>>();
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load SKUs: $e';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _createVariant() async {
+    if (widget.itemId == null) return;
+
+    final result = await VariantPickerDialog.show(
+      context,
+      itemId: widget.itemId!,
+      itemName: widget.itemName,
+      itemCode: widget.itemCode,
+    );
+
+    if (result != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.isNew
+                ? 'Created new variant SKU: ${result.skuCode}'
+                : 'Selected existing SKU: ${result.skuCode}',
+          ),
+        ),
+      );
+      _loadSkus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    if (widget.itemId == null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(tokens.spacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.inventory_2_outlined, size: 48, color: tokens.brand.slate),
+              SizedBox(height: tokens.spacing.md),
+              const Text(
+                'Save this item first before creating or viewing variants.',
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_loading) {
+      return const Center(child: LoadingState());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(_error!, style: TextStyle(color: tokens.semanticColors.danger)),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(tokens.spacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Item Variants (${_skus.length} SKUs)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              FilledButton.icon(
+                onPressed: _createVariant,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('New Variant SKU'),
+              ),
+            ],
+          ),
+          SizedBox(height: tokens.spacing.md),
+          if (_skus.isEmpty)
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: tokens.brand.mist),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(tokens.spacing.xl),
+                child: Column(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, size: 36, color: tokens.brand.slate),
+                    SizedBox(height: tokens.spacing.sm),
+                    const Text(
+                      'No variant SKUs generated yet for this item.\nClick "New Variant SKU" to create one.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...List.generate(_skus.length, (i) {
+              final sku = _skus[i];
+              final code = sku['sku_code'] as String? ?? '—';
+              final summary = sku['attribute_summary'] as String? ?? sku['sku_name'] as String? ?? '';
+              final rate = sku['rate']?.toString() ?? '—';
+
+              return Card(
+                elevation: 0,
+                margin: EdgeInsets.only(bottom: tokens.spacing.sm),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: tokens.brand.mist),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: tokens.brand.mist,
+                    child: Text(
+                      '${i + 1}',
+                      style: TextStyle(color: tokens.brand.primary, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(code, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(summary),
+                  trailing: Text('Rate: $rate', style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 }
