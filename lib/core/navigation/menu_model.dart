@@ -326,6 +326,14 @@ abstract final class AppMenu {
             blurb: 'Warehouses and stock locations',
           ),
           MenuItemModel(
+            label: 'Product attribute',
+            icon: Icons.style_outlined,
+            selectedIcon: Icons.style,
+            route: '/inventory/attribute',
+            requiredModule: 'Inventory',
+            blurb: 'Product attributes, options & groups',
+          ),
+          MenuItemModel(
             label: 'Item property',
             icon: Icons.tune_outlined,
             selectedIcon: Icons.tune,
