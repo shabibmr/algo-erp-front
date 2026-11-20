@@ -282,6 +282,13 @@ Do not:
 - **Use `double` for money or quantity.** Use `Decimal`.
 - **Register a master repository as `@injectable`.** They're plain factory functions on purpose.
 - **Invent a backend API.** File a `BE-NNN` entry in `docs/backend-suggestions.md` and adapt around it.
+- **Keep adding optional flags to a shared voucher `Kind` config
+  (`ItemQtyVoucherKind`/`LedgerAmountVoucherKind`/etc. in `lib/core/vouchers/`) once one member
+  needs most of them.** Fork that voucher type into its own feature (domain entity + bloc +
+  presentation), the way Sales Invoice was — `ItemQtyKinds.salesInvoice` is the only one of 9
+  item-qty kinds using all 8 optional flags; every other kind uses 0–2. A kind needing more than
+  half a shared engine's optional flags is no longer "the same shape with trim" — treat that as
+  the fork signal, not a reason to add flag #9.
 - **Stretch a small field to fill empty space.** Currency, Date, Status, Quantity, etc. hold fixed
   preferred widths (see the v3 field-width table); only Address / Description / Notes / Remarks / HTML
   editors / grids / attachments go full width.

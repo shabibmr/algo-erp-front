@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>algoERP 3D — Refined Magic Motion & 3D Cabinet Experience</title>
+    <meta
+      name="description"
+      content="Refined Magic Animator Motion — Kinetic Micro-Interactions, 3D Launchpad Cabinet, Volumetric Spotlight Beam & Three.js WebGL Engine for algoERP."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <!-- Three.js, OrbitControls, GSAP, Anime.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  </head>
+  <body>
+    <!-- Film Grain Overlay -->
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- Magic Particle Ripple Overlay Canvas -->
+    <canvas id="magic-ripple-canvas" class="magic-canvas"></canvas>
+
+    <!-- 3D Loader Screen with Magic Animator Logo Reveal -->
+    <div class="loader-screen" id="loader">
+      <div class="loader-content">
+        <div class="loader-badge magic-glow">
+          <div class="magic-logo-wrap">
+            <div class="magic-cube-core"></div>
+            <div class="magic-ring-spin"></div>
+          </div>
+          <span class="loader-title">algoERP Magic Engine</span>
+        </div>
+        <p class="loader-sub">Preparing Magic 3D Canvas, Volumetric Spotlight &amp; Kinetic Motion...</p>
+        <div class="loader-bar-wrap">
+          <div class="loader-bar" id="loader-bar"></div>
+        </div>
+        <span class="loader-percent" id="loader-percent">0%</span>
+      </div>
+    </div>
+
+    <!-- WebGL Fallback Container -->
+    <div class="webgl-fallback" id="webgl-fallback" style="display: none;">
+      <div class="fallback-hero" style="background-image: url('./assets/cabinet_3d.jpg');">
+        <div class="fallback-overlay">
+          <h2>Standard 2D Fallback Mode Active</h2>
+          <p>WebGL hardware acceleration is limited. Displaying 3D Cabinet preview render.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main WebGL 3D Canvas Layer -->
+    <div class="canvas-3d-wrap">
+      <canvas id="webgl-canvas"></canvas>
+
+      <!-- 3D Viewport HTML Tooltip Layer -->
+      <div id="tooltip-3d" class="tooltip-3d magic-tooltip" hidden>
+        <div class="tooltip-category" id="tooltip-category">3D Module</div>
+        <div class="tooltip-title" id="tooltip-title">Sales Invoice</div>
+        <div class="tooltip-val" id="tooltip-val">Vouchers Series</div>
+        <div class="tooltip-tag" id="tooltip-tag">Click to Launch</div>
+      </div>
+    </div>
+
+    <!-- Persistent Floating Controls: Magic Seal Dock & Spotlight Shortcut -->
+    <div class="seal-dock">
+      <button type="button" class="seal magic-seal-btn" id="seal-btn" aria-label="Open The Cabinet" title="Open Cabinet (Cmd+.)">
+        <span class="seal-ring magic-pulse-ring" aria-hidden="true"></span>
+        <span class="seal-core magic-core-rotate">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="4" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="13" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="4" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="13" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+          </svg>
+        </span>
+        <span class="seal-label">The Cabinet</span>
+      </button>
+
+      <button type="button" class="seal-hint magic-hover-btn" id="spotlight-trigger" title="Open Spotlight (Cmd+K)" aria-label="Open Spotlight">
+        <kbd>⌘K</kbd>
+      </button>
+
+      <button type="button" class="seal-hint theme-hint magic-hover-btn" id="btn-theme-toggle" title="Toggle Lighting Theme">
+        <span id="theme-icon">☀️</span>
+      </button>
+    </div>
+
+    <!-- App Shell Overlays (Chrome-Free Full-Bleed Desk) -->
+    <div class="desk-app">
+      <main class="canvas" id="desk">
+        <!-- Greeting Header -->
+        <header class="greeting reveal magic-card-entry">
+          <div class="greeting-copy">
+            <div class="context-row">
+              <span class="context-pill">Al Noor Trading LLC</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-muted">Dubai HQ Branch</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-badge magic-badge">Magic Motion Active</span>
+            </div>
+            <span class="eyebrow anime-word">Today’s Executive Surface · 08 Aug 2026</span>
+            <h1 class="hero-title">
+              <span class="anime-word">Good</span>
+              <span class="anime-word">morning,</span>
+              <em class="anime-word magic-gradient-text">Rania</em>
+            </h1>
+            <p class="lede anime-word">
+              No sidebar. No top navbar. Launch 3D modules from <strong>The Cabinet</strong> or fire the 3D <strong>Spotlight Beam</strong> with <kbd class="kbd" id="btn-spotlight-inline">⌘K</kbd>.
+            </p>
+          </div>
+
+          <div class="greeting-actions">
+            <button type="button" class="btn btn-ghost magic-btn" id="open-cabinet-btn">
+              <span>Open Cabinet (3D)</span>
+              <span class="btn-icon">❖</span>
+            </button>
+            <button type="button" class="btn btn-lagoon magic-btn" id="open-spotlight-btn">
+              <span>Spotlight (⌘K)</span>
+              <span class="btn-icon">🔍</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Bento Grid Desk Surface -->
+        <section class="bento" aria-label="Desk overview">
+          <!-- Needs You Panel with Sticky Notes -->
+          <div class="bezel bento-needs reveal" id="needs">
+            <div class="bezel-core panel magic-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Needs Your Action</span>
+                  <h2>Sticky Notes on 3D Desk</h2>
+                </div>
+                <button type="button" class="text-link magic-link" id="btn-stamp-quick">Seal Invoices (3D)</button>
+              </div>
+
+              <div class="notes">
+                <article class="note card-3d-tilt magic-hover-card" style="--r: -1.6deg" data-voucher="INV/2408">
+                  <header>
+                    <span class="tag tag-approve">Approval Due</span>
+                    <time>Today</time>
+                  </header>
+                  <h3>Sales Invoice · INV/2408</h3>
+                  <p>Desert Motors LLC</p>
+                  <footer>
+                    <strong class="money">AED 14,280.00</strong>
+                    <button class="mini-btn stamp-card-btn magic-mini-btn" data-inv="INV/2408">
+                      <span>Seal 3D</span>
+                      <span class="mini-ico">❖</span>
+                    </button>
+                  </footer>
+                </article>
+
+                <article class="note card-3d-tilt magic-hover-card" style="--r: 1.4deg" data-voucher="CRE/9901">
+                  <header>
+                    <span class="tag tag-credit">Credit Watch</span>
+                    <time>92% Limit</time>
+                  </header>
+                  <h3>Gulf Spares LLC · limit</h3>
+                  <p>Drawn 92% of facility</p>
+                  <footer>
+                    <strong class="money brass">AED 184,000.00</strong>
+                    <button class="mini-btn stamp-card-btn magic-mini-btn" data-inv="CRE/9901">
+                      <span>Review</span>
+                      <span class="mini-ico">↗</span>
+                    </button>
+                  </footer>
+                </article>
+
+                <article class="note card-3d-tilt magic-hover-card" style="--r: -0.8deg" data-voucher="TRF/0042">
+                  <header>
+                    <span class="tag tag-stock">Stock Transfer</span>
+                    <time>Waiting</time>
+                  </header>
+                  <h3>Transfer · WH-02 → WH-01</h3>
+                  <p>48 lines · ready to post</p>
+                  <footer>
+                    <strong class="status-text">Awaiting post</strong>
+                    <button class="mini-btn stamp-card-btn magic-mini-btn" data-inv="TRF/0042">
+                      <span>Post 3D</span>
+                      <span class="mini-ico">❖</span>
+                    </button>
+                  </footer>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pulse Cash & Bank Cards -->
+          <div class="pulse-stack">
+            <div class="bezel reveal">
+              <div class="bezel-core panel pulse-card magic-panel">
+                <span class="pulse-label">Cash Position</span>
+                <strong class="pulse-value money stat-counter" data-target="128450" data-prefix="AED ">0</strong>
+                <span class="pulse-meta">Till + Drawer Balance</span>
+                <div class="spark-bars" aria-hidden="true">
+                  <span style="--height: 40%"></span>
+                  <span style="--height: 55%"></span>
+                  <span style="--height: 48%"></span>
+                  <span style="--height: 72%"></span>
+                  <span style="--height: 86%"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bezel reveal">
+              <div class="bezel-core panel pulse-card magic-panel">
+                <span class="pulse-label">Bank Operating A/C</span>
+                <strong class="pulse-value money stat-counter" data-target="892110" data-prefix="AED ">0</strong>
+                <span class="pulse-meta">Primary Operating Balance</span>
+                <div class="delta up">+ 4.2% vs last week</div>
+              </div>
+            </div>
+
+            <div class="bezel reveal">
+              <div class="bezel-core panel pulse-card accent magic-panel">
+                <span class="pulse-label">Awaiting Official Seal</span>
+                <strong class="pulse-value">3</strong>
+                <span class="pulse-meta">Pending Invoices</span>
+                <button type="button" class="text-link lagoon magic-link" id="btn-focus-seal">Focus 3D Stamp →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Continue / Recent Stream -->
+          <div class="bezel bento-continue reveal">
+            <div class="bezel-core panel magic-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Continue Work</span>
+                  <h2>Pick Up Where You Left Off</h2>
+                </div>
+              </div>
+              <ul class="continue-list">
+                <li class="magic-hover-card">
+                  <span class="doc-ico" aria-hidden="true">📄</span>
+                  <div>
+                    <strong>Purchase Order · PO/1182</strong>
+                    <span>Steel &amp; Co. · Draft</span>
+                  </div>
+                  <time>12m ago</time>
+                </li>
+                <li class="magic-hover-card">
+                  <span class="doc-ico" aria-hidden="true">📦</span>
+                  <div>
+                    <strong>Stock Transfer · ST/441</strong>
+                    <span>WH-02 → WH-01 · 48 lines</span>
+                  </div>
+                  <time>1h ago</time>
+                </li>
+                <li class="magic-hover-card">
+                  <span class="doc-ico" aria-hidden="true">📊</span>
+                  <div>
+                    <strong>General Ledger Journal · JV/77</strong>
+                    <span>Month-end Accrual Entry</span>
+                  </div>
+                  <time>3h ago</time>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="desk-foot reveal">
+          <span>Chrome-Free 3D Desk · The Cabinet + Spotlight</span>
+          <span>Press <kbd class="kbd" id="btn-spotlight-foot">⌘K</kbd> for Spotlight · Click Seal for Cabinet</span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- The Cabinet Modal (Launchpad Grid with 3D WebGL Integration) -->
+    <div class="overlay cabinet" id="cabinet-overlay" role="dialog" aria-modal="true" aria-labelledby="cabinet-title" hidden>
+      <button type="button" class="overlay-scrim" id="close-cabinet-scrim" aria-label="Close cabinet"></button>
+      <div class="cabinet-stage magic-modal">
+        <div class="cabinet-chrome">
+          <div>
+            <p class="cabinet-kicker">The Cabinet (3D Launchpad)</p>
+            <h2 id="cabinet-title">Open an Executive Desk Drawer</h2>
+          </div>
+          <button type="button" class="icon-close magic-btn" id="close-cabinet-btn" aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        <div class="cabinet-search bezel">
+          <span class="bezel-core search-core">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.3" />
+              <path d="M16 16.5 20 20.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+            <input type="search" id="cabinet-filter" placeholder="Filter 3D modules..." autocomplete="off" />
+          </span>
+        </div>
+
+        <div class="folder-row" role="tablist">
+          <button type="button" class="folder is-on magic-tab" data-folder="all">All Modules</button>
+          <button type="button" class="folder magic-tab" data-folder="workspace">Workspace</button>
+          <button type="button" class="folder magic-tab" data-folder="vouchers">Vouchers</button>
+          <button type="button" class="folder magic-tab" data-folder="masters">Masters</button>
+          <button type="button" class="folder magic-tab" data-folder="inventory">Inventory</button>
+        </div>
+
+        <div class="cabinet-grid" id="cabinet-grid">
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="workspace" data-name="desk">
+            <span class="bezel-core mod-core"><span class="mod-glyph">🖥️</span><span class="mod-name">Desk</span><span class="mod-sub">Today’s Surface</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="vouchers" data-name="sales invoice">
+            <span class="bezel-core mod-core"><span class="mod-glyph">📄</span><span class="mod-name">Sales Invoice</span><span class="mod-sub">Voucher Series</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="vouchers" data-name="purchase order">
+            <span class="bezel-core mod-core"><span class="mod-glyph">🛒</span><span class="mod-name">Purchase Order</span><span class="mod-sub">Procurement</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="vouchers" data-name="cash receipt">
+            <span class="bezel-core mod-core"><span class="mod-glyph">💵</span><span class="mod-name">Cash Receipt</span><span class="mod-sub">Banking</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="inventory" data-name="stock transfer">
+            <span class="bezel-core mod-core"><span class="mod-glyph">📦</span><span class="mod-name">Stock Transfer</span><span class="mod-sub">Godowns</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="masters" data-name="brands">
+            <span class="bezel-core mod-core"><span class="mod-glyph">🏷️</span><span class="mod-name">Brands</span><span class="mod-sub">Masters</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="masters" data-name="ledgers">
+            <span class="bezel-core mod-core"><span class="mod-glyph">📘</span><span class="mod-name">Ledgers</span><span class="mod-sub">Accounts</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="inventory" data-name="items skus">
+            <span class="bezel-core mod-core"><span class="mod-glyph">⚙️</span><span class="mod-name">Items &amp; SKUs</span><span class="mod-sub">Inventory</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="workspace" data-name="reports">
+            <span class="bezel-core mod-core"><span class="mod-glyph">📊</span><span class="mod-name">Reports</span><span class="mod-sub">Analytics</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel magic-mod-tile" data-folder="workspace" data-name="warehouses">
+            <span class="bezel-core mod-core"><span class="mod-glyph">🏬</span><span class="mod-name">Warehouses</span><span class="mod-sub">Godown Hubs</span></span>
+          </button>
+        </div>
+
+        <p class="cabinet-foot">Type to filter · Esc closes · ⌘K opens Spotlight Command Palette</p>
+      </div>
+    </div>
+
+    <!-- Spotlight Command Palette Overlay (Triggered via ⌘K or Search) -->
+    <div class="overlay spotlight" id="spotlight-overlay" role="dialog" aria-modal="true" aria-labelledby="spotlight-title" hidden>
+      <button type="button" class="overlay-scrim" id="close-spotlight-scrim" aria-label="Close spotlight"></button>
+      <div class="spotlight-panel bezel magic-modal">
+        <div class="bezel-core spotlight-core">
+          <div class="spotlight-input-row">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.3" />
+              <path d="M16 16.5 20 20.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+            <input type="search" id="spotlight-input" placeholder="Search 3D modules, vouchers, or actions (e.g. INV/2408)..." autocomplete="off" />
+            <kbd class="kbd quiet">Esc</kbd>
+          </div>
+
+          <div class="spotlight-results" id="spotlight-results">
+            <p class="spot-group">Actions</p>
+            <button type="button" class="spot-row magic-hover-card" data-action="seal-inv">
+              <span class="spot-ico">❖</span>
+              <span><strong>Stamp Invoice (3D)</strong><small>Official Brass Seal Action</small></span>
+              <kbd class="kbd quiet">↵</kbd>
+            </button>
+            <button type="button" class="spot-row magic-hover-card" data-action="focus-wh">
+              <span class="spot-ico">📦</span>
+              <span><strong>Inspect Jebel Ali Godown (WH-01)</strong><small>3D Warehouse View</small></span>
+            </button>
+
+            <p class="spot-group">Vouchers &amp; Documents</p>
+            <button type="button" class="spot-row magic-hover-card" data-action="open-inv">
+              <span class="spot-ico">📄</span>
+              <span><strong>INV/2408 · Desert Motors LLC</strong><small>Sales Invoice · AED 14,280</small></span>
+            </button>
+            <button type="button" class="spot-row magic-hover-card" data-action="open-po">
+              <span class="spot-ico">🛒</span>
+              <span><strong>PO/1182 · Steel &amp; Co.</strong><small>Purchase Order · Draft</small></span>
+            </button>
+
+            <p class="spot-group">Domain Masters</p>
+            <button type="button" class="spot-row magic-hover-card" data-action="open-ledgers">
+              <span class="spot-ico">📘</span>
+              <span><strong>General Ledgers</strong><small>Accounts Master</small></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Overlay -->
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

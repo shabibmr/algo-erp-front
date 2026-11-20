@@ -1,6 +1,5 @@
 import 'package:algo_erp_front/core/di/injection.dart';
 import 'package:algo_erp_front/core/domain/repository.dart';
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/network/dio_client.dart';
 import 'package:algo_erp_front/core/vouchers/effective_price.dart';
 import 'package:algo_erp_front/core/vouchers/item_qty/item_qty_kind.dart';
@@ -193,7 +192,7 @@ class ItemQtyFormCubit extends Cubit<ItemQtyFormState> {
     }
     final full = await _repository.getSourceVoucher(s.id);
     if (isClosed) return;
-    full.fold((f) => emit(state.copyWith(error: () => _messageOf(f))), (src) {
+    full.fold((f) => emit(state.copyWith(error: () => f.message)), (src) {
       Ledger? party;
       Godown? godown;
       if (src.partyLedgerId != null) {
@@ -267,23 +266,9 @@ class ItemQtyFormCubit extends Cubit<ItemQtyFormState> {
     final result = await _repository.post(draft.copyWith(lines: complete));
     if (isClosed) return;
     result.fold(
-      (failure) => emit(
-        state.copyWith(posting: false, error: () => _messageOf(failure)),
-      ),
+      (failure) =>
+          emit(state.copyWith(posting: false, error: () => failure.message)),
       (posted) => emit(state.copyWith(posting: false, posted: () => posted)),
     );
   }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
 }

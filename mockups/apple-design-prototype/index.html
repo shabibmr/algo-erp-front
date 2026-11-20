@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="apple-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>algoERP — Modern Apple macOS Design System</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Vector Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ==========================================================================
+       APPLE HUMAN INTERFACE GUIDELINES (HIG) DESIGN TOKENS
+       ========================================================================== */
+    :root {
+      /* Apple San Francisco Typography Simulation */
+      --font-sf: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-arabic: 'IBM Plex Sans Arabic', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Apple Continuous Squircle Radii */
+      --r-squircle-xs: 6px;
+      --r-squircle-sm: 10px;
+      --r-squircle-md: 14px;
+      --r-squircle-lg: 20px;
+      --r-squircle-xl: 26px;
+      --r-pill: 9999px;
+
+      /* Control Heights */
+      --h-control: 40px;
+      --h-row: 48px;
+      --w-sidebar: 240px;
+
+      /* Transitions */
+      --spring-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --spring-smooth: 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.12);
+    }
+
+    /* APPLE LIGHT THEME (macOS Sequoia Frosted Light) */
+    html[data-theme="apple-light"] {
+      --bg-desktop: #F5F5F7;
+      --bg-window: rgba(255, 255, 255, 0.88);
+      --bg-sidebar: rgba(246, 246, 248, 0.82);
+      --bg-card: #FFFFFF;
+      --bg-card-subtle: #F9F9FB;
+      --bg-control: rgba(0, 0, 0, 0.04);
+      --bg-control-hover: rgba(0, 0, 0, 0.07);
+      
+      --border-hairline: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.14);
+      --border-focus: #0071E3;
+
+      --label-primary: #1D1D1F;
+      --label-secondary: #6E6E73;
+      --label-tertiary: #86868B;
+      --label-quaternary: #A1A1A6;
+
+      /* Apple System Colors */
+      --system-blue: #0071E3;
+      --system-blue-soft: #E8F2FE;
+      --system-teal: #008077;
+      --system-teal-soft: #E4F5F3;
+      --system-green: #34C759;
+      --system-green-soft: #EBF9EE;
+      --system-orange: #FF9500;
+      --system-orange-soft: #FFF5E5;
+      --system-red: #FF3B30;
+      --system-red-soft: #FFEBEA;
+      --system-gold: #B27B13;
+      --system-gold-soft: #FBF4E6;
+
+      --shadow-window: 0 20px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04);
+      --shadow-float: 0 12px 36px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* APPLE DARK THEME (macOS Space Black / Pro Dark) */
+    html[data-theme="apple-dark"] {
+      --bg-desktop: #000000;
+      --bg-window: rgba(26, 26, 30, 0.88);
+      --bg-sidebar: rgba(20, 20, 24, 0.82);
+      --bg-card: #202024;
+      --bg-card-subtle: #2A2A30;
+      --bg-control: rgba(255, 255, 255, 0.08);
+      --bg-control-hover: rgba(255, 255, 255, 0.12);
+
+      --border-hairline: rgba(255, 255, 255, 0.10);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --border-focus: #0A84FF;
+
+      --label-primary: #F5F5F7;
+      --label-secondary: #A1A1A6;
+      --label-tertiary: #86868B;
+      --label-quaternary: #6E6E73;
+
+      --system-blue: #0A84FF;
+      --system-blue-soft: #122844;
+      --system-teal: #2FD0C5;
+      --system-teal-soft: #0E3532;
+      --system-green: #30D158;
+      --system-green-soft: #0E3618;
+      --system-orange: #FF9F0A;
+      --system-orange-soft: #382405;
+      --system-red: #FF453A;
+      --system-red-soft: #38100E;
+      --system-gold: #FFD60A;
+      --system-gold-soft: #3A3205;
+
+      --shadow-window: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
+      --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+    }
+
+    [dir="rtl"] {
+      font-family: var(--font-arabic);
+    }
+
+    /* ==========================================================================
+       BASE & RESET
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sf);
+      background: var(--bg-desktop);
+      color: var(--label-primary);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 16px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Tabular numbers for financial precision */
+    .tabular-nums {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    /* ==========================================================================
+       MACOS WINDOW CONTAINER (FROSTED GLASS SHELL)
+       ========================================================================== */
+    .macos-window {
+      width: 100%;
+      max-width: 1440px;
+      height: 94vh;
+      background: var(--bg-window);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border-radius: var(--r-squircle-lg);
+      border: 1px solid var(--border-hairline);
+      box-shadow: var(--shadow-window);
+      display: grid;
+      grid-template-rows: 52px 42px 1fr;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       1. WINDOW TITLEBAR & UNIFIED TOOLBAR
+       ========================================================================== */
+    .window-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border-hairline);
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+
+    /* Traffic Lights */
+    .traffic-lights {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 60px;
+    }
+    .traffic-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+    }
+    .traffic-dot.red { background: #FF5F56; border: 0.5px solid #E0443E; }
+    .traffic-dot.yellow { background: #FFBD2E; border: 0.5px solid #DEA123; }
+    .traffic-dot.green { background: #27C93F; border: 0.5px solid #1AAB29; }
+
+    /* Centered Breadcrumb / Context Segment */
+    .titlebar-center {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-control);
+      padding: 4px 12px;
+      border-radius: var(--r-pill);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--label-secondary);
+      border: 1px solid var(--border-hairline);
+      cursor: pointer;
+      transition: var(--spring-fast);
+    }
+    .titlebar-center:hover {
+      background: var(--bg-control-hover);
+      color: var(--label-primary);
+    }
+    .online-indicator {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--system-teal);
+    }
+
+    /* Right Toolbar Controls */
+    .titlebar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spotlight-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      background: var(--bg-control);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--r-squircle-xs);
+      padding: 0 10px;
+      font-size: 12px;
+      color: var(--label-tertiary);
+      cursor: pointer;
+      transition: var(--spring-fast);
+    }
+    .spotlight-btn:hover {
+      background: var(--bg-control-hover);
+      color: var(--label-secondary);
+    }
+    .spotlight-btn kbd {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .apple-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--r-squircle-xs);
+      border: none;
+      background: transparent;
+      color: var(--label-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--spring-fast);
+    }
+    .apple-icon-btn:hover {
+      background: var(--bg-control);
+      color: var(--label-primary);
+    }
+
+    /* ==========================================================================
+       2. SEGMENTED TABS STRIP (APPLE CAPSULE TABS)
+       ========================================================================== */
+    .segmented-tab-strip {
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .apple-tab {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: var(--r-squircle-xs);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--label-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: var(--spring-fast);
+      white-space: nowrap;
+      position: relative;
+    }
+    .apple-tab:hover {
+      background: var(--bg-control);
+      color: var(--label-primary);
+    }
+    .apple-tab.active {
+      background: var(--bg-card);
+      color: var(--label-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 0.5px var(--border-hairline);
+    }
+
+    .dirty-pill {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--system-gold);
+    }
+
+    .tab-x {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--label-tertiary);
+      transition: var(--spring-fast);
+    }
+    .tab-x:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--label-primary);
+    }
+
+    /* ==========================================================================
+       3. WINDOW BODY (SIDEBAR + MAIN WORKSPACE)
+       ========================================================================== */
+    .window-body {
+      display: grid;
+      grid-template-columns: var(--w-sidebar) 1fr;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* macOS Sidebar */
+    .macos-sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-hairline);
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    [dir="rtl"] .macos-sidebar {
+      border-right: none;
+      border-left: 1px solid var(--border-hairline);
+    }
+
+    .sidebar-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--label-tertiary);
+      padding: 0 8px;
+    }
+
+    .sidebar-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: var(--r-squircle-xs);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--label-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: var(--spring-fast);
+    }
+    [dir="rtl"] .sidebar-item {
+      text-align: right;
+    }
+    .sidebar-item:hover {
+      background: var(--bg-control);
+      color: var(--label-primary);
+    }
+    .sidebar-item.active {
+      background: var(--system-blue);
+      color: white;
+      font-weight: 600;
+    }
+
+    .sidebar-item .item-badge {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: var(--r-pill);
+      background: rgba(0, 0, 0, 0.08);
+      font-weight: 600;
+    }
+    .sidebar-item.active .item-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
+    /* Main Workspace Canvas */
+    .workspace-canvas {
+      overflow-y: auto;
+      background: var(--bg-desktop);
+      padding: 24px 32px 100px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .apple-container-1200 {
+      width: 100%;
+      max-width: 1240px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Workspace Views */
+    .apple-view {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .apple-view.active {
+      display: flex;
+      animation: appleFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes appleFadeIn {
+      from { opacity: 0; transform: scale(0.99) translateY(4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ==========================================================================
+       4. APPLE CARDS & CONTROLS
+       ========================================================================== */
+    .apple-card {
+      background: var(--bg-card);
+      border-radius: var(--r-squircle-md);
+      border: 1px solid var(--border-hairline);
+      box-shadow: var(--shadow-card);
+      padding: 20px 24px;
+      transition: var(--spring-fast);
+    }
+
+    .card-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--label-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Apple Form Inputs */
+    .apple-input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .apple-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .apple-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--label-secondary);
+    }
+
+    .apple-input, .apple-select {
+      height: var(--h-control);
+      background: var(--bg-card-subtle);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--r-squircle-sm);
+      padding: 0 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--label-primary);
+      outline: none;
+      transition: var(--spring-fast);
+      width: 100%;
+    }
+    .apple-input:focus, .apple-select:focus {
+      border-color: var(--border-focus);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    }
+
+    /* Apple Capsule Buttons */
+    .apple-btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: var(--r-pill);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: var(--spring-fast);
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .apple-btn:active {
+      transform: scale(0.97);
+    }
+    .apple-btn-primary {
+      background: var(--system-blue);
+      color: white;
+      box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);
+    }
+    .apple-btn-primary:hover {
+      filter: brightness(1.08);
+    }
+    .apple-btn-teal {
+      background: var(--system-teal);
+      color: white;
+      box-shadow: 0 2px 6px rgba(0, 128, 119, 0.3);
+    }
+    .apple-btn-secondary {
+      background: var(--bg-control);
+      color: var(--label-primary);
+      border: 1px solid var(--border-hairline);
+    }
+    .apple-btn-secondary:hover {
+      background: var(--bg-control-hover);
+    }
+
+    /* Apple Pills & Badges */
+    .apple-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: var(--r-pill);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-blue { background: var(--system-blue-soft); color: var(--system-blue); }
+    .badge-teal { background: var(--system-teal-soft); color: var(--system-teal); }
+    .badge-green { background: var(--system-green-soft); color: var(--system-green); }
+    .badge-orange { background: var(--system-orange-soft); color: var(--system-orange); }
+    .badge-red { background: var(--system-red-soft); color: var(--system-red); }
+    .badge-gold { background: var(--system-gold-soft); color: var(--system-gold); }
+
+    /* ==========================================================================
+       5. LIVE CALCULATING NUMBERS LEDGER TABLE
+       ========================================================================== */
+    .numbers-sheet-card {
+      background: var(--bg-card);
+      border-radius: var(--r-squircle-md);
+      border: 1px solid var(--border-hairline);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .numbers-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    [dir="rtl"] .numbers-table {
+      text-align: right;
+    }
+
+    .numbers-table th {
+      background: var(--bg-card-subtle);
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--label-tertiary);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .numbers-table td {
+      padding: 6px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    .numbers-table tbody tr:hover {
+      background: var(--bg-control);
+    }
+
+    .numbers-cell-input {
+      height: 32px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--r-squircle-xs);
+      padding: 0 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--label-primary);
+      width: 100%;
+      outline: none;
+      transition: var(--spring-fast);
+    }
+    .numbers-cell-input:hover {
+      border-color: var(--border-hairline);
+      background: var(--bg-card);
+    }
+    .numbers-cell-input:focus {
+      border-color: var(--border-focus);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+    }
+    .numbers-cell-input.numeric {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+
+    /* Summary Card */
+    .apple-summary-split {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+    }
+
+    .apple-totals-card {
+      background: var(--bg-card);
+      border-radius: var(--r-squircle-md);
+      border: 1px solid var(--border-hairline);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: var(--shadow-card);
+    }
+    .totals-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--label-secondary);
+    }
+    .totals-divider {
+      height: 1px;
+      background: var(--border-hairline);
+      margin: 4px 0;
+    }
+    .totals-net-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--label-primary);
+      padding-top: 4px;
+    }
+    .totals-net-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--system-teal);
+    }
+
+    /* ==========================================================================
+       6. FLOATING DOCK ACTION STRIP (MACOS FLOATING GLASS BAR)
+       ========================================================================== */
+    .floating-action-dock {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-window);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-pill);
+      padding: 6px 12px;
+      box-shadow: var(--shadow-float);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    /* ==========================================================================
+       7. SPOTLIGHT SEARCH MODAL (APPLE SPOTLIGHT OVERLAY)
+       ========================================================================== */
+    .spotlight-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 14vh;
+      z-index: 1000;
+    }
+    .spotlight-overlay.open {
+      display: flex;
+    }
+
+    .spotlight-modal {
+      width: 100%;
+      max-width: 600px;
+      background: var(--bg-window);
+      backdrop-filter: blur(32px) saturate(190%);
+      -webkit-backdrop-filter: blur(32px) saturate(190%);
+      border-radius: var(--r-squircle-lg);
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-float);
+      overflow: hidden;
+      animation: spotlightPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes spotlightPop {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .spotlight-input-row {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-hairline);
+      gap: 12px;
+    }
+    .spotlight-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--label-primary);
+      font-family: inherit;
+    }
+
+    /* Toast */
+    .apple-toast {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      color: var(--label-primary);
+      border: 1px solid var(--border-hairline);
+      padding: 10px 18px;
+      border-radius: var(--r-pill);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-float);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 1200;
+      animation: dropDown 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.12);
+    }
+    @keyframes dropDown {
+      from { transform: translate(-50%, -12px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MACOS APPLICATION WINDOW -->
+  <div class="macos-window">
+    
+    <!-- WINDOW TITLEBAR (HEADER) -->
+    <div class="window-titlebar">
+      <!-- Traffic Light Window Controls -->
+      <div class="traffic-lights">
+        <div class="traffic-dot red" onclick="showAppleToast('Closing window...')"></div>
+        <div class="traffic-dot yellow" onclick="showAppleToast('Minimizing to Dock')"></div>
+        <div class="traffic-dot green" onclick="showAppleToast('Fullscreen Mode')"></div>
+      </div>
+
+      <!-- Center Context Segment -->
+      <div class="titlebar-center" onclick="showAppleToast('Branch: Dubai Logistics Center')">
+        <span class="online-indicator"></span>
+        <span>Al-Reem Trading LLC · Dubai Logistics Zone · FY 2026-27</span>
+        <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+      </div>
+
+      <!-- Right Spotlight & Toolbar Actions -->
+      <div class="titlebar-actions">
+        <button class="spotlight-btn" onclick="toggleSpotlight(true)">
+          <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+          <span>Spotlight Search</span>
+          <kbd>⌘ Space</kbd>
+        </button>
+
+        <!-- Theme Switcher (Light / Dark) -->
+        <button class="apple-icon-btn" onclick="toggleAppleTheme()" title="Toggle Light / Dark Mode">
+          <i data-lucide="moon" id="appleThemeIcon" style="width: 16px; height: 16px;"></i>
+        </button>
+
+        <!-- RTL Switcher -->
+        <button class="apple-icon-btn" onclick="toggleAppleRtl()" title="Toggle Language &amp; RTL (EN / عربي)">
+          <span style="font-size: 11px; font-weight: 700;" id="appleLangLabel">AR</span>
+        </button>
+
+        <!-- Profile Avatar -->
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--system-teal-soft); color: var(--system-teal); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">
+          SM
+        </div>
+      </div>
+    </div>
+
+    <!-- SEGMENTED TABS STRIP -->
+    <nav class="segmented-tab-strip">
+      <button class="apple-tab" data-tab="view-desk" onclick="switchAppleTab('view-desk', this)">
+        <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
+        <span>Today's Desk</span>
+      </button>
+
+      <button class="apple-tab" data-tab="view-inventory" onclick="switchAppleTab('view-inventory', this)">
+        <i data-lucide="boxes" style="width: 14px; height: 14px;"></i>
+        <span>Inventory Items</span>
+        <span class="tab-x" onclick="event.stopPropagation(); showAppleToast('Closed Tab');">&times;</span>
+      </button>
+
+      <button class="apple-tab active" data-tab="view-invoice" onclick="switchAppleTab('view-invoice', this)">
+        <i data-lucide="receipt" style="width: 14px; height: 14px;"></i>
+        <span>Sales Invoice #INV-2026-0042</span>
+        <span class="dirty-pill" title="Unsaved Draft"></span>
+        <span class="tab-x" onclick="event.stopPropagation(); showAppleToast('Saved draft before closing');">&times;</span>
+      </button>
+
+      <button class="apple-tab" data-tab="view-customer" onclick="switchAppleTab('view-customer', this)">
+        <i data-lucide="person-standing" style="width: 14px; height: 14px;"></i>
+        <span>Customer Registration</span>
+        <span class="tab-x" onclick="event.stopPropagation(); showAppleToast('Closed Tab');">&times;</span>
+      </button>
+    </nav>
+
+    <!-- WINDOW MAIN BODY (SIDEBAR + WORKSPACE) -->
+    <div class="window-body">
+      
+      <!-- MACOS SIDEBAR -->
+      <aside class="macos-sidebar">
+        <div class="sidebar-group-title">WORKSPACE</div>
+        <div class="sidebar-nav-list">
+          <button class="sidebar-item" onclick="switchAppleTab('view-desk', document.querySelector('[data-tab=view-desk]'))">
+            <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+            <span>Today's Desk</span>
+          </button>
+          <button class="sidebar-item active" onclick="switchAppleTab('view-invoice', document.querySelector('[data-tab=view-invoice]'))">
+            <i data-lucide="receipt" style="width: 16px; height: 16px;"></i>
+            <span>Sales Invoices</span>
+            <span class="item-badge">4 Drafts</span>
+          </button>
+          <button class="sidebar-item" onclick="switchAppleTab('view-inventory', document.querySelector('[data-tab=view-inventory]'))">
+            <i data-lucide="boxes" style="width: 16px; height: 16px;"></i>
+            <span>Item Master</span>
+            <span class="item-badge">1.4k</span>
+          </button>
+          <button class="sidebar-item" onclick="switchAppleTab('view-customer', document.querySelector('[data-tab=view-customer]'))">
+            <i data-lucide="building" style="width: 16px; height: 16px;"></i>
+            <span>Customers &amp; Debtors</span>
+          </button>
+        </div>
+
+        <div class="sidebar-group-title">FINANCIALS &amp; HR</div>
+        <div class="sidebar-nav-list">
+          <button class="sidebar-item" onclick="showAppleToast('Opening General Ledger')">
+            <i data-lucide="book-open" style="width: 16px; height: 16px;"></i>
+            <span>General Ledger</span>
+          </button>
+          <button class="sidebar-item" onclick="showAppleToast('Opening Payroll')">
+            <i data-lucide="users" style="width: 16px; height: 16px;"></i>
+            <span>Employees &amp; HR</span>
+          </button>
+          <button class="sidebar-item" onclick="showAppleToast('Opening Reports')">
+            <i data-lucide="bar-chart-2" style="width: 16px; height: 16px;"></i>
+            <span>Tax &amp; VAT Reports</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- WORKSPACE CANVAS -->
+      <main class="workspace-canvas">
+        <div class="apple-container-1200">
+
+          <!-- ================================================================= -->
+          <!-- VIEW 1: SALES INVOICE (LIVE APPLE NUMBERS LEDGER)                 -->
+          <!-- ================================================================= -->
+          <div id="view-invoice" class="apple-view active">
+            
+            <!-- Document Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <h1 style="font-size: 22px; font-weight: 800; color: var(--label-primary);">Tax Invoice #INV-2026-0042</h1>
+                  <span class="apple-badge badge-gold">Draft</span>
+                  <span class="apple-badge badge-teal">UAE VAT 5.0%</span>
+                </div>
+                <div style="font-size: 13px; color: var(--label-secondary); margin-top: 3px;">
+                  Created: 20 Aug 2026 · Voucher Series: INV-DXB-2026
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="apple-btn apple-btn-secondary" onclick="showAppleToast('Generating PDF Preview...')">
+                  <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
+                  <span>Print PDF</span>
+                </button>
+                <button class="apple-btn apple-btn-primary" onclick="showAppleToast('Invoice Posted Successfully!')">
+                  <i data-lucide="check" style="width: 14px; height: 14px;"></i>
+                  <span>Post Invoice</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Header Card -->
+            <div class="apple-card">
+              <div class="card-header-bar">
+                <div class="card-title-text">
+                  <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--system-blue);"></i>
+                  <span>Customer &amp; Header Information</span>
+                </div>
+              </div>
+
+              <div class="apple-input-grid">
+                <div class="apple-field">
+                  <label class="apple-label">Customer Account</label>
+                  <select class="apple-select">
+                    <option selected>Gulf Horizon Logistics LLC (TRN 100293847200003)</option>
+                    <option>Al-Futtaim Engineering Corp</option>
+                  </select>
+                </div>
+
+                <div class="apple-field">
+                  <label class="apple-label">Invoice Date</label>
+                  <input type="date" class="apple-input" value="2026-08-20">
+                </div>
+
+                <div class="apple-field">
+                  <label class="apple-label">Payment Terms</label>
+                  <select class="apple-select">
+                    <option selected>Credit 30 Days (Due 19 Sep 2026)</option>
+                    <option>Immediate Cash / Cheque</option>
+                  </select>
+                </div>
+
+                <div class="apple-field">
+                  <label class="apple-label">Customer PO Number</label>
+                  <input type="text" class="apple-input" value="PO-AE-99214">
+                </div>
+              </div>
+            </div>
+
+            <!-- Apple Numbers Table -->
+            <div class="numbers-sheet-card">
+              <table class="numbers-table">
+                <thead>
+                  <tr>
+                    <th style="width: 36px;">#</th>
+                    <th style="width: 300px;">Item Description</th>
+                    <th style="width: 130px;">Warehouse</th>
+                    <th style="width: 90px; text-align: right;">Qty</th>
+                    <th style="width: 70px;">UOM</th>
+                    <th style="width: 120px; text-align: right;">Rate (AED)</th>
+                    <th style="width: 80px; text-align: right;">Disc %</th>
+                    <th style="width: 100px; text-align: right;">VAT 5%</th>
+                    <th style="width: 130px; text-align: right;">Total (AED)</th>
+                    <th style="width: 40px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="apple-rows-body">
+                  <tr>
+                    <td style="color: var(--label-tertiary); font-weight: 600;">1</td>
+                    <td><input type="text" class="numbers-cell-input" value="Industrial Heavy Bearing 4200-Z"></td>
+                    <td>
+                      <select class="numbers-cell-input">
+                        <option>DXB Main Wh</option>
+                        <option>Jebel Ali FTZ</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-qty" value="12" oninput="calculateAppleLedger()"></td>
+                    <td><span class="apple-badge badge-blue">PCS</span></td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-rate" value="450.00" oninput="calculateAppleLedger()"></td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-disc" value="5" oninput="calculateAppleLedger()"></td>
+                    <td style="text-align: right;" class="tabular-nums apple-vat">256.50</td>
+                    <td style="text-align: right; font-weight: 700;" class="tabular-nums apple-total">5,386.50</td>
+                    <td style="text-align: center;">
+                      <button class="apple-icon-btn" onclick="deleteAppleRow(this)" style="color: var(--system-red);">
+                        <i data-lucide="minus-circle" style="width: 15px; height: 15px;"></i>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="color: var(--label-tertiary); font-weight: 600;">2</td>
+                    <td><input type="text" class="numbers-cell-input" value="Synthetic Hydraulic Lubricant 20L"></td>
+                    <td>
+                      <select class="numbers-cell-input">
+                        <option>DXB Main Wh</option>
+                        <option>Jebel Ali FTZ</option>
+                      </select>
+                    </td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-qty" value="6" oninput="calculateAppleLedger()"></td>
+                    <td><span class="apple-badge badge-blue">CAN</span></td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-rate" value="320.00" oninput="calculateAppleLedger()"></td>
+                    <td><input type="number" class="numbers-cell-input numeric apple-disc" value="0" oninput="calculateAppleLedger()"></td>
+                    <td style="text-align: right;" class="tabular-nums apple-vat">96.00</td>
+                    <td style="text-align: right; font-weight: 700;" class="tabular-nums apple-total">2,016.00</td>
+                    <td style="text-align: center;">
+                      <button class="apple-icon-btn" onclick="deleteAppleRow(this)" style="color: var(--system-red);">
+                        <i data-lucide="minus-circle" style="width: 15px; height: 15px;"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style="padding: 10px 16px; background: var(--bg-card-subtle); display: flex; justify-content: space-between; align-items: center;">
+                <button class="apple-btn apple-btn-secondary" onclick="addAppleRow()" style="height: 30px; font-size: 12px;">
+                  <i data-lucide="plus" style="width: 13px; height: 13px;"></i>
+                  <span>Add Line Item</span>
+                </button>
+                <div style="font-size: 12px; color: var(--label-tertiary);">
+                  Tab to jump · Live calculating
+                </div>
+              </div>
+            </div>
+
+            <!-- Apple Summary Split -->
+            <div class="apple-summary-split">
+              <div class="apple-card">
+                <div class="card-title-text" style="margin-bottom: 10px;">
+                  <span>Payment Instructions</span>
+                </div>
+                <textarea class="apple-input" style="height: 90px; padding: 10px;" placeholder="Bank remittance instructions...">Please wire transfer payment to Emirates NBD Account IBAN AE2802600009841285741 with invoice reference INV-2026-0042.</textarea>
+              </div>
+
+              <!-- Live Totals -->
+              <div class="apple-totals-card">
+                <div class="totals-item">
+                  <span>Gross Subtotal</span>
+                  <span class="tabular-nums" id="apple-subtotal">AED 7,320.00</span>
+                </div>
+                <div class="totals-item">
+                  <span>Discount</span>
+                  <span class="tabular-nums" id="apple-discount" style="color: var(--system-red);">-AED 270.00</span>
+                </div>
+                <div class="totals-item">
+                  <span>UAE VAT (5.0%)</span>
+                  <span class="tabular-nums" id="apple-vat-sum">AED 352.50</span>
+                </div>
+                <div class="totals-divider"></div>
+                <div class="totals-net-row">
+                  <span>Total Amount:</span>
+                  <span class="tabular-nums totals-net-val" id="apple-grand-total">AED 7,402.50</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================================================================= -->
+          <!-- VIEW 2: INVENTORY ITEMS MASTER                                    -->
+          <!-- ================================================================= -->
+          <div id="view-inventory" class="apple-view">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h1 style="font-size: 22px; font-weight: 800;">Inventory Master Items</h1>
+                <div style="font-size: 13px; color: var(--label-secondary);">1,428 Active Stock SKUs</div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="apple-btn apple-btn-secondary" onclick="showAppleToast('Exported CSV Catalog')">
+                  <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                  <span>Export</span>
+                </button>
+                <button class="apple-btn apple-btn-primary" onclick="showAppleToast('Opening New Item Form')">
+                  <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                  <span>New Item</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="numbers-sheet-card">
+              <table class="numbers-table">
+                <thead>
+                  <tr>
+                    <th style="width: 36px;"><input type="checkbox"></th>
+                    <th>Item Code &amp; Name</th>
+                    <th>Category</th>
+                    <th>UOM</th>
+                    <th style="text-align: right;">Unit Price (AED)</th>
+                    <th style="text-align: right;">Stock Qty</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td>
+                      <div style="font-weight: 600;">Industrial Heavy Bearing 4200-Z</div>
+                      <div style="font-size: 11px; color: var(--label-tertiary);" class="tabular-nums">SKU-8821</div>
+                    </td>
+                    <td><span class="apple-badge badge-blue">Machinery</span></td>
+                    <td>PCS</td>
+                    <td style="text-align: right; font-weight: 600;" class="tabular-nums">450.00</td>
+                    <td style="text-align: right; font-weight: 700;" class="tabular-nums">340</td>
+                    <td><span class="apple-badge badge-green">In Stock</span></td>
+                  </tr>
+
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td>
+                      <div style="font-weight: 600;">Synthetic Hydraulic Lubricant 20L</div>
+                      <div style="font-size: 11px; color: var(--label-tertiary);" class="tabular-nums">SKU-4109</div>
+                    </td>
+                    <td><span class="apple-badge badge-blue">Chemicals</span></td>
+                    <td>CAN</td>
+                    <td style="text-align: right; font-weight: 600;" class="tabular-nums">320.00</td>
+                    <td style="text-align: right; font-weight: 700;" class="tabular-nums">18</td>
+                    <td><span class="apple-badge badge-orange">Low Stock</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ================================================================= -->
+          <!-- VIEW 3: CUSTOMER REGISTRATION                                     -->
+          <!-- ================================================================= -->
+          <div id="view-customer" class="apple-view">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h1 style="font-size: 22px; font-weight: 800;">New Customer Registration</h1>
+                <div style="font-size: 13px; color: var(--label-secondary);">Organization / Debtor Entity</div>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                <button class="apple-btn apple-btn-secondary" onclick="switchAppleTab('view-inventory', document.querySelector('[data-tab=view-inventory]'))">Cancel</button>
+                <button class="apple-btn apple-btn-primary" onclick="showAppleToast('Customer Saved!')">Save Customer</button>
+              </div>
+            </div>
+
+            <div class="apple-card">
+              <div class="card-title-text" style="margin-bottom: 16px;">1. Company Identity</div>
+              <div class="apple-input-grid">
+                <div class="apple-field">
+                  <label class="apple-label">Legal Name *</label>
+                  <input type="text" class="apple-input" placeholder="e.g. Gulf Horizons LLC">
+                </div>
+                <div class="apple-field">
+                  <label class="apple-label">Account Group *</label>
+                  <select class="apple-select">
+                    <option>Trade Debtors</option>
+                  </select>
+                </div>
+                <div class="apple-field">
+                  <label class="apple-label">Trade License</label>
+                  <input type="text" class="apple-input" placeholder="CN-1094821">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================================================================= -->
+          <!-- VIEW 4: TODAY'S DESK (DASHBOARD)                                  -->
+          <!-- ================================================================= -->
+          <div id="view-desk" class="apple-view">
+            <div>
+              <h1 style="font-size: 22px; font-weight: 800;">Today's Desk</h1>
+              <div style="font-size: 13px; color: var(--label-secondary);">Personal Executive Workspace</div>
+            </div>
+
+            <!-- Apple Stat Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+              <div class="apple-card">
+                <div style="font-size: 12px; color: var(--label-secondary); font-weight: 600;">Draft Vouchers</div>
+                <div style="font-size: 26px; font-weight: 800; margin-top: 4px;" class="tabular-nums">4 Pending</div>
+                <span class="apple-badge badge-gold" style="margin-top: 6px;">Needs Posting</span>
+              </div>
+
+              <div class="apple-card">
+                <div style="font-size: 12px; color: var(--label-secondary); font-weight: 600;">Today's Invoiced</div>
+                <div style="font-size: 26px; font-weight: 800; margin-top: 4px; color: var(--system-teal);" class="tabular-nums">AED 148,250</div>
+                <span class="apple-badge badge-teal" style="margin-top: 6px;">+12% vs last week</span>
+              </div>
+
+              <div class="apple-card">
+                <div style="font-size: 12px; color: var(--label-secondary); font-weight: 600;">Overdue Receivables</div>
+                <div style="font-size: 26px; font-weight: 800; margin-top: 4px; color: var(--system-red);" class="tabular-nums">AED 32,400</div>
+                <span class="apple-badge badge-red" style="margin-top: 6px;">3 Accounts</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- MACOS FLOATING ACTION DOCK (FOR ACTIVE INVOICE) -->
+    <div class="floating-action-dock" id="apple-dock">
+      <button class="apple-btn apple-btn-secondary" onclick="showAppleToast('Draft Template Saved')">
+        <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+        <span>Save Template</span>
+      </button>
+      <button class="apple-btn apple-btn-secondary" onclick="showAppleToast('Draft Auto-saved')">
+        <i data-lucide="save" style="width: 14px; height: 14px;"></i>
+        <span>Save Draft</span>
+      </button>
+      <button class="apple-btn apple-btn-primary" onclick="showAppleToast('Invoice Posted!')">
+        <i data-lucide="send" style="width: 14px; height: 14px;"></i>
+        <span>Post &amp; Commit (<span id="dock-total">AED 7,402.50</span>)</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- APPLE SPOTLIGHT SEARCH MODAL -->
+  <div class="spotlight-overlay" id="spotlightOverlay" onclick="handleSpotlightBackdrop(event)">
+    <div class="spotlight-modal">
+      <div class="spotlight-input-row">
+        <i data-lucide="search" style="width: 22px; height: 22px; color: var(--system-blue);"></i>
+        <input type="text" class="spotlight-input" id="spotlightSearch" placeholder="Spotlight Search Masters &amp; Vouchers..." oninput="filterSpotlight()">
+      </div>
+      <div style="padding: 8px 12px; max-height: 280px; overflow-y: auto;" id="spotlightResults">
+        <div class="sidebar-item" onclick="selectSpotlight('view-invoice')">
+          <i data-lucide="receipt" style="width: 16px; height: 16px;"></i>
+          <span>Sales Invoice #INV-2026-0042</span>
+        </div>
+        <div class="sidebar-item" onclick="selectSpotlight('view-inventory')">
+          <i data-lucide="boxes" style="width: 16px; height: 16px;"></i>
+          <span>Inventory Stock Items Master</span>
+        </div>
+        <div class="sidebar-item" onclick="selectSpotlight('view-customer')">
+          <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+          <span>New Customer Registration</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLE SYSTEM TOAST -->
+  <div class="apple-toast" id="appleToast">
+    <i data-lucide="info" style="width: 16px; height: 16px; color: var(--system-blue);"></i>
+    <span id="toastText">Action completed</span>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    lucide.createIcons();
+
+    // Theme Switcher (Apple Light vs Dark)
+    function toggleAppleTheme() {
+      const html = document.documentElement;
+      const cur = html.getAttribute('data-theme');
+      const next = cur === 'apple-dark' ? 'apple-light' : 'apple-dark';
+      html.setAttribute('data-theme', next);
+      
+      const icon = document.getElementById('appleThemeIcon');
+      icon.setAttribute('data-lucide', next === 'apple-dark' ? 'sun' : 'moon');
+      lucide.createIcons();
+      showAppleToast(next === 'apple-dark' ? 'macOS Dark Mode' : 'macOS Light Mode');
+    }
+
+    // RTL Switcher
+    function toggleAppleRtl() {
+      const html = document.documentElement;
+      const cur = html.getAttribute('dir');
+      const next = cur === 'rtl' ? 'ltr' : 'rtl';
+      html.setAttribute('dir', next);
+      document.getElementById('appleLangLabel').innerText = next === 'rtl' ? 'EN' : 'AR';
+      showAppleToast(next === 'rtl' ? 'Arabic RTL Layout' : 'English LTR Layout');
+    }
+
+    // Tab Switching
+    function switchAppleTab(viewId, tabEl) {
+      document.querySelectorAll('.apple-tab').forEach(t => t.classList.remove('active'));
+      if (tabEl) tabEl.classList.add('active');
+
+      document.querySelectorAll('.apple-view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add('active');
+
+      document.getElementById('apple-dock').style.display = viewId === 'view-invoice' ? 'flex' : 'none';
+
+      // Sidebar Sync
+      document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+      if (viewId === 'view-desk') document.querySelector('.sidebar-nav-list button:nth-child(1)').classList.add('active');
+      if (viewId === 'view-invoice') document.querySelector('.sidebar-nav-list button:nth-child(2)').classList.add('active');
+      if (viewId === 'view-inventory') document.querySelector('.sidebar-nav-list button:nth-child(3)').classList.add('active');
+      if (viewId === 'view-customer') document.querySelector('.sidebar-nav-list button:nth-child(4)').classList.add('active');
+    }
+
+    // Live Numbers Ledger Math
+    function calculateAppleLedger() {
+      const rows = document.querySelectorAll('#apple-rows-body tr');
+      let subtotal = 0;
+      let totalDiscount = 0;
+      let totalVat = 0;
+
+      rows.forEach((row, i) => {
+        row.querySelector('td:first-child').innerText = i + 1;
+        const qty = parseFloat(row.querySelector('.apple-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.apple-rate').value) || 0;
+        const disc = parseFloat(row.querySelector('.apple-disc').value) || 0;
+
+        const lineGross = qty * rate;
+        const lineDisc = lineGross * (disc / 100);
+        const lineTaxable = lineGross - lineDisc;
+        const lineVat = lineTaxable * 0.05;
+        const lineTotal = lineTaxable + lineVat;
+
+        subtotal += lineGross;
+        totalDiscount += lineDisc;
+        totalVat += lineVat;
+
+        row.querySelector('.apple-vat').innerText = lineVat.toFixed(2);
+        row.querySelector('.apple-total').innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+
+      const grandTotal = (subtotal - totalDiscount) + totalVat;
+      document.getElementById('apple-subtotal').innerText = 'AED ' + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('apple-discount').innerText = '-AED ' + totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('apple-vat-sum').innerText = 'AED ' + totalVat.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('apple-grand-total').innerText = 'AED ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('dock-total').innerText = 'AED ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function addAppleRow() {
+      const tbody = document.getElementById('apple-rows-body');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color: var(--label-tertiary); font-weight: 600;">${tbody.children.length + 1}</td>
+        <td><input type="text" class="numbers-cell-input" placeholder="Type SKU name..."></td>
+        <td>
+          <select class="numbers-cell-input">
+            <option>DXB Main Wh</option>
+            <option>Jebel Ali FTZ</option>
+          </select>
+        </td>
+        <td><input type="number" class="numbers-cell-input numeric apple-qty" value="1" oninput="calculateAppleLedger()"></td>
+        <td><span class="apple-badge badge-blue">PCS</span></td>
+        <td><input type="number" class="numbers-cell-input numeric apple-rate" value="100.00" oninput="calculateAppleLedger()"></td>
+        <td><input type="number" class="numbers-cell-input numeric apple-disc" value="0" oninput="calculateAppleLedger()"></td>
+        <td style="text-align: right;" class="tabular-nums apple-vat">5.00</td>
+        <td style="text-align: right; font-weight: 700;" class="tabular-nums apple-total">105.00</td>
+        <td style="text-align: center;">
+          <button class="apple-icon-btn" onclick="deleteAppleRow(this)" style="color: var(--system-red);">
+            <i data-lucide="minus-circle" style="width: 15px; height: 15px;"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      lucide.createIcons();
+      calculateAppleLedger();
+    }
+
+    function deleteAppleRow(btn) {
+      const tbody = document.getElementById('apple-rows-body');
+      if (tbody.children.length > 1) {
+        btn.closest('tr').remove();
+        calculateAppleLedger();
+      } else {
+        showAppleToast('Invoice requires at least one line item');
+      }
+    }
+
+    // Spotlight Search
+    function toggleSpotlight(open) {
+      const overlay = document.getElementById('spotlightOverlay');
+      if (open) {
+        overlay.classList.add('open');
+        setTimeout(() => document.getElementById('spotlightSearch').focus(), 50);
+      } else {
+        overlay.classList.remove('open');
+      }
+    }
+
+    function handleSpotlightBackdrop(e) {
+      if (e.target.id === 'spotlightOverlay') toggleSpotlight(false);
+    }
+
+    function selectSpotlight(viewId) {
+      toggleSpotlight(false);
+      const tab = document.querySelector(`[data-tab="${viewId}"]`);
+      switchAppleTab(viewId, tab);
+    }
+
+    function filterSpotlight() {
+      const q = document.getElementById('spotlightSearch').value.toLowerCase();
+      document.querySelectorAll('#spotlightResults .sidebar-item').forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    // Keybindings
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Space') {
+        e.preventDefault();
+        toggleSpotlight(!document.getElementById('spotlightOverlay').classList.contains('open'));
+      }
+      if (e.key === 'Escape') toggleSpotlight(false);
+    });
+
+    // Apple Toast
+    function showAppleToast(msg) {
+      const toast = document.getElementById('appleToast');
+      document.getElementById('toastText').innerText = msg;
+      toast.style.display = 'flex';
+      setTimeout(() => { toast.style.display = 'none'; }, 2200);
+    }
+  </script>
+</body>
+</html>

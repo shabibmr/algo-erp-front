@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme-seed="teal">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>algoERP — Material Design 3 (M3) Light Theme Prototype</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ==========================================================================
+       MATERIAL DESIGN 3 (M3) LIGHT THEME TOKENS (DYNAMIC SEEDS)
+       ========================================================================== */
+    :root {
+      /* M3 Typography */
+      --md-sys-typescale-font: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      --md-sys-typescale-arabic: 'IBM Plex Sans Arabic', 'Roboto', sans-serif;
+      --md-sys-typescale-mono: 'JetBrains Mono', monospace;
+
+      /* M3 Shape Radii */
+      --md-sys-shape-corner-none: 0px;
+      --md-sys-shape-corner-extra-small: 4px;
+      --md-sys-shape-corner-small: 8px;
+      --md-sys-shape-corner-medium: 12px;
+      --md-sys-shape-corner-large: 16px;
+      --md-sys-shape-corner-extra-large: 28px;
+      --md-sys-shape-corner-full: 9999px;
+
+      /* M3 Elevation & Shadows */
+      --md-sys-elevation-0: none;
+      --md-sys-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.30);
+      --md-sys-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.30);
+      --md-sys-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.15), 0px 1px 3px 0px rgba(0, 0, 0, 0.30);
+
+      /* Spacing Scale */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+
+      /* Standard Heights */
+      --height-control: 48px;
+      --height-row: 48px;
+    }
+
+    /* SEED 1: TEAL (Default algoERP M3 Seed) */
+    html[data-theme-seed="teal"] {
+      --md-sys-color-primary: #006A60;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #72F8E8;
+      --md-sys-color-on-primary-container: #00201C;
+      
+      --md-sys-color-secondary: #4A635F;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #CCE8E3;
+      --md-sys-color-on-secondary-container: #05201D;
+      
+      --md-sys-color-tertiary: #456179;
+      --md-sys-color-on-tertiary: #FFFFFF;
+      --md-sys-color-tertiary-container: #CCE5FF;
+      --md-sys-color-on-tertiary-container: #001D31;
+
+      --md-sys-color-error: #BA1A1A;
+      --md-sys-color-on-error: #FFFFFF;
+      --md-sys-color-error-container: #FFDAD6;
+      --md-sys-color-on-error-container: #410002;
+
+      --md-sys-color-surface: #F4FAF8;
+      --md-sys-color-on-surface: #161D1C;
+      --md-sys-color-surface-variant: #DAE5E2;
+      --md-sys-color-on-surface-variant: #3F4947;
+      --md-sys-color-outline: #6F7977;
+      --md-sys-color-outline-variant: #BEC9C6;
+
+      --md-sys-color-surface-container-lowest: #FFFFFF;
+      --md-sys-color-surface-container-low: #EEF4F2;
+      --md-sys-color-surface-container: #E8EFED;
+      --md-sys-color-surface-container-high: #E2E9E7;
+      --md-sys-color-surface-container-highest: #DCE4E1;
+    }
+
+    /* SEED 2: INDIGO BLUE */
+    html[data-theme-seed="blue"] {
+      --md-sys-color-primary: #005FB0;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #D4E3FF;
+      --md-sys-color-on-primary-container: #001C3B;
+      
+      --md-sys-color-secondary: #555F71;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #D9E3F8;
+      --md-sys-color-on-secondary-container: #121C2B;
+      
+      --md-sys-color-tertiary: #6E5676;
+      --md-sys-color-on-tertiary: #FFFFFF;
+      --md-sys-color-tertiary-container: #F7D8FF;
+      --md-sys-color-on-tertiary-container: #271430;
+
+      --md-sys-color-error: #BA1A1A;
+      --md-sys-color-on-error: #FFFFFF;
+      --md-sys-color-error-container: #FFDAD6;
+      --md-sys-color-on-error-container: #410002;
+
+      --md-sys-color-surface: #F8F9FF;
+      --md-sys-color-on-surface: #191C20;
+      --md-sys-color-surface-variant: #E0E2EC;
+      --md-sys-color-on-surface-variant: #43474E;
+      --md-sys-color-outline: #74777F;
+      --md-sys-color-outline-variant: #C4C6D0;
+
+      --md-sys-color-surface-container-lowest: #FFFFFF;
+      --md-sys-color-surface-container-low: #F2F3FA;
+      --md-sys-color-surface-container: #ECEEF4;
+      --md-sys-color-surface-container-high: #E6E8EE;
+      --md-sys-color-surface-container-highest: #E0E2E8;
+    }
+
+    /* SEED 3: EMERALD GREEN */
+    html[data-theme-seed="green"] {
+      --md-sys-color-primary: #1C6D33;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #A4F6AC;
+      --md-sys-color-on-primary-container: #002108;
+      
+      --md-sys-color-secondary: #526350;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #D5E8D0;
+      --md-sys-color-on-secondary-container: #101F10;
+      
+      --md-sys-color-tertiary: #38656B;
+      --md-sys-color-on-tertiary: #FFFFFF;
+      --md-sys-color-tertiary-container: #BCEBF1;
+      --md-sys-color-on-tertiary-container: #001F23;
+
+      --md-sys-color-error: #BA1A1A;
+      --md-sys-color-on-error: #FFFFFF;
+      --md-sys-color-error-container: #FFDAD6;
+      --md-sys-color-on-error-container: #410002;
+
+      --md-sys-color-surface: #F6FAF3;
+      --md-sys-color-on-surface: #181D18;
+      --md-sys-color-surface-variant: #DEE5DA;
+      --md-sys-color-on-surface-variant: #424940;
+      --md-sys-color-outline: #72796F;
+      --md-sys-color-outline-variant: #C2C9BD;
+
+      --md-sys-color-surface-container-lowest: #FFFFFF;
+      --md-sys-color-surface-container-low: #F0F5ED;
+      --md-sys-color-surface-container: #EAEFE7;
+      --md-sys-color-surface-container-high: #E4EAE2;
+      --md-sys-color-surface-container-highest: #DEE4DC;
+    }
+
+    /* SEED 4: TERRACOTTA AMBER */
+    html[data-theme-seed="amber"] {
+      --md-sys-color-primary: #8C4E00;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #FFDCC0;
+      --md-sys-color-on-primary-container: #2E1500;
+      
+      --md-sys-color-secondary: #745A43;
+      --md-sys-color-on-secondary: #FFFFFF;
+      --md-sys-color-secondary-container: #FFDCC0;
+      --md-sys-color-on-secondary-container: #2A1706;
+      
+      --md-sys-color-tertiary: #5C6237;
+      --md-sys-color-on-tertiary: #FFFFFF;
+      --md-sys-color-tertiary-container: #E0E7B0;
+      --md-sys-color-on-tertiary-container: #191E00;
+
+      --md-sys-color-error: #BA1A1A;
+      --md-sys-color-on-error: #FFFFFF;
+      --md-sys-color-error-container: #FFDAD6;
+      --md-sys-color-on-error-container: #410002;
+
+      --md-sys-color-surface: #FFF8F4;
+      --md-sys-color-on-surface: #221A14;
+      --md-sys-color-surface-variant: #F3DFD1;
+      --md-sys-color-on-surface-variant: #51443B;
+      --md-sys-color-outline: #84746A;
+      --md-sys-color-outline-variant: #D6C3B6;
+
+      --md-sys-color-surface-container-lowest: #FFFFFF;
+      --md-sys-color-surface-container-low: #FFF1E8;
+      --md-sys-color-surface-container: #FAECE2;
+      --md-sys-color-surface-container-high: #F4E6DD;
+      --md-sys-color-surface-container-highest: #EEE1D7;
+    }
+
+    [dir="rtl"] {
+      font-family: var(--md-sys-typescale-arabic);
+    }
+
+    /* ==========================================================================
+       BASE & RESET
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--md-sys-typescale-font);
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      font-size: 14px;
+      line-height: 1.4;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       M3 APP BAR (TOP)
+       ========================================================================== */
+    .m3-top-app-bar {
+      height: 64px;
+      background: var(--md-sys-color-surface-container);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-lg);
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      z-index: 50;
+    }
+
+    .m3-app-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+    }
+    .m3-app-title .m3-logo-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--md-sys-shape-corner-medium);
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .m3-search-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      height: 44px;
+      background: var(--md-sys-color-surface-container-high);
+      border-radius: var(--md-sys-shape-corner-full);
+      padding: 0 16px;
+      min-width: 320px;
+      color: var(--md-sys-color-on-surface-variant);
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+    }
+    .m3-search-bar:focus-within {
+      background: var(--md-sys-color-surface-container-lowest);
+      border-color: var(--md-sys-color-primary);
+      box-shadow: var(--md-sys-elevation-1);
+    }
+    .m3-search-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--md-sys-color-on-surface);
+      width: 100%;
+    }
+
+    .m3-actions-cluster {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* M3 Dynamic Seed Switcher */
+    .m3-seed-picker {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--md-sys-color-surface-container-lowest);
+      padding: 4px 8px;
+      border-radius: var(--md-sys-shape-corner-full);
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .seed-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.15s ease;
+    }
+    .seed-dot.active {
+      transform: scale(1.15);
+      border-color: var(--md-sys-color-on-surface);
+    }
+    .seed-teal { background: #006A60; }
+    .seed-blue { background: #005FB0; }
+    .seed-green { background: #1C6D33; }
+    .seed-amber { background: #8C4E00; }
+
+    /* M3 Icon Buttons */
+    .m3-icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--md-sys-shape-corner-full);
+      border: none;
+      background: transparent;
+      color: var(--md-sys-color-on-surface-variant);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .m3-icon-btn:hover {
+      background: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface);
+    }
+
+    /* ==========================================================================
+       M3 TAB BAR (PRIMARY CONNECTED TABS)
+       ========================================================================== */
+    .m3-tabs-bar {
+      height: 48px;
+      background: var(--md-sys-color-surface-container-low);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-lg);
+      gap: 4px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      overflow-x: auto;
+    }
+
+    .m3-tab-item {
+      height: 40px;
+      padding: 0 16px;
+      border-radius: var(--md-sys-shape-corner-small);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: 0.2s ease;
+      white-space: nowrap;
+    }
+    .m3-tab-item:hover {
+      background: var(--md-sys-color-surface-container-highest);
+      color: var(--md-sys-color-on-surface);
+    }
+    .m3-tab-item.active {
+      color: var(--md-sys-color-primary);
+      font-weight: 700;
+    }
+    .m3-tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 12px;
+      right: 12px;
+      height: 3px;
+      background: var(--md-sys-color-primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* ==========================================================================
+       M3 MAIN SHELL (NAVIGATION RAIL + WORKSPACE)
+       ========================================================================== */
+    .m3-app-shell {
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      height: calc(100vh - 64px - 48px);
+      overflow: hidden;
+    }
+
+    /* M3 Navigation Rail */
+    .m3-nav-rail {
+      background: var(--md-sys-color-surface-container);
+      border-right: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-md) 0;
+      gap: 12px;
+    }
+    [dir="rtl"] .m3-nav-rail {
+      border-right: none;
+      border-left: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .m3-rail-destination {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: var(--md-sys-color-on-surface-variant);
+      font-size: 11px;
+      font-weight: 500;
+      transition: 0.15s ease;
+    }
+    .m3-rail-destination .pill-icon {
+      width: 56px;
+      height: 32px;
+      border-radius: var(--md-sys-shape-corner-large);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .m3-rail-destination:hover .pill-icon {
+      background: var(--md-sys-color-surface-container-highest);
+    }
+    .m3-rail-destination.active {
+      color: var(--md-sys-color-on-surface);
+      font-weight: 700;
+    }
+    .m3-rail-destination.active .pill-icon {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+
+    /* Workspace Content Area */
+    .m3-workspace-content {
+      overflow-y: auto;
+      background: var(--md-sys-color-surface);
+      padding: var(--space-lg) var(--space-xl) 100px var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .m3-container-1400 {
+      width: 100%;
+      max-width: 1380px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+
+    /* Views */
+    .m3-view {
+      display: none;
+      width: 100%;
+    }
+    .m3-view.active {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       M3 CARDS & ELEVATED SURFACES
+       ========================================================================== */
+    .m3-card {
+      background: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-large);
+      padding: var(--space-lg);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      box-shadow: var(--md-sys-elevation-0);
+    }
+    .m3-card.elevated {
+      border: none;
+      box-shadow: var(--md-sys-elevation-1);
+    }
+
+    .m3-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--md-sys-color-surface-container);
+    }
+    .m3-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* ==========================================================================
+       M3 BUTTONS & CHIPS
+       ========================================================================== */
+    .m3-btn {
+      height: 40px;
+      padding: 0 24px;
+      border-radius: var(--md-sys-shape-corner-full);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      cursor: pointer;
+      transition: 0.15s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    /* Filled Primary */
+    .m3-btn-filled {
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+      box-shadow: var(--md-sys-elevation-0);
+    }
+    .m3-btn-filled:hover {
+      box-shadow: var(--md-sys-elevation-1);
+      filter: brightness(1.06);
+    }
+
+    /* Tonal Secondary */
+    .m3-btn-tonal {
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+    }
+    .m3-btn-tonal:hover {
+      box-shadow: var(--md-sys-elevation-1);
+    }
+
+    /* Outlined Button */
+    .m3-btn-outlined {
+      background: transparent;
+      border: 1px solid var(--md-sys-color-outline);
+      color: var(--md-sys-color-primary);
+    }
+    .m3-btn-outlined:hover {
+      background: var(--md-sys-color-surface-container-high);
+    }
+
+    /* M3 Chips */
+    .m3-chip {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--md-sys-shape-corner-small);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+    .m3-chip:hover {
+      background: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface);
+    }
+    .m3-chip.selected {
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    /* M3 Badges & Pills */
+    .m3-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: var(--md-sys-shape-corner-full);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .m3-badge-primary {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+    .m3-badge-secondary {
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+    }
+    .m3-badge-tertiary {
+      background: var(--md-sys-color-tertiary-container);
+      color: var(--md-sys-color-on-tertiary-container);
+    }
+    .m3-badge-error {
+      background: var(--md-sys-color-error-container);
+      color: var(--md-sys-color-on-error-container);
+    }
+
+    /* ==========================================================================
+       M3 OUTLINED TEXT FIELDS
+       ========================================================================== */
+    .m3-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .m3-field-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .m3-outlined-input, .m3-outlined-select {
+      height: 52px;
+      border: 1px solid var(--md-sys-color-outline);
+      border-radius: var(--md-sys-shape-corner-extra-small);
+      background: transparent;
+      padding: 16px 14px 4px 14px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--md-sys-color-on-surface);
+      outline: none;
+      transition: 0.2s ease;
+      width: 100%;
+    }
+    .m3-outlined-input:focus, .m3-outlined-select:focus {
+      border-color: var(--md-sys-color-primary);
+      border-width: 2px;
+      padding-left: 13px;
+    }
+
+    .m3-floating-label {
+      position: absolute;
+      top: 6px;
+      left: 14px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
+      pointer-events: none;
+      transition: 0.2s ease;
+    }
+    .m3-outlined-input:focus ~ .m3-floating-label,
+    .m3-outlined-select:focus ~ .m3-floating-label {
+      color: var(--md-sys-color-primary);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       VIEW 1: M3 SALES INVOICE LIVE LEDGER
+       ========================================================================== */
+    .m3-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .m3-page-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .m3-subhead {
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: 4px;
+    }
+
+    /* M3 Data Table */
+    .m3-table-card {
+      background: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-large);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      overflow: hidden;
+    }
+
+    .m3-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    [dir="rtl"] .m3-table {
+      text-align: right;
+    }
+
+    .m3-table th {
+      background: var(--md-sys-color-surface-container-low);
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--md-sys-color-on-surface-variant);
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .m3-table td {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+    .m3-table tbody tr:hover {
+      background: var(--md-sys-color-surface-container-low);
+    }
+
+    .m3-cell-input {
+      height: 38px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      border-radius: var(--md-sys-shape-corner-extra-small);
+      background: transparent;
+      padding: 0 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--md-sys-color-on-surface);
+      width: 100%;
+      outline: none;
+    }
+    .m3-cell-input:focus {
+      border-color: var(--md-sys-color-primary);
+      border-width: 2px;
+    }
+    .m3-cell-input.number {
+      font-family: var(--md-sys-typescale-mono);
+      text-align: right;
+    }
+
+    /* M3 Bottom App Bar (Sticky Action Strip) */
+    .m3-bottom-app-bar {
+      position: fixed;
+      bottom: 0;
+      left: 84px;
+      right: 0;
+      height: 72px;
+      background: var(--md-sys-color-surface-container);
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+      box-shadow: var(--md-sys-elevation-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-xl);
+      z-index: 100;
+    }
+    [dir="rtl"] .m3-bottom-app-bar {
+      left: 0;
+      right: 84px;
+    }
+
+    /* ==========================================================================
+       VIEW 4: M3 TODAY'S DESK (STAT CARDS)
+       ========================================================================== */
+    .m3-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .m3-metric-card {
+      border-radius: var(--md-sys-shape-corner-large);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .m3-metric-card.primary {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+    .m3-metric-card.secondary {
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+    }
+    .m3-metric-card.tertiary {
+      background: var(--md-sys-color-tertiary-container);
+      color: var(--md-sys-color-on-tertiary-container);
+    }
+    .m3-metric-card.error {
+      background: var(--md-sys-color-error-container);
+      color: var(--md-sys-color-on-error-container);
+    }
+
+    .m3-metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--md-sys-typescale-mono);
+    }
+
+    /* Toast */
+    .m3-snackbar {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--md-sys-color-on-surface);
+      color: var(--md-sys-color-surface);
+      padding: 12px 24px;
+      border-radius: var(--md-sys-shape-corner-extra-small);
+      font-size: 14px;
+      box-shadow: var(--md-sys-elevation-3);
+      display: none;
+      z-index: 1200;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APP BAR -->
+  <header class="m3-top-app-bar">
+    <div style="display: flex; align-items: center; gap: var(--space-md);">
+      <div class="m3-app-title">
+        <div class="m3-logo-badge">M3</div>
+        <span>algoERP · <span style="font-weight: 400; font-size: 16px;">Material Design 3</span></span>
+      </div>
+
+      <div class="m3-badge m3-badge-secondary" style="margin-left: 8px;">
+        Al-Reem Trading LLC (Dubai)
+      </div>
+    </div>
+
+    <!-- M3 Search Bar -->
+    <div class="m3-search-bar">
+      <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+      <input type="text" class="m3-search-input" placeholder="Search masters, vouchers, reports...">
+    </div>
+
+    <!-- Actions & Dynamic M3 Color Seed Switcher -->
+    <div class="m3-actions-cluster">
+      
+      <!-- Material You Color Seed Switcher -->
+      <div class="m3-seed-picker" title="Switch Material 3 Seed Color">
+        <span style="font-size: 11px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); padding-right: 4px;">SEED:</span>
+        <div class="seed-dot seed-teal active" onclick="setM3Seed('teal', this)" title="Teal (Default)"></div>
+        <div class="seed-dot seed-blue" onclick="setM3Seed('blue', this)" title="Indigo Blue"></div>
+        <div class="seed-dot seed-green" onclick="setM3Seed('green', this)" title="Emerald Green"></div>
+        <div class="seed-dot seed-amber" onclick="setM3Seed('amber', this)" title="Terracotta Amber"></div>
+      </div>
+
+      <!-- RTL Toggle -->
+      <button class="m3-icon-btn" onclick="toggleM3Rtl()" title="Toggle RTL Arabic / LTR English">
+        <span style="font-weight: 700; font-size: 12px;" id="m3LangLabel">AR</span>
+      </button>
+
+      <!-- Notifications -->
+      <button class="m3-icon-btn" onclick="showSnackbar('No new notifications')">
+        <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+      </button>
+
+      <!-- Profile Avatar -->
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: flex; align-items: center; justify-content: center; font-weight: 700;">
+        SM
+      </div>
+    </div>
+  </header>
+
+  <!-- M3 CONNECTED TAB BAR -->
+  <nav class="m3-tabs-bar">
+    <button class="m3-tab-item active" onclick="switchM3Tab('m3-view-sales-invoice', this)">
+      <i data-lucide="receipt" style="width: 16px; height: 16px;"></i>
+      <span>Sales Invoice #INV-2026-0042</span>
+    </button>
+    <button class="m3-tab-item" onclick="switchM3Tab('m3-view-inventory', this)">
+      <i data-lucide="boxes" style="width: 16px; height: 16px;"></i>
+      <span>Inventory Items Master</span>
+    </button>
+    <button class="m3-tab-item" onclick="switchM3Tab('m3-view-customer', this)">
+      <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+      <span>Customer Registration</span>
+    </button>
+    <button class="m3-tab-item" onclick="switchM3Tab('m3-view-desk', this)">
+      <i data-lucide="layout-dashboard" style="width: 16px; height: 16px;"></i>
+      <span>Today's Desk</span>
+    </button>
+  </nav>
+
+  <!-- M3 APP SHELL (RAIL + WORKSPACE) -->
+  <div class="m3-app-shell">
+    
+    <!-- M3 Navigation Rail -->
+    <aside class="m3-nav-rail">
+      <button class="m3-rail-destination active" onclick="switchM3Tab('m3-view-sales-invoice', document.querySelector('.m3-tabs-bar .m3-tab-item:nth-child(1)'))">
+        <div class="pill-icon">
+          <i data-lucide="receipt" style="width: 20px; height: 20px;"></i>
+        </div>
+        <span>Vouchers</span>
+      </button>
+
+      <button class="m3-rail-destination" onclick="switchM3Tab('m3-view-inventory', document.querySelector('.m3-tabs-bar .m3-tab-item:nth-child(2)'))">
+        <div class="pill-icon">
+          <i data-lucide="boxes" style="width: 20px; height: 20px;"></i>
+        </div>
+        <span>Inventory</span>
+      </button>
+
+      <button class="m3-rail-destination" onclick="switchM3Tab('m3-view-customer', document.querySelector('.m3-tabs-bar .m3-tab-item:nth-child(3)'))">
+        <div class="pill-icon">
+          <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+        </div>
+        <span>Masters</span>
+      </button>
+
+      <button class="m3-rail-destination" onclick="switchM3Tab('m3-view-desk', document.querySelector('.m3-tabs-bar .m3-tab-item:nth-child(4)'))">
+        <div class="pill-icon">
+          <i data-lucide="layout-dashboard" style="width: 20px; height: 20px;"></i>
+        </div>
+        <span>Desk</span>
+      </button>
+    </aside>
+
+    <!-- Workspace Content -->
+    <main class="m3-workspace-content">
+      <div class="m3-container-1400">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: M3 SALES INVOICE LIVE LEDGER                              -->
+        <!-- ================================================================= -->
+        <div id="m3-view-sales-invoice" class="m3-view active">
+          
+          <div class="m3-page-header">
+            <div>
+              <h1>
+                <span>Tax Invoice #INV-2026-0042</span>
+                <span class="m3-badge m3-badge-secondary">Draft</span>
+              </h1>
+              <div class="m3-subhead">Series: INV-DXB-2026 · Created: 20 Aug 2026 · UAE VAT 5%</div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-sm);">
+              <button class="m3-btn m3-btn-tonal" onclick="showSnackbar('Exporting PDF...')">
+                <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+                <span>Print PDF</span>
+              </button>
+              <button class="m3-btn m3-btn-filled" onclick="showSnackbar('Invoice Posted Successfully!')">
+                <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+                <span>Post Invoice</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- M3 Outlined Header Form Card -->
+          <div class="m3-card elevated">
+            <div class="m3-card-header">
+              <div class="m3-card-title">
+                <i data-lucide="file-text" style="width: 18px; height: 18px; color: var(--md-sys-color-primary);"></i>
+                <span>Invoice Header Details</span>
+              </div>
+            </div>
+
+            <div class="m3-form-grid">
+              <div class="m3-field-container">
+                <select class="m3-outlined-select">
+                  <option selected>Gulf Horizon Logistics LLC (TRN 100293847200003)</option>
+                  <option>Al-Futtaim Engineering Corp</option>
+                </select>
+                <label class="m3-floating-label">Customer / Debtor *</label>
+              </div>
+
+              <div class="m3-field-container">
+                <input type="date" class="m3-outlined-input" value="2026-08-20">
+                <label class="m3-floating-label">Invoice Date *</label>
+              </div>
+
+              <div class="m3-field-container">
+                <select class="m3-outlined-select">
+                  <option selected>Credit 30 Days (Due 19 Sep 2026)</option>
+                  <option>Immediate Cash / Cheque</option>
+                </select>
+                <label class="m3-floating-label">Payment Terms</label>
+              </div>
+
+              <div class="m3-field-container">
+                <input type="text" class="m3-outlined-input" value="PO-AE-99214">
+                <label class="m3-floating-label">Customer PO Reference</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- M3 Line Items Table -->
+          <div class="m3-table-card">
+            <table class="m3-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th style="width: 320px;">Item / Description</th>
+                  <th style="width: 140px;">Godown</th>
+                  <th style="width: 100px; text-align: right;">Qty</th>
+                  <th style="width: 80px;">UOM</th>
+                  <th style="width: 130px; text-align: right;">Rate (AED)</th>
+                  <th style="width: 90px; text-align: right;">Disc %</th>
+                  <th style="width: 100px; text-align: right;">VAT 5%</th>
+                  <th style="width: 140px; text-align: right;">Total (AED)</th>
+                  <th style="width: 40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="m3-items-body">
+                <tr>
+                  <td style="font-weight: 700; color: var(--md-sys-color-outline);">1</td>
+                  <td><input type="text" class="m3-cell-input" value="Industrial Heavy Bearing 4200-Z"></td>
+                  <td>
+                    <select class="m3-cell-input">
+                      <option>DXB Main Wh</option>
+                      <option>Jebel Ali FTZ</option>
+                    </select>
+                  </td>
+                  <td><input type="number" class="m3-cell-input number m3-qty" value="12" oninput="recalculateM3Invoice()"></td>
+                  <td><span class="m3-badge m3-badge-secondary">PCS</span></td>
+                  <td><input type="number" class="m3-cell-input number m3-rate" value="450.00" oninput="recalculateM3Invoice()"></td>
+                  <td><input type="number" class="m3-cell-input number m3-disc" value="5" oninput="recalculateM3Invoice()"></td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono);" class="m3-vat">256.50</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 700;" class="m3-total">5,386.50</td>
+                  <td>
+                    <button class="m3-icon-btn" onclick="removeM3Row(this)" style="width: 32px; height: 32px;">
+                      <i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--md-sys-color-error);"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="font-weight: 700; color: var(--md-sys-color-outline);">2</td>
+                  <td><input type="text" class="m3-cell-input" value="Synthetic Hydraulic Lubricant 20L"></td>
+                  <td>
+                    <select class="m3-cell-input">
+                      <option>DXB Main Wh</option>
+                      <option>Jebel Ali FTZ</option>
+                    </select>
+                  </td>
+                  <td><input type="number" class="m3-cell-input number m3-qty" value="6" oninput="recalculateM3Invoice()"></td>
+                  <td><span class="m3-badge m3-badge-secondary">CAN</span></td>
+                  <td><input type="number" class="m3-cell-input number m3-rate" value="320.00" oninput="recalculateM3Invoice()"></td>
+                  <td><input type="number" class="m3-cell-input number m3-disc" value="0" oninput="recalculateM3Invoice()"></td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono);" class="m3-vat">96.00</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 700;" class="m3-total">2,016.00</td>
+                  <td>
+                    <button class="m3-icon-btn" onclick="removeM3Row(this)" style="width: 32px; height: 32px;">
+                      <i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--md-sys-color-error);"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="padding: 12px 16px; background: var(--md-sys-color-surface-container-low); display: flex; justify-content: space-between; align-items: center;">
+              <button class="m3-btn m3-btn-outlined" onclick="addM3Row()" style="height: 36px; font-size: 13px;">
+                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                <span>Add Line Item</span>
+              </button>
+              <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">5% UAE VAT computed per line</span>
+            </div>
+          </div>
+
+          <!-- M3 Summary Card -->
+          <div style="display: grid; grid-template-columns: 1fr 380px; gap: var(--space-md);">
+            <div class="m3-card">
+              <div class="m3-card-title" style="margin-bottom: 12px;">Bank Payment Remarks</div>
+              <textarea class="m3-outlined-input" style="height: 90px; padding: 12px;" placeholder="Bank remittance instructions...">Please wire payment to Emirates NBD IBAN AE2802600009841285741 with ref INV-2026-0042.</textarea>
+            </div>
+
+            <div class="m3-card" style="background: var(--md-sys-color-surface-container-low);">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Subtotal</span>
+                  <span id="m3-subtotal" style="font-family: var(--md-sys-typescale-mono);">AED 7,320.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Discount</span>
+                  <span id="m3-discount" style="font-family: var(--md-sys-typescale-mono); color: var(--md-sys-color-error);">-AED 270.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>UAE VAT (5%)</span>
+                  <span id="m3-vat-sum" style="font-family: var(--md-sys-typescale-mono);">AED 352.50</span>
+                </div>
+                <div style="height: 1px; background: var(--md-sys-color-outline-variant); margin: 4px 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--md-sys-color-primary);">
+                  <span>Total Payable:</span>
+                  <span id="m3-grand-total">AED 7,402.50</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: M3 MASTER LIST (INVENTORY)                                -->
+        <!-- ================================================================= -->
+        <div id="m3-view-inventory" class="m3-view">
+          <div class="m3-page-header">
+            <div>
+              <h1>
+                <span>Inventory Items Master</span>
+                <span class="m3-badge m3-badge-primary">1,428 SKUs</span>
+              </h1>
+              <div class="m3-subhead">Central Stock &amp; Warehouse Catalog</div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-sm);">
+              <button class="m3-btn m3-btn-tonal" onclick="showSnackbar('Exported CSV')">
+                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                <span>Export CSV</span>
+              </button>
+              <button class="m3-btn m3-btn-filled" onclick="showSnackbar('Opening New Item Form')">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                <span>New Item</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- M3 Filter Chips -->
+          <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+            <button class="m3-chip selected">All Items (1,428)</button>
+            <button class="m3-chip">In Stock (1,280)</button>
+            <button class="m3-chip">Low Stock (34)</button>
+            <button class="m3-chip">Raw Materials (412)</button>
+            <button class="m3-chip">Finished Goods (830)</button>
+          </div>
+
+          <!-- M3 Master Table -->
+          <div class="m3-table-card">
+            <table class="m3-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox"></th>
+                  <th>Item Code &amp; Description</th>
+                  <th>Category</th>
+                  <th>UOM</th>
+                  <th style="text-align: right;">Unit Price (AED)</th>
+                  <th style="text-align: right;">Stock Qty</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div style="font-weight: 600;">Industrial Heavy Bearing 4200-Z</div>
+                    <div style="font-size: 12px; color: var(--md-sys-color-outline); font-family: var(--md-sys-typescale-mono);">SKU-8821</div>
+                  </td>
+                  <td><span class="m3-badge m3-badge-secondary">Machinery</span></td>
+                  <td>PCS</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 600;">450.00</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 700;">340</td>
+                  <td><span class="m3-badge m3-badge-primary">In Stock</span></td>
+                </tr>
+
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>
+                    <div style="font-weight: 600;">Synthetic Hydraulic Lubricant 20L</div>
+                    <div style="font-size: 12px; color: var(--md-sys-color-outline); font-family: var(--md-sys-typescale-mono);">SKU-4109</div>
+                  </td>
+                  <td><span class="m3-badge m3-badge-secondary">Chemicals</span></td>
+                  <td>CAN</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 600;">320.00</td>
+                  <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 700;">18</td>
+                  <td><span class="m3-badge m3-badge-error">Low Stock</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: M3 MASTER FORM (CUSTOMER)                                 -->
+        <!-- ================================================================= -->
+        <div id="m3-view-customer" class="m3-view">
+          <div class="m3-page-header">
+            <div>
+              <h1>New Customer Registration</h1>
+              <div class="m3-subhead">Organization / Master Entity Creation</div>
+            </div>
+
+            <div style="display: flex; gap: var(--space-sm);">
+              <button class="m3-btn m3-btn-outlined" onclick="switchM3Tab('m3-view-inventory', document.querySelector('.m3-tabs-bar .m3-tab-item:nth-child(2)'))">Cancel</button>
+              <button class="m3-btn m3-btn-filled" onclick="showSnackbar('Customer Saved Successfully!')">Save Customer</button>
+            </div>
+          </div>
+
+          <div class="m3-card elevated">
+            <div class="m3-card-header">
+              <div class="m3-card-title">1. Legal Entity &amp; Trade Details</div>
+            </div>
+            <div class="m3-form-grid">
+              <div class="m3-field-container">
+                <input type="text" class="m3-outlined-input" placeholder=" ">
+                <label class="m3-floating-label">Legal Trade Name *</label>
+              </div>
+
+              <div class="m3-field-container">
+                <select class="m3-outlined-select">
+                  <option selected>Trade Debtors (Receivables)</option>
+                  <option>Affiliated Accounts</option>
+                </select>
+                <label class="m3-floating-label">Account Group *</label>
+              </div>
+
+              <div class="m3-field-container">
+                <input type="text" class="m3-outlined-input" placeholder=" ">
+                <label class="m3-floating-label">Trade License Number</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="m3-card elevated">
+            <div class="m3-card-header">
+              <div class="m3-card-title">2. Tax &amp; Credit Configuration</div>
+            </div>
+            <div class="m3-form-grid">
+              <div class="m3-field-container">
+                <input type="text" class="m3-outlined-input" placeholder=" ">
+                <label class="m3-floating-label">15-digit UAE TRN Number *</label>
+              </div>
+
+              <div class="m3-field-container">
+                <input type="number" class="m3-outlined-input" placeholder=" ">
+                <label class="m3-floating-label">Credit Limit (AED)</label>
+              </div>
+
+              <div class="m3-field-container">
+                <select class="m3-outlined-select">
+                  <option>Net 30 Days</option>
+                  <option>Net 60 Days</option>
+                </select>
+                <label class="m3-floating-label">Default Payment Terms</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: M3 TODAY'S DESK (DASHBOARD)                               -->
+        <!-- ================================================================= -->
+        <div id="m3-view-desk" class="m3-view">
+          <div class="m3-page-header">
+            <div>
+              <h1>Today's Desk</h1>
+              <div class="m3-subhead">Material 3 Dashboard Overview</div>
+            </div>
+          </div>
+
+          <div class="m3-metrics-grid">
+            <div class="m3-metric-card secondary">
+              <div style="font-size: 13px; font-weight: 500;">Draft Vouchers</div>
+              <div class="m3-metric-value">4 Pending</div>
+              <div style="font-size: 12px;">Needs operator posting</div>
+            </div>
+
+            <div class="m3-metric-card primary">
+              <div style="font-size: 13px; font-weight: 500;">Today's Invoiced Volume</div>
+              <div class="m3-metric-value">AED 148,250</div>
+              <div style="font-size: 12px;">+12% vs last week</div>
+            </div>
+
+            <div class="m3-metric-card error">
+              <div style="font-size: 13px; font-weight: 500;">Overdue Receivables</div>
+              <div class="m3-metric-value">AED 32,400</div>
+              <div style="font-size: 12px;">3 Accounts overdue</div>
+            </div>
+
+            <div class="m3-metric-card tertiary">
+              <div style="font-size: 13px; font-weight: 500;">Low Stock SKUs</div>
+              <div class="m3-metric-value">7 Items</div>
+              <div style="font-size: 12px;">Below reorder threshold</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- STICKY M3 BOTTOM BAR -->
+  <footer class="m3-bottom-app-bar" id="m3-action-strip">
+    <div>
+      <button class="m3-btn m3-btn-outlined" onclick="showSnackbar('Draft Saved')">Save Draft</button>
+    </div>
+    <div style="display: flex; gap: var(--space-sm);">
+      <button class="m3-btn m3-btn-tonal" onclick="showSnackbar('Printing Voucher...')">Print PDF</button>
+      <button class="m3-btn m3-btn-filled" onclick="showSnackbar('Invoice Posted and Committed!')">Post &amp; Commit Invoice</button>
+    </div>
+  </footer>
+
+  <!-- M3 SNACKBAR NOTIFICATION -->
+  <div class="m3-snackbar" id="m3Snackbar"></div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    lucide.createIcons();
+
+    // M3 Seed Switcher
+    function setM3Seed(seedName, el) {
+      document.documentElement.setAttribute('data-theme-seed', seedName);
+      document.querySelectorAll('.seed-dot').forEach(d => d.classList.remove('active'));
+      if (el) el.classList.add('active');
+      showSnackbar(`Material 3 seed switched to: ${seedName.toUpperCase()}`);
+    }
+
+    // M3 RTL Switcher
+    function toggleM3Rtl() {
+      const html = document.documentElement;
+      const current = html.getAttribute('dir');
+      const next = current === 'rtl' ? 'ltr' : 'rtl';
+      html.setAttribute('dir', next);
+      document.getElementById('m3LangLabel').innerText = next === 'rtl' ? 'EN' : 'AR';
+      showSnackbar(next === 'rtl' ? 'تم تفعيل الاتجاه من اليمين لليسار (RTL)' : 'English LTR Mode');
+    }
+
+    // M3 Tab Switcher
+    function switchM3Tab(viewId, tabEl) {
+      document.querySelectorAll('.m3-tab-item').forEach(t => t.classList.remove('active'));
+      if (tabEl) tabEl.classList.add('active');
+
+      document.querySelectorAll('.m3-view').forEach(v => v.classList.remove('active'));
+      const view = document.getElementById(viewId);
+      if (view) view.classList.add('active');
+
+      const bottomBar = document.getElementById('m3-action-strip');
+      bottomBar.style.display = viewId === 'm3-view-sales-invoice' ? 'flex' : 'none';
+
+      // Update Rail
+      document.querySelectorAll('.m3-rail-destination').forEach(r => r.classList.remove('active'));
+      if (viewId === 'm3-view-sales-invoice') document.querySelector('.m3-nav-rail button:nth-child(1)').classList.add('active');
+      if (viewId === 'm3-view-inventory') document.querySelector('.m3-nav-rail button:nth-child(2)').classList.add('active');
+      if (viewId === 'm3-view-customer') document.querySelector('.m3-nav-rail button:nth-child(3)').classList.add('active');
+      if (viewId === 'm3-view-desk') document.querySelector('.m3-nav-rail button:nth-child(4)').classList.add('active');
+    }
+
+    // Live Calculation
+    function recalculateM3Invoice() {
+      const rows = document.querySelectorAll('#m3-items-body tr');
+      let subtotal = 0;
+      let totalDiscount = 0;
+      let totalVat = 0;
+
+      rows.forEach((row, i) => {
+        row.querySelector('td:first-child').innerText = i + 1;
+        const qty = parseFloat(row.querySelector('.m3-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.m3-rate').value) || 0;
+        const disc = parseFloat(row.querySelector('.m3-disc').value) || 0;
+
+        const lineGross = qty * rate;
+        const lineDisc = lineGross * (disc / 100);
+        const lineTaxable = lineGross - lineDisc;
+        const lineVat = lineTaxable * 0.05;
+        const lineTotal = lineTaxable + lineVat;
+
+        subtotal += lineGross;
+        totalDiscount += lineDisc;
+        totalVat += lineVat;
+
+        row.querySelector('.m3-vat').innerText = lineVat.toFixed(2);
+        row.querySelector('.m3-total').innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+
+      const grandTotal = (subtotal - totalDiscount) + totalVat;
+      document.getElementById('m3-subtotal').innerText = 'AED ' + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('m3-discount').innerText = '-AED ' + totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('m3-vat-sum').innerText = 'AED ' + totalVat.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('m3-grand-total').innerText = 'AED ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function addM3Row() {
+      const tbody = document.getElementById('m3-items-body');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight: 700; color: var(--md-sys-color-outline);">${tbody.children.length + 1}</td>
+        <td><input type="text" class="m3-cell-input" placeholder="Type item SKU..."></td>
+        <td>
+          <select class="m3-cell-input">
+            <option>DXB Main Wh</option>
+            <option>Jebel Ali FTZ</option>
+          </select>
+        </td>
+        <td><input type="number" class="m3-cell-input number m3-qty" value="1" oninput="recalculateM3Invoice()"></td>
+        <td><span class="m3-badge m3-badge-secondary">PCS</span></td>
+        <td><input type="number" class="m3-cell-input number m3-rate" value="100.00" oninput="recalculateM3Invoice()"></td>
+        <td><input type="number" class="m3-cell-input number m3-disc" value="0" oninput="recalculateM3Invoice()"></td>
+        <td style="text-align: right; font-family: var(--md-sys-typescale-mono);" class="m3-vat">5.00</td>
+        <td style="text-align: right; font-family: var(--md-sys-typescale-mono); font-weight: 700;" class="m3-total">105.00</td>
+        <td>
+          <button class="m3-icon-btn" onclick="removeM3Row(this)" style="width: 32px; height: 32px;">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px; color: var(--md-sys-color-error);"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      lucide.createIcons();
+      recalculateM3Invoice();
+    }
+
+    function removeM3Row(btn) {
+      const row = btn.closest('tr');
+      if (document.querySelectorAll('#m3-items-body tr').length > 1) {
+        row.remove();
+        recalculateM3Invoice();
+      } else {
+        showSnackbar('Invoice requires at least one line item');
+      }
+    }
+
+    function showSnackbar(msg) {
+      const s = document.getElementById('m3Snackbar');
+      s.innerText = msg;
+      s.style.display = 'block';
+      setTimeout(() => { s.style.display = 'none'; }, 2500);
+    }
+  </script>
+</body>
+</html>

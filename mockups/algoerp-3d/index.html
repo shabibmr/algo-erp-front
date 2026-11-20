@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>algoERP 3D — Refined Anime.js & 3D WebGL Executive Experience</title>
+    <meta
+      name="description"
+      content="Award-Winning 3D & Kinetic Anime.js Experience — Organization Topology, Inventory Godowns, Multi-Currency Vault & Interactive 3D Brass Seal for algoERP."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <!-- Three.js, OrbitControls, GSAP, and Anime.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  </head>
+  <body>
+    <!-- Film Grain Overlay -->
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- 3D & Anime.js Loading Screen -->
+    <div class="loader-screen" id="loader">
+      <div class="loader-content">
+        <div class="loader-badge">
+          <div class="loader-spinner"></div>
+          <span class="loader-title">algoERP 3D Kinetic Engine</span>
+        </div>
+        <p class="loader-sub">Initializing Three.js WebGL Shaders & Anime.js Kinetic Timelines...</p>
+        <div class="loader-bar-wrap">
+          <div class="loader-bar" id="loader-bar"></div>
+        </div>
+        <span class="loader-percent" id="loader-percent">0%</span>
+      </div>
+    </div>
+
+    <!-- WebGL Fallback Container -->
+    <div class="webgl-fallback" id="webgl-fallback" style="display: none;">
+      <div class="fallback-hero" style="background-image: url('./assets/resources_3d.jpg');">
+        <div class="fallback-overlay">
+          <h2>Standard 2D Fallback Mode Active</h2>
+          <p>WebGL hardware acceleration is limited. Displaying 3D ERP Domain topology preview image.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main WebGL 3D Canvas Layer -->
+    <div class="canvas-3d-wrap">
+      <canvas id="webgl-canvas"></canvas>
+
+      <!-- 3D Viewport HTML Tooltip Layer -->
+      <div id="tooltip-3d" class="tooltip-3d" hidden>
+        <div class="tooltip-category" id="tooltip-category">ERP Resource</div>
+        <div class="tooltip-title" id="tooltip-title">Warehouse Godown WH-01</div>
+        <div class="tooltip-val" id="tooltip-val">8,420 SKUs · 94% Capacity</div>
+        <div class="tooltip-tag" id="tooltip-tag">Batch Tracked (FIFO)</div>
+      </div>
+    </div>
+
+    <!-- Floating 3D Control Dock -->
+    <div class="dock-3d" id="dock-3d">
+      <div class="dock-pill">
+        <span class="dock-label">ERP 3D Resources:</span>
+        <button class="dock-btn is-active" data-preset="branches">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 7l3.5 3.5M17 7.5L14 10M17 16.5L14 14"/></svg>
+          <span>Branch Topology</span>
+        </button>
+        <button class="dock-btn" data-preset="godown">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M3 10h18M5 6h14M9 21V10M15 21V10"/></svg>
+          <span>Inventory Godowns</span>
+        </button>
+        <button class="dock-btn" data-preset="vault">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M12 8v8M8 12h8"/></svg>
+          <span>Currency Vault</span>
+        </button>
+        <button class="dock-btn" data-preset="seal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v6M12 18v4M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M18 12h4"/></svg>
+          <span>Voucher Seal Engine</span>
+        </button>
+
+        <div class="dock-divider"></div>
+
+        <button class="dock-action-btn" id="btn-stamp-action">
+          <span class="stamp-icon">❖</span>
+          <span>Seal Voucher (INV/2408)</span>
+        </button>
+        <button class="dock-action-btn ghost" id="btn-theme-toggle">
+          <span class="theme-icon">☀️</span>
+          <span>Daylight</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- App Shell Overlays -->
+    <div class="app">
+      <!-- Binder Sidebar -->
+      <aside class="binder" aria-label="Main navigation">
+        <div class="binder-brand">
+          <div class="brand-mark-3d" aria-hidden="true">
+            <div class="mark-cube"></div>
+          </div>
+          <div class="brand-text">
+            <strong>algoERP <span class="badge-3d">3D</span></strong>
+            <span>Logical Resources</span>
+          </div>
+        </div>
+
+        <nav class="binder-nav">
+          <p class="nav-section">ERP Resources</p>
+          <a class="nav-item is-active" href="#branches-section">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="3"/><path d="M5 6h4M15 6h4M12 15v4"/></svg>
+            </span>
+            <span>Branch Topology</span>
+          </a>
+          <a class="nav-item" href="#godown-section">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 8h16M4 14h16M4 20h16"/></svg>
+            </span>
+            <span>Inventory & Godowns</span>
+            <em class="nav-badge">3 Hubs</em>
+          </a>
+          <a class="nav-item" href="#vault-section">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>
+            </span>
+            <span>Multi-Currency Vault</span>
+          </a>
+          <a class="nav-item" href="#vouchers-section">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>
+            </span>
+            <span>Voucher Series Seal</span>
+            <em class="nav-badge">3 Pending</em>
+          </a>
+          <a class="nav-item" href="#hr-section">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </span>
+            <span>HR & Shift Roster</span>
+          </a>
+        </nav>
+
+        <div class="binder-foot">
+          <div class="user-chip">
+            <span class="avatar">RA</span>
+            <div>
+              <strong>Rania Al-Saud</strong>
+              <span>Chief Controller</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Canvas Shell Overlaying 3D Viewport -->
+      <div class="shell">
+        <!-- Floating Island Top Bar -->
+        <header class="topbar-wrap">
+          <div class="topbar island">
+            <div class="context">
+              <span class="context-pill">Al Noor Trading LLC</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-muted">Multi-Branch ERP Network</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-badge">FY 2025–26</span>
+            </div>
+
+            <div class="topbar-actions">
+              <div class="webgl-indicator" id="fps-badge">
+                <span class="status-dot green"></span>
+                <span id="fps-text">60 FPS · 3D Domain Synced</span>
+              </div>
+              <button class="icon-btn" type="button" aria-label="Notifications" title="Notifications">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/>
+                  <path d="M10 18.5a2 2 0 0 0 4 0"/>
+                </svg>
+                <i class="ping" aria-hidden="true"></i>
+              </button>
+              <a class="btn group" href="#" id="btn-quick-voucher">
+                <span>+ New Voucher Series</span>
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <main class="canvas" id="desk-content">
+          <!-- Section 1: Hero & Multi-Branch Topology -->
+          <section class="greeting reveal" id="branches-section">
+            <div class="greeting-copy">
+              <span class="eyebrow anime-word">Logical 3D ERP Domain · Multi-Branch Network</span>
+              <h1 class="hero-title">
+                <span class="anime-word">Multi-Branch</span>
+                <span class="anime-word">Topology</span>
+                <span class="anime-word">&amp;</span>
+                <em class="anime-word">Resource Control</em>
+              </h1>
+              <p class="lede anime-word">
+                Real-time 3D visualization of your organization's physical resources: Inter-branch transfer conduits, inventory godown capacities, multi-currency accounts, and voucher approval seals.
+              </p>
+              <div class="hero-tags">
+                <span class="hero-chip">🏢 Organization Topology</span>
+                <span class="hero-chip">📦 Warehouse Godown SKUs</span>
+                <span class="hero-chip">💱 Multi-Currency Vault</span>
+                <span class="hero-chip">❖ Official Brass Seal</span>
+              </div>
+            </div>
+            <div class="greeting-actions">
+              <button class="btn btn-lagoon" id="btn-explore-godown">
+                <span>Inspect Inventory Godowns</span>
+                <span class="btn-icon">↘</span>
+              </button>
+              <button class="btn btn-ghost" id="btn-reset-cam">
+                <span>Reset Branch View</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- Section 2: Inventory & Warehouse Godowns -->
+          <section class="bento-section reveal" id="godown-section">
+            <div class="section-header">
+              <span class="eyebrow">Warehouse & Inventory Management (`inventory_godown`)</span>
+              <h2>3D Inventory Godown & SKU Batches</h2>
+              <p>Hover over the 3D storage racks directly on screen to inspect batch expiration, serial tracking, and stock transfers.</p>
+            </div>
+
+            <div class="bento-grid">
+              <div class="bento-card glass-panel bento-main">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow tight">Active Warehouse Godowns</span>
+                    <h3>Godown Stock & Batch Capacity</h3>
+                  </div>
+                  <span class="tag tag-gold">3D Interactive Racks</span>
+                </div>
+
+                <div class="godown-cards-grid">
+                  <div class="godown-card card-3d-tilt" data-godown="WH-01">
+                    <div class="godown-header">
+                      <span class="godown-tag">WH-01</span>
+                      <strong class="godown-name">Jebel Ali Hub</strong>
+                    </div>
+                    <p class="godown-sub">Heavy Machinery & Industrial Spare Parts</p>
+                    <div class="godown-stats">
+                      <div class="g-stat">
+                        <span class="g-lbl">Total SKUs</span>
+                        <strong class="g-val stat-counter" data-target="8420">0</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Capacity</span>
+                        <strong class="g-val text-moss stat-counter" data-target="94" data-suffix="%">0%</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Value (AED)</span>
+                        <strong class="g-val money">1.84 M</strong>
+                      </div>
+                    </div>
+                    <button class="mini-btn focus-godown-btn" data-wh="WH-01">
+                      <span>Target 3D Rack #1</span>
+                      <span class="mini-ico">↗</span>
+                    </button>
+                  </div>
+
+                  <div class="godown-card card-3d-tilt" data-godown="WH-02">
+                    <div class="godown-header">
+                      <span class="godown-tag tag-blue">WH-02</span>
+                      <strong class="godown-name">Al Quoz Depot</strong>
+                    </div>
+                    <p class="godown-sub">Fast Moving Consumer Goods & Consumables</p>
+                    <div class="godown-stats">
+                      <div class="g-stat">
+                        <span class="g-lbl">Total SKUs</span>
+                        <strong class="g-val stat-counter" data-target="4190">0</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Capacity</span>
+                        <strong class="g-val text-brass stat-counter" data-target="68" data-suffix="%">0%</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Value (AED)</span>
+                        <strong class="g-val money">620 K</strong>
+                      </div>
+                    </div>
+                    <button class="mini-btn focus-godown-btn" data-wh="WH-02">
+                      <span>Target 3D Rack #2</span>
+                      <span class="mini-ico">↗</span>
+                    </button>
+                  </div>
+
+                  <div class="godown-card card-3d-tilt" data-godown="WH-03">
+                    <div class="godown-header">
+                      <span class="godown-tag tag-purple">WH-03</span>
+                      <strong class="godown-name">Riyadh Distribution</strong>
+                    </div>
+                    <p class="godown-sub">KSA Regional Fulfillment Warehouse</p>
+                    <div class="godown-stats">
+                      <div class="g-stat">
+                        <span class="g-lbl">Total SKUs</span>
+                        <strong class="g-val stat-counter" data-target="12850">0</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Capacity</span>
+                        <strong class="g-val text-lagoon stat-counter" data-target="82" data-suffix="%">0%</strong>
+                      </div>
+                      <div class="g-stat">
+                        <span class="g-lbl">Value (SAR)</span>
+                        <strong class="g-val money">3.40 M</strong>
+                      </div>
+                    </div>
+                    <button class="mini-btn focus-godown-btn" data-wh="WH-03">
+                      <span>Target 3D Rack #3</span>
+                      <span class="mini-ico">↗</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Godown 3D Diagram Side Preview with Dynamic SVG Path Morph -->
+              <div class="bento-card glass-panel bento-side">
+                <div class="seal-preview-box">
+                  <div class="seal-badge-wrap">
+                    <svg viewBox="0 0 120 120" class="seal-morph-svg">
+                      <path id="seal-path" class="seal-path-draw" d="M60,10 A50,50 0 1,1 59.9,10 Z" fill="none" stroke="#b8843b" stroke-width="4" />
+                    </svg>
+                    <img src="./assets/resources_3d.jpg" alt="3D ERP Resources Diagram" class="seal-img-preview" />
+                    <div class="seal-glow-ring"></div>
+                  </div>
+                  <h3>ERP Resource Topology</h3>
+                  <p>Interconnected multi-branch network, godown batch inventory, and currency accounts.</p>
+                  <div class="seal-stats">
+                    <div class="stat-item">
+                      <span class="stat-num">3 Hubs</span>
+                      <span class="stat-lbl">Godowns</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-num">25.4K</span>
+                      <span class="stat-lbl">Active SKUs</span>
+                    </div>
+                  </div>
+                  <button class="btn btn-gold btn-full" id="btn-trigger-godown-cam">
+                    <span>Inspect 3D Warehouse Racks</span>
+                    <span class="btn-icon">📦</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 3: Accounts & Multi-Currency Vault -->
+          <section class="pulse-section reveal" id="vault-section">
+            <div class="section-header">
+              <span class="eyebrow">Financial Accounts (`accounts_ledger`, `organization_currency`)</span>
+              <h2>Multi-Currency Vault & Bank Balances</h2>
+              <p>Real-time exchange rate engine (AED / USD / EUR) mapped to 3D currency vault cylinders.</p>
+            </div>
+
+            <div class="pulse-grid">
+              <div class="pulse-card-3d glass-panel">
+                <span class="pulse-label">AED Operating Account (Primary)</span>
+                <strong class="pulse-value money">AED 892,110.50</strong>
+                <span class="pulse-sub">Mashreq Bank HQ · Liquid Reserve</span>
+                <div class="currency-tag">Base Currency · 1.0000</div>
+              </div>
+
+              <div class="pulse-card-3d glass-panel">
+                <span class="pulse-label">USD Trade Facility A/C</span>
+                <strong class="pulse-value money">$ 245,000.00</strong>
+                <span class="pulse-sub">Standard Chartered · FX Rate: 3.6725</span>
+                <div class="currency-tag tag-usd">AED Equivalent: 899,762.50</div>
+              </div>
+
+              <div class="pulse-card-3d glass-panel highlight-lagoon">
+                <span class="pulse-label">EUR European Reserve</span>
+                <strong class="pulse-value money">€ 180,500.00</strong>
+                <span class="pulse-sub">BNP Paribas · FX Rate: 4.0210</span>
+                <div class="currency-tag tag-eur">AED Equivalent: 725,790.50</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 4: Voucher Series & Approval Stamp Engine -->
+          <section class="ledger-section reveal" id="vouchers-section">
+            <div class="section-header">
+              <span class="eyebrow">Transactions & Voucher Approvals (`transactions_sales_invoice`)</span>
+              <h2>Voucher Series & 3D Brass Seal Engine</h2>
+            </div>
+
+            <div class="glass-panel ledger-table-wrap">
+              <div class="table-head-bar">
+                <h3>Queued Vouchers for Official 3D Sealing</h3>
+                <div class="table-actions">
+                  <span class="live-tag">● Voucher Series Active</span>
+                  <button class="btn btn-gold btn-sm" id="btn-batch-seal">
+                    <span>Batch Seal All Vouchers (3D)</span>
+                  </button>
+                </div>
+              </div>
+
+              <table class="ledger-table">
+                <thead>
+                  <tr>
+                    <th>Voucher Series</th>
+                    <th>Date</th>
+                    <th>Particulars / Ledger Account</th>
+                    <th>Godown / Branch</th>
+                    <th>Status</th>
+                    <th class="num-col">Amount (AED)</th>
+                    <th class="num-col">3D Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="voucher-row" data-voucher="INV/2408">
+                    <td><code class="code-tag">INV/2408</code></td>
+                    <td>08 Aug 2026</td>
+                    <td><strong>Desert Motors LLC</strong> — Machinery Supply</td>
+                    <td>WH-01 Jebel Ali</td>
+                    <td><span class="status-pill warning">Needs Seal</span></td>
+                    <td class="num-col money">14,280.00</td>
+                    <td class="num-col">
+                      <button class="mini-btn stamp-card-btn" data-inv="INV/2408">
+                        <span>Seal 3D</span>
+                        <span class="mini-ico">❖</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="voucher-row" data-voucher="TRF/0042">
+                    <td><code class="code-tag">TRF/0042</code></td>
+                    <td>08 Aug 2026</td>
+                    <td><strong>Inter-Godown Transfer</strong> — 48 SKUs</td>
+                    <td>WH-02 → WH-01</td>
+                    <td><span class="status-pill warning">Pending Post</span></td>
+                    <td class="num-col money">86,400.00</td>
+                    <td class="num-col">
+                      <button class="mini-btn stamp-card-btn" data-inv="TRF/0042">
+                        <span>Post 3D</span>
+                        <span class="mini-ico">❖</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="voucher-row" data-voucher="CRE/9901">
+                    <td><code class="code-tag">CRE/9901</code></td>
+                    <td>07 Aug 2026</td>
+                    <td><strong>Gulf Spares LLC</strong> — Facility Credit Note</td>
+                    <td>Sharjah Branch</td>
+                    <td><span class="status-pill info">In Review</span></td>
+                    <td class="num-col money">184,000.00</td>
+                    <td class="num-col">
+                      <button class="mini-btn stamp-card-btn" data-inv="CRE/9901">
+                        <span>Review</span>
+                        <span class="mini-ico">↗</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="voucher-row" data-voucher="RCP/8812">
+                    <td><code class="code-tag">RCP/8812</code></td>
+                    <td>07 Aug 2026</td>
+                    <td><strong>Emirates Steel Corp</strong> — Bank Settlement</td>
+                    <td>Dubai HQ</td>
+                    <td><span class="status-pill success">Sealed ✓</span></td>
+                    <td class="num-col money">95,000.00</td>
+                    <td class="num-col">
+                      <span class="status-text text-moss">Sealed ✓</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Section 5: HR Workforce Roster -->
+          <section class="ledger-section reveal" id="hr-section">
+            <div class="section-header">
+              <span class="eyebrow">HR & Employee Roster (`employee_employee`, `employee_shift`)</span>
+              <h2>Workforce & Department Shift Roster</h2>
+            </div>
+
+            <div class="hr-roster-grid">
+              <div class="hr-card glass-panel">
+                <span class="hr-dept">Finance & Accounting</span>
+                <strong class="hr-count">14 Active Staff</strong>
+                <span class="hr-sub">Day Shift (08:00 – 17:00) · 100% Present</span>
+              </div>
+              <div class="hr-card glass-panel">
+                <span class="hr-dept">Warehouse Operations</span>
+                <strong class="hr-count">38 Active Staff</strong>
+                <span class="hr-sub">2 Shifts (WH-01 & WH-02) · 2 On Leave</span>
+              </div>
+              <div class="hr-card glass-panel">
+                <span class="hr-dept">Sales & Logistics</span>
+                <strong class="hr-count">22 Field Officers</strong>
+                <span class="hr-sub">Active GPS Route Tracking</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Footer -->
+          <footer class="desk-foot">
+            <p>© 2026 algoERP — Refined 3D WebGL & Anime.js Kinetic Engine.</p>
+            <div class="foot-links">
+              <span>Three.js WebGL</span>
+              <span>•</span>
+              <span>Anime.js Timelines</span>
+              <span>•</span>
+              <span>SVG Morphing</span>
+              <span>•</span>
+              <span>PBR Shaders</span>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

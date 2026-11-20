@@ -7,6 +7,7 @@ import 'package:algo_erp_front/core/navigation/menu_model.dart';
 import 'package:algo_erp_front/core/navigation/shell_header.dart';
 import 'package:algo_erp_front/core/responsive/breakpoints.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
+import 'package:algo_erp_front/core/widgets/animated_brand_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -153,11 +154,9 @@ class _MobileShellState extends State<_MobileShell> {
                 padding: EdgeInsets.all(tokens.spacing.md),
                 child: Row(
                   children: [
-                    Image.asset(
-                      'assets/brand/algo_mark.png',
+                    const AnimatedBrandLogo(
                       width: 32,
                       height: 32,
-                      fit: BoxFit.contain,
                     ),
                     SizedBox(width: tokens.spacing.sm),
                     Text(

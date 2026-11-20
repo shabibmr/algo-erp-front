@@ -1,6 +1,7 @@
 import 'package:algo_erp_front/core/navigation/menu_model.dart';
 import 'package:algo_erp_front/core/theme/motion_tokens.dart';
 import 'package:algo_erp_front/core/utils/extensions/build_context_x.dart';
+import 'package:algo_erp_front/core/widgets/animated_brand_logo.dart';
 import 'package:flutter/material.dart';
 
 /// Paper "binder spine" navigation — section labels + lagoon soft selection.
@@ -189,12 +190,9 @@ class _BrandHeader extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(tokens.radii.md),
-            child: Image.asset(
-              'assets/brand/algo_mark.png',
+            child: AnimatedBrandLogo(
               width: 36,
               height: 36,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
               errorBuilder: (_, __, ___) =>
                   Icon(Icons.hexagon_outlined, color: brand.lagoon, size: 32),
             ),

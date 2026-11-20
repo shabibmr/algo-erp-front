@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dune-light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>algoERP — Pro Max Enterprise UI/UX Design System</title>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Vector Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & SYSTEM VARIABLES (PRO MAX INTELLIGENCE)
+       ========================================================================== */
+    :root {
+      /* Shared Dimensions & Spacing (8, 12, 16, 24, 32, 48, 64px) */
+      --space-2xs: 4px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+
+      /* Control Heights (Comfortable Modern Enterprise 44-48px) */
+      --h-control: 46px;
+      --h-control-sm: 36px;
+      --h-tab: 44px;
+      --h-row: 50px;
+      --h-navbar: 60px;
+      --w-rail: 72px;
+
+      /* Border Radii */
+      --r-xs: 4px;
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 16px;
+      --r-full: 9999px;
+
+      /* Typography Families */
+      --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-arabic: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Transitions */
+      --t-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --t-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* THEME 1: DUNE & SAPPHIRE LIGHT (Modern UAE Executive) */
+    html[data-theme="dune-light"] {
+      --bg-canvas: #F8F7F4;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #FDFCFB;
+      --bg-subtle: #F0EDE5;
+      --bg-subtle-hover: #E7E3D8;
+      
+      --border-subtle: #E8E4DA;
+      --border-strong: #D6D0C2;
+      --border-focus: #0D766E;
+
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #64748B;
+      --text-inverse: #FFFFFF;
+
+      --color-brand: #0D766E;
+      --color-brand-hover: #0F5B55;
+      --color-brand-active: #0B4540;
+      --color-brand-soft: #E6F4F2;
+      --color-brand-text: #0D766E;
+
+      --color-accent: #C28834;
+      --color-accent-soft: #FEF6EC;
+      --color-accent-text: #92580E;
+
+      --color-danger: #BE2A2A;
+      --color-danger-soft: #FDE8E8;
+      --color-danger-text: #9B1C1C;
+
+      --color-warning: #D97706;
+      --color-warning-soft: #FEF3C7;
+      --color-warning-text: #92400E;
+
+      --color-info: #0284C7;
+      --color-info-soft: #E0F2FE;
+      --color-info-text: #0369A1;
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03);
+      --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
+      --shadow-sticky: 0 -4px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    /* THEME 2: NIGHT DESK (Dark Mode) */
+    html[data-theme="dune-dark"] {
+      --bg-canvas: #0B0F17;
+      --bg-card: #131923;
+      --bg-card-hover: #1A2230;
+      --bg-subtle: #1C2433;
+      --bg-subtle-hover: #263145;
+
+      --border-subtle: #242E40;
+      --border-strong: #334158;
+      --border-focus: #14B8A6;
+
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --text-inverse: #0F172A;
+
+      --color-brand: #14B8A6;
+      --color-brand-hover: #0D9488;
+      --color-brand-active: #0F766E;
+      --color-brand-soft: #0C3330;
+      --color-brand-text: #5EEAD4;
+
+      --color-accent: #F59E0B;
+      --color-accent-soft: #3D2808;
+      --color-accent-text: #FDE68A;
+
+      --color-danger: #F87171;
+      --color-danger-soft: #3B1616;
+      --color-danger-text: #FECACA;
+
+      --color-warning: #FBBF24;
+      --color-warning-soft: #3B2A08;
+      --color-warning-text: #FEF08A;
+
+      --color-info: #38BDF8;
+      --color-info-soft: #0C283E;
+      --color-info-text: #BAE6FD;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+      --shadow-sticky: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* THEME 3: MATERIAL DESIGN 3 LIGHT (Official M3 Specification) */
+    html[data-theme="material3"] {
+      --bg-canvas: #F4FAF8;
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #EEF4F2;
+      --bg-subtle: #E8EFED;
+      --bg-subtle-hover: #DCE4E1;
+
+      --border-subtle: #BEC9C6;
+      --border-strong: #6F7977;
+      --border-focus: #006A60;
+
+      --text-primary: #161D1C;
+      --text-secondary: #3F4947;
+      --text-muted: #6F7977;
+      --text-inverse: #FFFFFF;
+
+      --color-brand: #006A60;
+      --color-brand-hover: #00544C;
+      --color-brand-active: #003E38;
+      --color-brand-soft: #72F8E8;
+      --color-brand-text: #00201C;
+
+      --color-accent: #705D00;
+      --color-accent-soft: #FFE16E;
+      --color-accent-text: #221B00;
+
+      --color-danger: #BA1A1A;
+      --color-danger-soft: #FFDAD6;
+      --color-danger-text: #410002;
+
+      --color-warning: #845400;
+      --color-warning-soft: #FFDDB5;
+      --color-warning-text: #2B1700;
+
+      --color-info: #006399;
+      --color-info-soft: #CDE5FF;
+      --color-info-text: #001D32;
+
+      --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.12);
+      --shadow-md: 0px 2px 6px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0px 4px 12px rgba(0, 0, 0, 0.20);
+      --shadow-sticky: 0px -2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    [dir="rtl"] {
+      font-family: var(--font-arabic);
+    }
+
+    /* ==========================================================================
+       2. RESET & ACCESSIBILITY BASE
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Tabular numbers for financial & numeric precision */
+    .tabular-nums {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Interactive Focus Rings (WCAG AA) */
+    :focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: var(--r-full);
+    }
+
+    /* ==========================================================================
+       3. TOP APPLICATION BAR
+       ========================================================================== */
+    .top-app-bar {
+      height: var(--h-navbar);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-lg);
+      z-index: 50;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .brand-logo-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-decoration: none;
+      letter-spacing: -0.4px;
+    }
+    .logo-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(13, 118, 110, 0.3);
+    }
+
+    /* Context Pill (Company / Branch / Financial Year) */
+    .context-switcher-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 6px 14px;
+      border-radius: var(--r-full);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--t-fast);
+    }
+    .context-switcher-btn:hover {
+      background: var(--bg-subtle-hover);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-brand);
+      display: inline-block;
+    }
+
+    /* Quick Search / Command Palette */
+    .search-cmd-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      height: 40px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      padding: 0 14px;
+      color: var(--text-muted);
+      cursor: pointer;
+      min-width: 260px;
+      transition: var(--t-fast);
+    }
+    .search-cmd-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+    .search-cmd-btn kbd {
+      margin-left: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 6px;
+      border-radius: var(--r-xs);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Top Bar Controls */
+    .navbar-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .theme-preset-selector {
+      display: flex;
+      align-items: center;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .theme-btn {
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--t-fast);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .theme-btn:hover {
+      color: var(--text-primary);
+    }
+    .theme-btn.active {
+      background: var(--bg-card);
+      color: var(--color-brand);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .icon-action-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--r-md);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--t-fast);
+      position: relative;
+    }
+    .icon-action-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border-color: var(--border-subtle);
+    }
+
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 4px 10px 4px 4px;
+      border-radius: var(--r-full);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+    }
+    .avatar-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--color-brand-soft);
+      color: var(--color-brand-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    /* ==========================================================================
+       4. MULTI-TAB WORKSPACE STRIP
+       ========================================================================== */
+    .tab-strip {
+      height: var(--h-tab);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-lg);
+      gap: 4px;
+      overflow-x: auto;
+      user-select: none;
+      z-index: 40;
+    }
+
+    .workspace-tab {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--t-fast);
+      white-space: nowrap;
+      position: relative;
+    }
+    .workspace-tab:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+    .workspace-tab.active {
+      background: var(--color-brand-soft);
+      color: var(--color-brand-text);
+      border-color: var(--border-subtle);
+    }
+    .workspace-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 10px;
+      right: 10px;
+      height: 2px;
+      background: var(--color-brand);
+      border-radius: 2px;
+    }
+
+    .tab-dirty-indicator {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      display: inline-block;
+    }
+
+    .tab-close-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: var(--t-fast);
+      margin-left: 2px;
+    }
+    .tab-close-icon:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--text-primary);
+    }
+
+    .add-tab-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r-sm);
+      border: 1px dashed var(--border-strong);
+      background: transparent;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--t-fast);
+      margin-left: var(--space-xs);
+    }
+    .add-tab-btn:hover {
+      border-color: var(--color-brand);
+      color: var(--color-brand);
+      background: var(--color-brand-soft);
+    }
+
+    /* ==========================================================================
+       5. MAIN APPLICATION BODY (RAIL + WORKSPACE)
+       ========================================================================== */
+    .app-main-layout {
+      display: grid;
+      grid-template-columns: var(--w-rail) 1fr;
+      height: calc(100vh - var(--h-navbar) - var(--h-tab));
+      overflow: hidden;
+    }
+
+    /* Left Navigation Rail */
+    .nav-rail-sidebar {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-md) 0;
+      gap: var(--space-sm);
+      z-index: 30;
+    }
+    [dir="rtl"] .nav-rail-sidebar {
+      border-right: none;
+      border-left: 1px solid var(--border-subtle);
+    }
+
+    .rail-action-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--r-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: var(--t-fast);
+      position: relative;
+      gap: 3px;
+    }
+    .rail-action-btn span {
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .rail-action-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+    .rail-action-btn.active {
+      background: var(--color-brand-soft);
+      color: var(--color-brand-text);
+      font-weight: 700;
+    }
+    .rail-action-btn.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 3px;
+      background: var(--color-brand);
+      border-radius: 0 4px 4px 0;
+    }
+    [dir="rtl"] .rail-action-btn.active::before {
+      left: auto;
+      right: 0;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .rail-spacer {
+      flex: 1;
+    }
+
+    /* Central Workspace */
+    .workspace-viewport {
+      overflow-y: auto;
+      background: var(--bg-canvas);
+      padding: var(--space-xl) var(--space-2xl) 120px var(--space-2xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .workspace-max-container {
+      width: 100%;
+      max-width: 1360px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+
+    /* Views */
+    .workspace-view {
+      display: none;
+      width: 100%;
+    }
+    .workspace-view.active {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      animation: tabFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       6. UI CARD & FORM COMPONENTS
+       ========================================================================== */
+    .ui-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow-sm);
+      transition: var(--t-fast);
+    }
+    .ui-panel:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    /* Form Fields Grid */
+    .form-row-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .required-asterisk {
+      color: var(--color-danger);
+    }
+
+    .input-control {
+      height: var(--h-control);
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
+      padding: 0 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-primary);
+      outline: none;
+      transition: var(--t-fast);
+      width: 100%;
+    }
+    .input-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--color-brand-soft);
+    }
+
+    /* Badge Pills */
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: var(--r-full);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tag-brand { background: var(--color-brand-soft); color: var(--color-brand-text); }
+    .tag-accent { background: var(--color-accent-soft); color: var(--color-accent-text); }
+    .tag-danger { background: var(--color-danger-soft); color: var(--color-danger-text); }
+    .tag-warning { background: var(--color-warning-soft); color: var(--color-warning-text); }
+    .tag-subtle { background: var(--bg-subtle); color: var(--text-secondary); }
+
+    /* Button Component */
+    .action-btn {
+      height: var(--h-control);
+      padding: 0 20px;
+      border-radius: var(--r-sm);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-xs);
+      cursor: pointer;
+      transition: var(--t-fast);
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+    .action-btn-primary {
+      background: var(--color-brand);
+      color: white;
+      box-shadow: 0 2px 6px rgba(13, 118, 110, 0.25);
+    }
+    .action-btn-primary:hover {
+      background: var(--color-brand-hover);
+      box-shadow: 0 4px 12px rgba(13, 118, 110, 0.35);
+    }
+    .action-btn-secondary {
+      background: var(--bg-card);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .action-btn-secondary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--text-secondary);
+    }
+    .action-btn-danger-ghost {
+      background: transparent;
+      color: var(--color-danger);
+    }
+    .action-btn-danger-ghost:hover {
+      background: var(--color-danger-soft);
+    }
+
+    /* ==========================================================================
+       7. LIVE CALCULATING LEDGER SHEET (SALES INVOICE)
+       ========================================================================== */
+    .document-masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-xs);
+    }
+    .masthead-title-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .masthead-title-row h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+    .masthead-metadata {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Ledger Data Table */
+    .ledger-grid-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    [dir="rtl"] .ledger-table {
+      text-align: right;
+    }
+
+    .ledger-table th {
+      background: var(--bg-subtle);
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .ledger-table td {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    .ledger-table tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .table-cell-input {
+      height: 38px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-xs);
+      padding: 0 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      width: 100%;
+      outline: none;
+      transition: var(--t-fast);
+    }
+    .table-cell-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px var(--color-brand-soft);
+    }
+    .table-cell-input.numeric {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+    [dir="rtl"] .table-cell-input.numeric {
+      text-align: left;
+    }
+
+    .ledger-table-footer {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-top: 1px dashed var(--border-strong);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Live Summary Card */
+    .ledger-summary-section {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: var(--space-lg);
+    }
+
+    .financial-totals-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .totals-line-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .totals-line-item.bold-label {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .totals-divider-line {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 4px 0;
+    }
+    .grand-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 8px;
+    }
+    .grand-total-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .grand-total-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--color-accent);
+      letter-spacing: -0.5px;
+    }
+
+    /* ==========================================================================
+       8. STICKY ACTION STRIP (PRO MAX FOOTER)
+       ========================================================================== */
+    .sticky-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: var(--w-rail);
+      right: 0;
+      height: 74px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-sticky);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-2xl);
+      z-index: 100;
+    }
+    [dir="rtl"] .sticky-bottom-bar {
+      left: 0;
+      right: var(--w-rail);
+    }
+
+    .bar-cluster {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* ==========================================================================
+       9. MASTER LIST SURFACE (INVENTORY)
+       ========================================================================== */
+    .master-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+    }
+    .filter-chips-list {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .toolbar-chip {
+      padding: 6px 14px;
+      border-radius: var(--r-full);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--t-fast);
+    }
+    .toolbar-chip:hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .toolbar-chip.active {
+      background: var(--color-brand);
+      border-color: var(--color-brand);
+      color: white;
+    }
+
+    /* Stock Level Progress Indicator */
+    .stock-indicator-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .stock-track {
+      width: 70px;
+      height: 6px;
+      background: var(--bg-subtle);
+      border-radius: var(--r-full);
+      overflow: hidden;
+    }
+    .stock-fill {
+      height: 100%;
+      border-radius: var(--r-full);
+    }
+
+    /* ==========================================================================
+       10. TODAY'S DESK DASHBOARD
+       ========================================================================== */
+    .pulse-metrics-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .metric-kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .metric-kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .metric-kpi-card.brand::before { background: var(--color-brand); }
+    .metric-kpi-card.accent::before { background: var(--color-accent); }
+    .metric-kpi-card.danger::before { background: var(--color-danger); }
+    .metric-kpi-card.warning::before { background: var(--color-warning); }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .kpi-number {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    /* Task Queue Item */
+    .desk-task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-md);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-md);
+      margin-bottom: var(--space-xs);
+      transition: var(--t-fast);
+      cursor: pointer;
+    }
+    .desk-task-row:hover {
+      background: var(--bg-card);
+      border-color: var(--color-brand);
+      transform: translateX(3px);
+    }
+    [dir="rtl"] .desk-task-row:hover {
+      transform: translateX(-3px);
+    }
+
+    /* ==========================================================================
+       11. MODALS & OVERLAYS (CMD+K & PDF PREVIEW)
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.15s ease;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-window {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      width: 90%;
+      max-width: 640px;
+      overflow: hidden;
+      animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes scaleUp {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Toast */
+    .toast-stack {
+      position: fixed;
+      bottom: 90px;
+      right: 24px;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    [dir="rtl"] .toast-stack {
+      right: auto;
+      left: 24px;
+    }
+    .toast-pill {
+      background: var(--text-primary);
+      color: var(--text-inverse);
+      padding: 12px 18px;
+      border-radius: var(--r-md);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APPLICATION NAVBAR -->
+  <header class="top-app-bar">
+    <div class="brand-cluster">
+      <a href="#" class="brand-logo-badge">
+        <div class="logo-icon-box">AE</div>
+        <span>algo<span style="color: var(--color-brand);">ERP</span></span>
+      </a>
+
+      <!-- Tenant / Branch Context Pill -->
+      <button class="context-switcher-btn" onclick="openModal('contextModal')">
+        <span class="status-dot"></span>
+        <span>Al-Reem Trading LLC · Dubai Logistics Zone · FY 2026-27</span>
+        <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+      </button>
+    </div>
+
+    <!-- Quick Search / Command Palette Trigger -->
+    <button class="search-cmd-btn" onclick="openModal('cmdkModal')">
+      <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+      <span>Search entities or commands...</span>
+      <kbd>⌘K</kbd>
+    </button>
+
+    <!-- Controls Cluster -->
+    <div class="navbar-controls">
+      
+      <!-- Design Theme Switcher (Dune Light vs Night Desk vs Material 3) -->
+      <div class="theme-preset-selector">
+        <button class="theme-btn active" id="btn-dune" onclick="setTheme('dune-light', this)" title="Dune &amp; Sapphire (Modern UAE Executive)">
+          <i data-lucide="sun" style="width: 14px; height: 14px;"></i>
+          <span>Dune</span>
+        </button>
+        <button class="theme-btn" id="btn-dark" onclick="setTheme('dune-dark', this)" title="Night Desk (Dark Mode)">
+          <i data-lucide="moon" style="width: 14px; height: 14px;"></i>
+          <span>Night</span>
+        </button>
+        <button class="theme-btn" id="btn-m3" onclick="setTheme('material3', this)" title="Official Material Design 3">
+          <i data-lucide="palette" style="width: 14px; height: 14px;"></i>
+          <span>M3</span>
+        </button>
+      </div>
+
+      <!-- RTL Language Switcher -->
+      <button class="icon-action-btn" onclick="toggleRtlMode()" title="Toggle English (LTR) / Arabic (RTL)">
+        <span style="font-weight: 700; font-size: 12px;" id="lang-indicator">AR</span>
+      </button>
+
+      <!-- Notifications -->
+      <button class="icon-action-btn" onclick="triggerToast('No unread notifications')">
+        <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
+      </button>
+
+      <!-- User Profile -->
+      <div class="user-profile-badge" onclick="triggerToast('Logged in as Chief Accountant')">
+        <div class="avatar-circle">SM</div>
+        <span style="font-size: 13px; font-weight: 600;">Shabib</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MULTI-TAB WORKSPACE STRIP -->
+  <nav class="tab-strip">
+    <button class="workspace-tab" data-tab-id="view-desk" onclick="switchWorkspaceTab('view-desk', this)">
+      <i data-lucide="layout-dashboard" style="width: 15px; height: 15px;"></i>
+      <span>Today's Desk</span>
+    </button>
+
+    <button class="workspace-tab" data-tab-id="view-inventory" onclick="switchWorkspaceTab('view-inventory', this)">
+      <i data-lucide="boxes" style="width: 15px; height: 15px;"></i>
+      <span>Inventory Items</span>
+      <span class="tab-close-icon" onclick="event.stopPropagation(); triggerToast('Closed tab');">&times;</span>
+    </button>
+
+    <button class="workspace-tab active" data-tab-id="view-sales-invoice" onclick="switchWorkspaceTab('view-sales-invoice', this)">
+      <i data-lucide="receipt" style="width: 15px; height: 15px;"></i>
+      <span>Sales Invoice #INV-2026-0042</span>
+      <span class="tab-dirty-indicator" title="Unsaved changes"></span>
+      <span class="tab-close-icon" onclick="event.stopPropagation(); triggerToast('Draft saved before closing');">&times;</span>
+    </button>
+
+    <button class="workspace-tab" data-tab-id="view-customer" onclick="switchWorkspaceTab('view-customer', this)">
+      <i data-lucide="user-plus" style="width: 15px; height: 15px;"></i>
+      <span>New Customer Registration</span>
+      <span class="tab-close-icon" onclick="event.stopPropagation(); triggerToast('Closed tab');">&times;</span>
+    </button>
+
+    <button class="add-tab-btn" onclick="openModal('cmdkModal')" title="Open New Tab (⌘K)">
+      <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+    </button>
+  </nav>
+
+  <!-- MAIN APPLICATION LAYOUT -->
+  <div class="app-main-layout">
+    
+    <!-- NAVIGATION RAIL -->
+    <aside class="nav-rail-sidebar">
+      <button class="rail-action-btn" onclick="switchWorkspaceTab('view-desk', document.querySelector('[data-tab-id=view-desk]'))" title="Today's Desk">
+        <i data-lucide="layout-dashboard" style="width: 20px; height: 20px;"></i>
+        <span>Desk</span>
+      </button>
+
+      <button class="rail-action-btn active" onclick="switchWorkspaceTab('view-sales-invoice', document.querySelector('[data-tab-id=view-sales-invoice]'))" title="Sales Invoices &amp; Vouchers">
+        <i data-lucide="receipt" style="width: 20px; height: 20px;"></i>
+        <span>Vouchers</span>
+      </button>
+
+      <button class="rail-action-btn" onclick="switchWorkspaceTab('view-inventory', document.querySelector('[data-tab-id=view-inventory]'))" title="Inventory Stock Masters">
+        <i data-lucide="package" style="width: 20px; height: 20px;"></i>
+        <span>Inventory</span>
+      </button>
+
+      <button class="rail-action-btn" onclick="switchWorkspaceTab('view-customer', document.querySelector('[data-tab-id=view-customer]'))" title="Accounts &amp; Ledgers">
+        <i data-lucide="book-open" style="width: 20px; height: 20px;"></i>
+        <span>Accounts</span>
+      </button>
+
+      <button class="rail-action-btn" onclick="triggerToast('Opening HR &amp; Payroll')" title="HR &amp; Employees">
+        <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+        <span>People</span>
+      </button>
+
+      <button class="rail-action-btn" onclick="triggerToast('Opening Financial Reports')" title="Reports &amp; Analytics">
+        <i data-lucide="bar-chart-3" style="width: 20px; height: 20px;"></i>
+        <span>Reports</span>
+      </button>
+
+      <div class="rail-spacer"></div>
+
+      <button class="rail-action-btn" onclick="triggerToast('Opening System Settings')" title="Settings">
+        <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+        <span>Settings</span>
+      </button>
+    </aside>
+
+    <!-- WORKSPACE VIEWPORT -->
+    <main class="workspace-viewport">
+      <div class="workspace-max-container">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: SALES INVOICE (LIVE LEDGER SHEET + STICKY BAR)            -->
+        <!-- ================================================================= -->
+        <div id="view-sales-invoice" class="workspace-view active">
+          
+          <div class="document-masthead">
+            <div>
+              <div class="masthead-title-row">
+                <h1>Tax Invoice #INV-2026-0042</h1>
+                <span class="tag-badge tag-accent">Draft</span>
+                <span class="tag-badge tag-brand">UAE VAT 5.0%</span>
+              </div>
+              <div class="masthead-metadata">
+                <span>Voucher Series: <strong>INV-DXB-2026</strong></span>
+                <span>•</span>
+                <span>Creation Date: <strong>20 Aug 2026</strong></span>
+                <span>•</span>
+                <span>Branch: <strong>Dubai Logistics Hub</strong></span>
+              </div>
+            </div>
+
+            <div class="bar-cluster">
+              <button class="action-btn action-btn-secondary" onclick="openModal('pdfModal')">
+                <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+                <span>Print PDF Preview</span>
+              </button>
+              <button class="action-btn action-btn-primary" onclick="triggerToast('Invoice #INV-2026-0042 Posted Successfully!')">
+                <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                <span>Post Invoice</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Document Header Card -->
+          <div class="ui-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+                <span>Invoice Header &amp; Counterparty</span>
+              </div>
+              <span class="tag-badge tag-subtle">Primary Information</span>
+            </div>
+
+            <div class="form-row-grid">
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Customer / Debtor <span class="required-asterisk">*</span></label>
+                </div>
+                <select class="input-control">
+                  <option selected>Gulf Horizon Logistics LLC (TRN 100293847200003)</option>
+                  <option>Al-Futtaim Engineering Corp</option>
+                  <option>Emirates Retail Distributors</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Invoice Date <span class="required-asterisk">*</span></label>
+                </div>
+                <input type="date" class="input-control" value="2026-08-20">
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Payment Terms</label>
+                </div>
+                <select class="input-control">
+                  <option selected>Credit 30 Days (Due 19 Sep 2026)</option>
+                  <option>Immediate Cash / Cheque</option>
+                  <option>Credit 60 Days</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Customer PO Number</label>
+                </div>
+                <input type="text" class="input-control" value="PO-AE-99214">
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Ledger Table -->
+          <div class="ledger-grid-card">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th style="width: 320px;">Item Code &amp; Description</th>
+                  <th style="width: 140px;">Warehouse</th>
+                  <th style="width: 100px; text-align: right;">Qty</th>
+                  <th style="width: 80px;">UOM</th>
+                  <th style="width: 130px; text-align: right;">Rate (AED)</th>
+                  <th style="width: 90px; text-align: right;">Disc %</th>
+                  <th style="width: 110px; text-align: right;">VAT 5%</th>
+                  <th style="width: 140px; text-align: right;">Line Total (AED)</th>
+                  <th style="width: 44px; text-align: center;"></th>
+                </tr>
+              </thead>
+              <tbody id="invoice-rows-container">
+                <tr>
+                  <td style="font-weight: 700; color: var(--text-muted);">1</td>
+                  <td>
+                    <input type="text" class="table-cell-input" value="SKU-8821 • Industrial Heavy Bearing 4200-Z">
+                  </td>
+                  <td>
+                    <select class="table-cell-input">
+                      <option>DXB Main Wh</option>
+                      <option>Jebel Ali FTZ</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-qty" value="12" min="1" oninput="calculateLedger()">
+                  </td>
+                  <td><span class="tag-badge tag-subtle">PCS</span></td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-rate" value="450.00" step="0.01" oninput="calculateLedger()">
+                  </td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-disc" value="5" min="0" max="100" oninput="calculateLedger()">
+                  </td>
+                  <td style="text-align: right;" class="tabular-nums row-vat">256.50</td>
+                  <td style="text-align: right; font-weight: 700; color: var(--text-primary);" class="tabular-nums row-total">5,386.50</td>
+                  <td style="text-align: center;">
+                    <button class="icon-action-btn" onclick="deleteRow(this)" title="Delete Row" style="width: 32px; height: 32px;">
+                      <i data-lucide="trash-2" style="width: 15px; height: 15px; color: var(--color-danger);"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="font-weight: 700; color: var(--text-muted);">2</td>
+                  <td>
+                    <input type="text" class="table-cell-input" value="SKU-4109 • Synthetic Hydraulic Lubricant 20L">
+                  </td>
+                  <td>
+                    <select class="table-cell-input">
+                      <option>DXB Main Wh</option>
+                      <option>Jebel Ali FTZ</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-qty" value="6" min="1" oninput="calculateLedger()">
+                  </td>
+                  <td><span class="tag-badge tag-subtle">CAN</span></td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-rate" value="320.00" step="0.01" oninput="calculateLedger()">
+                  </td>
+                  <td>
+                    <input type="number" class="table-cell-input numeric row-disc" value="0" min="0" max="100" oninput="calculateLedger()">
+                  </td>
+                  <td style="text-align: right;" class="tabular-nums row-vat">96.00</td>
+                  <td style="text-align: right; font-weight: 700; color: var(--text-primary);" class="tabular-nums row-total">2,016.00</td>
+                  <td style="text-align: center;">
+                    <button class="icon-action-btn" onclick="deleteRow(this)" title="Delete Row" style="width: 32px; height: 32px;">
+                      <i data-lucide="trash-2" style="width: 15px; height: 15px; color: var(--color-danger);"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="ledger-table-footer">
+              <button class="action-btn action-btn-secondary" onclick="appendRow()" style="height: 38px;">
+                <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                <span>Add Line Item</span>
+              </button>
+              <div style="font-size: 13px; color: var(--text-secondary);">
+                Press <kbd>Tab</kbd> to jump cells • <kbd>Alt+N</kbd> to insert row
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary & Remarks Grid -->
+          <div class="ledger-summary-section">
+            <div class="ui-panel">
+              <div class="panel-title" style="margin-bottom: var(--space-md);">
+                <i data-lucide="message-square" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+                <span>Payment Instructions &amp; Remarks</span>
+              </div>
+              <textarea class="input-control" style="height: 110px; padding: 12px; resize: vertical;">Please wire transfer payment to Emirates NBD Account IBAN AE2802600009841285741 with invoice reference INV-2026-0042.</textarea>
+            </div>
+
+            <!-- Financial Totals Breakdown -->
+            <div class="financial-totals-card">
+              <div class="totals-line-item">
+                <span>Subtotal (Gross)</span>
+                <span class="tabular-nums" id="sum-subtotal">AED 7,320.00</span>
+              </div>
+              <div class="totals-line-item">
+                <span>Line Discounts</span>
+                <span class="tabular-nums" id="sum-discount" style="color: var(--color-danger);">-AED 270.00</span>
+              </div>
+              <div class="totals-line-item bold-label">
+                <span>Taxable Amount</span>
+                <span class="tabular-nums" id="sum-taxable">AED 7,050.00</span>
+              </div>
+              <div class="totals-line-item">
+                <span>UAE VAT (5.0%)</span>
+                <span class="tabular-nums" id="sum-vat">AED 352.50</span>
+              </div>
+              <div class="totals-divider-line"></div>
+              <div class="grand-total-row">
+                <span class="grand-total-label">Total Amount:</span>
+                <span class="tabular-nums grand-total-val" id="sum-grand-total">AED 7,402.50</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); text-align: right;">
+                Seven Thousand Four Hundred Two AED &amp; 50/100
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: MASTER LIST SURFACE (INVENTORY)                           -->
+        <!-- ================================================================= -->
+        <div id="view-inventory" class="workspace-view">
+          
+          <div class="document-masthead">
+            <div>
+              <div class="masthead-title-row">
+                <h1>Inventory Master Catalog</h1>
+                <span class="tag-badge tag-brand">1,428 Active SKUs</span>
+              </div>
+              <div class="masthead-metadata">
+                <span>Module: <strong>Inventory / Item Master</strong></span>
+                <span>•</span>
+                <span>Valuation Method: <strong>Weighted Average</strong></span>
+              </div>
+            </div>
+
+            <div class="bar-cluster">
+              <button class="action-btn action-btn-secondary" onclick="triggerToast('Exported CSV Catalog')">
+                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                <span>Export CSV</span>
+              </button>
+              <button class="action-btn action-btn-primary" onclick="triggerToast('Opening New Item Master')">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                <span>New Item Master</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Master Toolbar & Filter Chips -->
+          <div class="ui-panel master-toolbar" style="padding: var(--space-md);">
+            <div class="filter-chips-list">
+              <button class="toolbar-chip active">All Items (1,428)</button>
+              <button class="toolbar-chip">In Stock (1,280)</button>
+              <button class="toolbar-chip">Low Stock Alerts (34)</button>
+              <button class="toolbar-chip">Raw Materials (412)</button>
+              <button class="toolbar-chip">Finished Goods (830)</button>
+            </div>
+
+            <div style="min-width: 280px;">
+              <input type="text" class="input-control" placeholder="Search SKU, barcode, or description..." style="height: 38px;">
+            </div>
+          </div>
+
+          <!-- Master Data Grid -->
+          <div class="ledger-grid-card">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox"></th>
+                  <th>Item Code &amp; Description</th>
+                  <th>Category</th>
+                  <th>UOM</th>
+                  <th style="text-align: right;">Selling Price (AED)</th>
+                  <th style="text-align: right;">Available Stock</th>
+                  <th>Status</th>
+                  <th style="text-align: center; width: 50px;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr onclick="triggerToast('Opened Item SKU-8821')">
+                  <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">Industrial Heavy Bearing 4200-Z</div>
+                    <div style="font-size: 12px; color: var(--text-muted);" class="tabular-nums">SKU-8821 • Barcode 62911029381</div>
+                  </td>
+                  <td><span class="tag-badge tag-subtle">Machinery</span></td>
+                  <td>PCS</td>
+                  <td style="text-align: right; font-weight: 600;" class="tabular-nums">450.00</td>
+                  <td style="text-align: right;">
+                    <div class="stock-indicator-bar" style="justify-content: flex-end;">
+                      <span class="tabular-nums" style="font-weight: 700;">340</span>
+                      <div class="stock-track"><div class="stock-fill" style="width: 85%; background: var(--color-brand);"></div></div>
+                    </div>
+                  </td>
+                  <td><span class="tag-badge tag-brand">In Stock</span></td>
+                  <td style="text-align: center;">
+                    <button class="icon-action-btn" onclick="event.stopPropagation(); triggerToast('Options menu')" style="width: 30px; height: 30px;">
+                      <i data-lucide="more-horizontal" style="width: 16px; height: 16px;"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr onclick="triggerToast('Opened Item SKU-4109')">
+                  <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">Synthetic Hydraulic Lubricant 20L</div>
+                    <div style="font-size: 12px; color: var(--text-muted);" class="tabular-nums">SKU-4109 • Barcode 62911084721</div>
+                  </td>
+                  <td><span class="tag-badge tag-subtle">Chemicals</span></td>
+                  <td>CAN</td>
+                  <td style="text-align: right; font-weight: 600;" class="tabular-nums">320.00</td>
+                  <td style="text-align: right;">
+                    <div class="stock-indicator-bar" style="justify-content: flex-end;">
+                      <span class="tabular-nums" style="font-weight: 700;">18</span>
+                      <div class="stock-track"><div class="stock-fill" style="width: 25%; background: var(--color-warning);"></div></div>
+                    </div>
+                  </td>
+                  <td><span class="tag-badge tag-warning">Low Stock</span></td>
+                  <td style="text-align: center;">
+                    <button class="icon-action-btn" onclick="event.stopPropagation(); triggerToast('Options menu')" style="width: 30px; height: 30px;">
+                      <i data-lucide="more-horizontal" style="width: 16px; height: 16px;"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: MASTER FORM SURFACE (CUSTOMER)                            -->
+        <!-- ================================================================= -->
+        <div id="view-customer" class="workspace-view">
+          
+          <div class="document-masthead">
+            <div>
+              <div class="masthead-title-row">
+                <h1>New Customer Registration</h1>
+                <span class="tag-badge tag-accent">Master Entity</span>
+              </div>
+              <div class="masthead-metadata">
+                <span>Module: <strong>Organization / Debtors</strong></span>
+              </div>
+            </div>
+
+            <div class="bar-cluster">
+              <button class="action-btn action-btn-secondary" onclick="switchWorkspaceTab('view-inventory', document.querySelector('[data-tab-id=view-inventory]'))">Cancel</button>
+              <button class="action-btn action-btn-primary" onclick="triggerToast('Customer Registered Successfully!')">
+                <i data-lucide="save" style="width: 16px; height: 16px;"></i>
+                <span>Save Customer</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 1: Legal -->
+          <div class="ui-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i data-lucide="building" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+                <span>1. Company &amp; Legal Identity</span>
+              </div>
+              <span class="tag-badge tag-brand">Required</span>
+            </div>
+
+            <div class="form-row-grid">
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Legal Trade Name <span class="required-asterisk">*</span></label>
+                </div>
+                <input type="text" class="input-control" placeholder="e.g. Al-Ain Industrial Supplies FZCO">
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Account Group <span class="required-asterisk">*</span></label>
+                </div>
+                <select class="input-control">
+                  <option selected>Trade Debtors (Receivables)</option>
+                  <option>Affiliated Companies</option>
+                  <option>Cash Customers</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Trade License Number</label>
+                </div>
+                <input type="text" class="input-control" placeholder="e.g. CN-1094821">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Financial -->
+          <div class="ui-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <i data-lucide="credit-card" style="width: 16px; height: 16px; color: var(--color-accent);"></i>
+                <span>2. VAT &amp; Financial Credit Terms</span>
+              </div>
+            </div>
+
+            <div class="form-row-grid">
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>UAE TRN (15 digits) <span class="required-asterisk">*</span></label>
+                </div>
+                <input type="text" class="input-control" placeholder="100xxxxxxxx0003">
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Credit Limit (AED)</label>
+                </div>
+                <input type="number" class="input-control" placeholder="50,000.00">
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label>Default Payment Terms</label>
+                </div>
+                <select class="input-control">
+                  <option>Net 30 Days</option>
+                  <option>Net 60 Days</option>
+                  <option>Cash on Delivery</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: TODAY'S DESK (DASHBOARD)                                  -->
+        <!-- ================================================================= -->
+        <div id="view-desk" class="workspace-view">
+          
+          <div class="document-masthead">
+            <div>
+              <div class="masthead-title-row">
+                <h1>Today's Desk</h1>
+                <span class="tag-badge tag-brand">Live Operational Overview</span>
+              </div>
+              <div class="masthead-metadata">
+                <span>Welcome back, <strong>Shabib</strong></span>
+                <span>•</span>
+                <span>Context: <strong>Al-Reem Trading LLC (Dubai Branch)</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Pulse KPI Cards -->
+          <div class="pulse-metrics-container">
+            <div class="metric-kpi-card accent">
+              <div class="kpi-header">
+                <span>Pending Drafts</span>
+                <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--color-accent);"></i>
+              </div>
+              <div class="kpi-number">4 Vouchers</div>
+              <span class="tag-badge tag-accent" style="align-self: flex-start;">Needs Posting</span>
+            </div>
+
+            <div class="metric-kpi-card brand">
+              <div class="kpi-header">
+                <span>Today's Invoiced</span>
+                <i data-lucide="trending-up" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+              </div>
+              <div class="kpi-number tabular-nums">AED 148,250</div>
+              <span class="tag-badge tag-brand" style="align-self: flex-start;">+12% vs last week</span>
+            </div>
+
+            <div class="metric-kpi-card danger">
+              <div class="kpi-header">
+                <span>Overdue Receivables</span>
+                <i data-lucide="alert-circle" style="width: 16px; height: 16px; color: var(--color-danger);"></i>
+              </div>
+              <div class="kpi-number tabular-nums">AED 32,400</div>
+              <span class="tag-badge tag-danger" style="align-self: flex-start;">3 Overdue Accounts</span>
+            </div>
+
+            <div class="metric-kpi-card warning">
+              <div class="kpi-header">
+                <span>Low Stock Items</span>
+                <i data-lucide="package-x" style="width: 16px; height: 16px; color: var(--color-warning);"></i>
+              </div>
+              <div class="kpi-number">7 SKUs</div>
+              <span class="tag-badge tag-warning" style="align-self: flex-start;">Reorder Threshold</span>
+            </div>
+          </div>
+
+          <!-- Desk Tasks -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--space-lg);">
+            <div class="ui-panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="check-square" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+                  <span>Needs Your Action</span>
+                </div>
+              </div>
+
+              <div class="desk-task-row" onclick="switchWorkspaceTab('view-sales-invoice', document.querySelector('[data-tab-id=view-sales-invoice]'))">
+                <div>
+                  <div style="font-weight: 700;">Sales Invoice #INV-2026-0042</div>
+                  <div style="font-size: 12px; color: var(--text-secondary);">Gulf Horizon Logistics • AED 7,402.50 • Draft</div>
+                </div>
+                <button class="action-btn action-btn-primary" style="height: 32px; padding: 0 12px; font-size: 12px;">Review</button>
+              </div>
+
+              <div class="desk-task-row" onclick="triggerToast('Opening PO Approval')">
+                <div>
+                  <div style="font-weight: 700;">Approve Purchase Order #PO-8819</div>
+                  <div style="font-size: 12px; color: var(--text-secondary);">Sharjah Heavy Metals • AED 54,000.00</div>
+                </div>
+                <button class="action-btn action-btn-secondary" style="height: 32px; padding: 0 12px; font-size: 12px;">Approve</button>
+              </div>
+            </div>
+
+            <div class="ui-panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <i data-lucide="history" style="width: 16px; height: 16px; color: var(--color-accent);"></i>
+                  <span>Recently Opened</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: var(--space-sm); font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                  <span>Tax Invoice #INV-2026-0041</span>
+                  <span style="color: var(--text-muted);">10m ago</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                  <span>Item SKU-8821 Heavy Bearing</span>
+                  <span style="color: var(--text-muted);">45m ago</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>UAE VAT Return 201</span>
+                  <span style="color: var(--text-muted);">Yesterday</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- STICKY ACTION STRIP (FOR ACTIVE INVOICE VIEW) -->
+  <footer class="sticky-bottom-bar" id="sales-action-bar">
+    <div class="bar-cluster">
+      <button class="action-btn action-btn-secondary" onclick="triggerToast('Saved as invoice template')">
+        <i data-lucide="copy" style="width: 15px; height: 15px;"></i>
+        <span>Save Template</span>
+      </button>
+      <button class="action-btn action-btn-danger-ghost" onclick="triggerToast('Draft discarded')">
+        <i data-lucide="trash" style="width: 15px; height: 15px;"></i>
+        <span>Discard</span>
+      </button>
+    </div>
+
+    <div class="bar-cluster">
+      <button class="action-btn action-btn-secondary" onclick="triggerToast('Draft auto-saved')">
+        <i data-lucide="save" style="width: 15px; height: 15px;"></i>
+        <span>Save Draft</span>
+      </button>
+      <button class="action-btn action-btn-primary" onclick="triggerToast('Invoice #INV-2026-0042 Posted Successfully!')">
+        <i data-lucide="send" style="width: 15px; height: 15px;"></i>
+        <span>Post &amp; Commit Invoice (<span id="btn-grand-total">AED 7,402.50</span>)</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ======================================================================== -->
+  <!-- MODAL 1: COMMAND PALETTE (CMD+K)                                         -->
+  <!-- ======================================================================== -->
+  <div class="modal-backdrop" id="cmdkModal" onclick="handleBackdropClick(event, 'cmdkModal')">
+    <div class="modal-window">
+      <div style="display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); gap: var(--space-sm);">
+        <i data-lucide="search" style="width: 18px; height: 18px; color: var(--color-brand);"></i>
+        <input type="text" id="cmdkSearch" placeholder="Type a command, master name, or voucher..." style="width: 100%; border: none; background: transparent; outline: none; font-size: 15px; color: var(--text-primary);" oninput="filterCmdkItems()">
+      </div>
+      <div style="max-height: 320px; overflow-y: auto; padding: 8px;" id="cmdkOptions">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px 4px 12px;">Documents &amp; Transactions</div>
+        <div class="desk-task-row" style="margin-bottom: 4px;" onclick="selectCmdkItem('view-sales-invoice')">
+          <span>Sales Invoice #INV-2026-0042</span>
+          <span class="tag-badge tag-accent">Open</span>
+        </div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px 4px 12px;">Master Catalogs</div>
+        <div class="desk-task-row" style="margin-bottom: 4px;" onclick="selectCmdkItem('view-inventory')">
+          <span>Inventory Stock Items Master</span>
+          <span class="tag-badge tag-subtle">Catalog</span>
+        </div>
+        <div class="desk-task-row" onclick="selectCmdkItem('view-customer')">
+          <span>New Customer Registration</span>
+          <span class="tag-badge tag-brand">Create</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================== -->
+  <!-- MODAL 2: PRINT PDF PREVIEW                                               -->
+  <!-- ======================================================================== -->
+  <div class="modal-backdrop" id="pdfModal" onclick="handleBackdropClick(event, 'pdfModal')">
+    <div class="modal-window" style="max-width: 580px;">
+      <div class="panel-header" style="padding: 16px 20px; margin: 0;">
+        <div class="panel-title">
+          <i data-lucide="printer" style="width: 16px; height: 16px; color: var(--color-brand);"></i>
+          <span>Official Tax Invoice PDF Preview</span>
+        </div>
+        <button class="icon-action-btn" onclick="closeModal('pdfModal')">&times;</button>
+      </div>
+      <div style="padding: 24px; background: var(--bg-subtle); display: flex; flex-direction: column; gap: var(--space-md);">
+        <div style="background: white; color: #0F172A; padding: 24px; border-radius: var(--r-md); box-shadow: var(--shadow-md); font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0D766E; padding-bottom: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 800; color: #0D766E;">AL-REEM TRADING LLC</div>
+              <div>TRN: 100293847200003 · Dubai, UAE</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800;">TAX INVOICE</div>
+              <div style="font-family: monospace;">#INV-2026-0042</div>
+            </div>
+          </div>
+          <div style="margin-top: 16px; display: flex; justify-content: space-between;">
+            <div><strong>Billed To:</strong> Gulf Horizon Logistics LLC</div>
+            <div><strong>Date:</strong> 20 Aug 2026</div>
+          </div>
+          <div style="margin-top: 20px; border-top: 1px solid #E2E8F0; padding-top: 12px; display: flex; justify-content: space-between; font-weight: 800; font-size: 15px; color: #0D766E;">
+            <span>Total Payable (Inc. 5% VAT):</span>
+            <span>AED 7,402.50</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 14px 20px; background: var(--bg-card); display: flex; justify-content: flex-end; gap: var(--space-sm); border-top: 1px solid var(--border-subtle);">
+        <button class="action-btn action-btn-secondary" onclick="closeModal('pdfModal')">Close</button>
+        <button class="action-btn action-btn-primary" onclick="triggerToast('PDF generated and sent to printer'); closeModal('pdfModal');">
+          <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+          <span>Download PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-stack" id="toastBox"></div>
+
+  <!-- JAVASCRIPT LOGIC ENGINE -->
+  <script>
+    lucide.createIcons();
+
+    // Theme Switcher Engine
+    function setTheme(themeName, btn) {
+      document.documentElement.setAttribute('data-theme', themeName);
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      triggerToast(`Theme switched to ${themeName.toUpperCase()}`);
+    }
+
+    // RTL Switcher
+    function toggleRtlMode() {
+      const html = document.documentElement;
+      const cur = html.getAttribute('dir');
+      const next = cur === 'rtl' ? 'ltr' : 'rtl';
+      html.setAttribute('dir', next);
+      document.getElementById('lang-indicator').innerText = next === 'rtl' ? 'EN' : 'AR';
+      triggerToast(next === 'rtl' ? 'Arabic RTL Layout Activated' : 'English LTR Layout Activated');
+    }
+
+    // Tab Switching
+    function switchWorkspaceTab(tabId, tabEl) {
+      document.querySelectorAll('.workspace-tab').forEach(t => t.classList.remove('active'));
+      if (tabEl) tabEl.classList.add('active');
+
+      document.querySelectorAll('.workspace-view').forEach(v => v.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+
+      // Toggle Sticky Bar
+      document.getElementById('sales-action-bar').style.display = tabId === 'view-sales-invoice' ? 'flex' : 'none';
+
+      // Update Rail
+      document.querySelectorAll('.rail-action-btn').forEach(r => r.classList.remove('active'));
+      if (tabId === 'view-desk') document.querySelector('.nav-rail-sidebar button:nth-child(1)').classList.add('active');
+      if (tabId === 'view-sales-invoice') document.querySelector('.nav-rail-sidebar button:nth-child(2)').classList.add('active');
+      if (tabId === 'view-inventory') document.querySelector('.nav-rail-sidebar button:nth-child(3)').classList.add('active');
+      if (tabId === 'view-customer') document.querySelector('.nav-rail-sidebar button:nth-child(4)').classList.add('active');
+    }
+
+    // Live Ledger Calculation Engine
+    function calculateLedger() {
+      const rows = document.querySelectorAll('#invoice-rows-container tr');
+      let subtotal = 0;
+      let totalDiscount = 0;
+      let totalVat = 0;
+
+      rows.forEach((row, i) => {
+        row.querySelector('td:first-child').innerText = i + 1;
+        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
+        const disc = parseFloat(row.querySelector('.row-disc').value) || 0;
+
+        const lineGross = qty * rate;
+        const lineDisc = lineGross * (disc / 100);
+        const lineTaxable = lineGross - lineDisc;
+        const lineVat = lineTaxable * 0.05;
+        const lineTotal = lineTaxable + lineVat;
+
+        subtotal += lineGross;
+        totalDiscount += lineDisc;
+        totalVat += lineVat;
+
+        row.querySelector('.row-vat').innerText = lineVat.toFixed(2);
+        row.querySelector('.row-total').innerText = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+
+      const grandTotal = (subtotal - totalDiscount) + totalVat;
+
+      document.getElementById('sum-subtotal').innerText = 'AED ' + subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('sum-discount').innerText = '-AED ' + totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('sum-taxable').innerText = 'AED ' + (subtotal - totalDiscount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('sum-vat').innerText = 'AED ' + totalVat.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('sum-grand-total').innerText = 'AED ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('btn-grand-total').innerText = 'AED ' + grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function appendRow() {
+      const tbody = document.getElementById('invoice-rows-container');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight: 700; color: var(--text-muted);">${tbody.children.length + 1}</td>
+        <td><input type="text" class="table-cell-input" placeholder="Select or type item SKU..."></td>
+        <td>
+          <select class="table-cell-input">
+            <option>DXB Main Wh</option>
+            <option>Jebel Ali FTZ</option>
+          </select>
+        </td>
+        <td><input type="number" class="table-cell-input numeric row-qty" value="1" min="1" oninput="calculateLedger()"></td>
+        <td><span class="tag-badge tag-subtle">PCS</span></td>
+        <td><input type="number" class="table-cell-input numeric row-rate" value="100.00" step="0.01" oninput="calculateLedger()"></td>
+        <td><input type="number" class="table-cell-input numeric row-disc" value="0" min="0" max="100" oninput="calculateLedger()"></td>
+        <td style="text-align: right;" class="tabular-nums row-vat">5.00</td>
+        <td style="text-align: right; font-weight: 700; color: var(--text-primary);" class="tabular-nums row-total">105.00</td>
+        <td style="text-align: center;">
+          <button class="icon-action-btn" onclick="deleteRow(this)" title="Delete Row" style="width: 32px; height: 32px;">
+            <i data-lucide="trash-2" style="width: 15px; height: 15px; color: var(--color-danger);"></i>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      lucide.createIcons();
+      calculateLedger();
+      tr.querySelector('input').focus();
+    }
+
+    function deleteRow(btn) {
+      const tbody = document.getElementById('invoice-rows-container');
+      if (tbody.children.length > 1) {
+        btn.closest('tr').remove();
+        calculateLedger();
+      } else {
+        triggerToast('Invoice must contain at least one line item');
+      }
+    }
+
+    // Modal Handlers
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+      if (id === 'cmdkModal') setTimeout(() => document.getElementById('cmdkSearch').focus(), 50);
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    function handleBackdropClick(e, id) {
+      if (e.target.id === id) closeModal(id);
+    }
+
+    function selectCmdkItem(viewId) {
+      closeModal('cmdkModal');
+      const tab = document.querySelector(`[data-tab-id="${viewId}"]`);
+      switchWorkspaceTab(viewId, tab);
+    }
+
+    function filterCmdkItems() {
+      const q = document.getElementById('cmdkSearch').value.toLowerCase();
+      document.querySelectorAll('#cmdkOptions .desk-task-row').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    // Global Keybindings
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openModal('cmdkModal');
+      }
+      if (e.altKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        if (document.getElementById('view-sales-invoice').classList.contains('active')) {
+          appendRow();
+        }
+      }
+      if (e.key === 'Escape') {
+        closeModal('cmdkModal');
+        closeModal('pdfModal');
+      }
+    });
+
+    // Toast System
+    function triggerToast(msg) {
+      const box = document.getElementById('toastBox');
+      const toast = document.createElement('div');
+      toast.className = 'toast-pill';
+      toast.innerHTML = `<i data-lucide="info" style="width: 16px; height: 16px;"></i><span>${msg}</span>`;
+      box.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = '0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+  </script>
+</body>
+</html>

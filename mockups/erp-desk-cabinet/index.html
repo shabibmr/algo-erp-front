@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>algoERP — Today’s Desk (Cabinet + Spotlight)</title>
+    <meta
+      name="description"
+      content="Chrome-free ERP desk — The Cabinet (Launchpad) + Spotlight. Ledger & Linen light."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="desk-app">
+      <main class="canvas" id="desk">
+        <header class="greeting reveal">
+          <div class="greeting-copy">
+            <div class="context-row">
+              <span class="context-pill">Al Noor Trading LLC</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-muted">Dubai Branch</span>
+              <span class="context-dot" aria-hidden="true"></span>
+              <span class="context-muted">FY 2025–26</span>
+            </div>
+            <span class="eyebrow">Today’s desk · 08 Aug 2026</span>
+            <h1>Good morning, <em>Rania</em></h1>
+            <p class="lede">
+              No sidebar. No top nav. Open modules from
+              <strong>The Cabinet</strong> or jump with
+              <kbd class="kbd" data-open-spotlight>⌘K</kbd>.
+            </p>
+          </div>
+          <div class="greeting-actions">
+            <button
+              type="button"
+              class="btn btn-ghost group"
+              id="open-cabinet-btn"
+              data-magnetic
+            >
+              <span>Open cabinet</span>
+              <span class="btn-icon ghost" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                  <rect x="13" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                  <rect x="4" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                  <rect x="13" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3" />
+                </svg>
+              </span>
+            </button>
+            <button type="button" class="btn group" data-open-spotlight data-magnetic>
+              <span>Spotlight</span>
+              <span class="btn-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.3" />
+                  <path d="M16 16.5 20 20.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                </svg>
+              </span>
+            </button>
+          </div>
+        </header>
+
+        <section class="bento" aria-label="Desk overview">
+          <div class="bezel bento-needs reveal" id="needs" data-delay="40">
+            <div class="bezel-core panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Needs you</span>
+                  <h2>Sticky notes on the desk</h2>
+                </div>
+                <button type="button" class="text-link" data-toast="Queue">View all</button>
+              </div>
+              <div class="notes">
+                <article class="note" style="--r: -1.6deg">
+                  <header>
+                    <span class="tag tag-approve">Approval</span>
+                    <time>Due today</time>
+                  </header>
+                  <h3>Sales Invoice · INV/2408</h3>
+                  <p>Desert Motors LLC</p>
+                  <footer>
+                    <strong class="money">AED 14,280.00</strong>
+                    <button class="mini-btn group" type="button" data-toast="Open INV/2408">
+                      <span>Open</span><span class="mini-ico" aria-hidden="true">↗</span>
+                    </button>
+                  </footer>
+                </article>
+                <article class="note" style="--r: 1.4deg">
+                  <header>
+                    <span class="tag tag-credit">Credit</span>
+                    <time>Watch</time>
+                  </header>
+                  <h3>Gulf Spares LLC · limit</h3>
+                  <p>Drawn 92% of facility</p>
+                  <footer>
+                    <strong class="money brass">AED 184,000</strong>
+                    <button class="mini-btn group" type="button" data-toast="Review credit">
+                      <span>Review</span><span class="mini-ico" aria-hidden="true">↗</span>
+                    </button>
+                  </footer>
+                </article>
+                <article class="note" style="--r: -0.8deg">
+                  <header>
+                    <span class="tag tag-stock">Stock</span>
+                    <time>Waiting</time>
+                  </header>
+                  <h3>Transfer · WH-02 → WH-01</h3>
+                  <p>48 lines · ready to post</p>
+                  <footer>
+                    <strong class="status-text">Awaiting post</strong>
+                    <button class="mini-btn group" type="button" data-toast="Post transfer">
+                      <span>Post</span><span class="mini-ico" aria-hidden="true">↗</span>
+                    </button>
+                  </footer>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="pulse-stack">
+            <div class="bezel reveal" data-delay="90">
+              <div class="bezel-core panel pulse-card">
+                <span class="pulse-label">Cash position</span>
+                <strong class="pulse-value money">128,450.00</strong>
+                <span class="pulse-meta">AED · till + drawer</span>
+                <div class="spark" aria-hidden="true">
+                  <span style="--h: 40%"></span><span style="--h: 55%"></span>
+                  <span style="--h: 48%"></span><span style="--h: 72%"></span>
+                  <span style="--h: 64%"></span><span style="--h: 86%"></span>
+                  <span style="--h: 78%"></span>
+                </div>
+              </div>
+            </div>
+            <div class="bezel reveal" data-delay="130">
+              <div class="bezel-core panel pulse-card">
+                <span class="pulse-label">Bank position</span>
+                <strong class="pulse-value money">892,110.50</strong>
+                <span class="pulse-meta">AED · operating a/c</span>
+                <div class="delta up">+ 4.2% vs last week</div>
+              </div>
+            </div>
+            <div class="bezel reveal" data-delay="170">
+              <div class="bezel-core panel pulse-card accent">
+                <span class="pulse-label">Awaiting your seal</span>
+                <strong class="pulse-value">3</strong>
+                <span class="pulse-meta">invoices · approvals</span>
+                <a class="text-link lagoon" href="#needs">Clear queue →</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="bezel bento-continue reveal" data-delay="100">
+            <div class="bezel-core panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Continue</span>
+                  <h2>Pick up where you left off</h2>
+                </div>
+              </div>
+              <ul class="continue-list">
+                <li>
+                  <span class="doc-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M7 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5Z" stroke="currentColor" stroke-width="1.3" />
+                      <path d="M14 3.5V8h4" stroke="currentColor" stroke-width="1.3" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Purchase · PO/1182</strong>
+                    <span>Steel &amp; Co. · Draft</span>
+                  </div>
+                  <time>12m ago</time>
+                </li>
+                <li>
+                  <span class="doc-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.3" />
+                      <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Brand · Gulf Lagoon</strong>
+                    <span>Master · Edited</span>
+                  </div>
+                  <time>1h ago</time>
+                </li>
+                <li>
+                  <span class="doc-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M4 18V6m0 12 5-5 4 3 7-8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong>Sales trend · Aug</strong>
+                    <span>Report · Viewed</span>
+                  </div>
+                  <time>Yesterday</time>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bezel bento-chart reveal" data-delay="140">
+            <div class="bezel-core panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Quiet pulse</span>
+                  <h2>Sales vs purchases · 7 days</h2>
+                </div>
+                <div class="legend">
+                  <span><i class="swatch lagoon"></i> Sales</span>
+                  <span><i class="swatch brass"></i> Purchases</span>
+                </div>
+              </div>
+              <div class="chart" role="img" aria-label="Bar chart mock">
+                <div class="chart-bars">
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 62%"></span><span class="bar buy" style="--h: 38%"></span></div><small>Mon</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 48%"></span><span class="bar buy" style="--h: 52%"></span></div><small>Tue</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 78%"></span><span class="bar buy" style="--h: 41%"></span></div><small>Wed</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 55%"></span><span class="bar buy" style="--h: 60%"></span></div><small>Thu</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 88%"></span><span class="bar buy" style="--h: 45%"></span></div><small>Fri</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 36%"></span><span class="bar buy" style="--h: 22%"></span></div><small>Sat</small></div>
+                  <div class="day"><div class="bars"><span class="bar sales" style="--h: 28%"></span><span class="bar buy" style="--h: 18%"></span></div><small>Sun</small></div>
+                </div>
+              </div>
+              <div class="chart-foot">
+                <div><span class="pulse-label">Sales docs</span><strong class="money">42</strong></div>
+                <div><span class="pulse-label">Purchase docs</span><strong class="money">27</strong></div>
+                <div><span class="pulse-label">Period</span><strong>01–08 Aug</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bezel bento-customers reveal" data-delay="180">
+            <div class="bezel-core panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Top customers</span>
+                  <h2>By voucher count</h2>
+                </div>
+              </div>
+              <ol class="rank-list">
+                <li><span class="rank">01</span><div><strong>Desert Motors LLC</strong><div class="track"><i style="--w: 92%"></i></div></div><span class="count">18</span></li>
+                <li><span class="rank">02</span><div><strong>Gulf Spares LLC</strong><div class="track"><i style="--w: 74%"></i></div></div><span class="count">14</span></li>
+                <li><span class="rank">03</span><div><strong>Al Noor Retail</strong><div class="track"><i style="--w: 58%"></i></div></div><span class="count">11</span></li>
+                <li><span class="rank">04</span><div><strong>Steel &amp; Co.</strong><div class="track"><i style="--w: 41%"></i></div></div><span class="count">8</span></li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="bezel bento-ledger reveal" data-delay="200">
+            <div class="bezel-core panel">
+              <div class="panel-head">
+                <div>
+                  <span class="eyebrow tight">Ledger sheet</span>
+                  <h2>Recent documents</h2>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm group" data-toast="Open list" data-magnetic>
+                  <span>Open list</span>
+                  <span class="btn-icon ghost" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M7 17 17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="ledger">
+                  <thead>
+                    <tr>
+                      <th>Document</th>
+                      <th>Party</th>
+                      <th>Status</th>
+                      <th class="num">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>INV/2408</strong><small>Sales Invoice</small></td>
+                      <td>Desert Motors LLC</td>
+                      <td><span class="chip chip-approved">Approved</span></td>
+                      <td class="num money">14,280.00</td>
+                    </tr>
+                    <tr>
+                      <td><strong>CR/902</strong><small>Cash Receipt</small></td>
+                      <td>Al Noor Retail</td>
+                      <td><span class="chip chip-posted">Posted</span></td>
+                      <td class="num money">8,400.00</td>
+                    </tr>
+                    <tr>
+                      <td><strong>PO/1182</strong><small>Purchase</small></td>
+                      <td>Steel &amp; Co.</td>
+                      <td><span class="chip chip-draft">Draft</span></td>
+                      <td class="num money">6,920.00</td>
+                    </tr>
+                    <tr>
+                      <td><strong>ST/441</strong><small>Stock Transfer</small></td>
+                      <td>WH-02 → WH-01</td>
+                      <td><span class="chip chip-draft">Draft</span></td>
+                      <td class="num">48 lines</td>
+                    </tr>
+                    <tr>
+                      <td><strong>JV/77</strong><small>Journal</small></td>
+                      <td>Month-end accrual</td>
+                      <td><span class="chip chip-posted">Posted</span></td>
+                      <td class="num money">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="desk-foot reveal" data-delay="220">
+          <span>Recipe L · no navbar</span>
+          <span>Press <kbd class="kbd" data-open-spotlight>⌘K</kbd> · seal opens Cabinet</span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Only persistent control: floating seal + ⌘K chip -->
+    <div class="seal-dock">
+      <button type="button" class="seal" id="seal" aria-label="Open the cabinet" aria-haspopup="dialog" aria-controls="cabinet" data-magnetic>
+        <span class="seal-ring" aria-hidden="true"></span>
+        <span class="seal-core">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="4" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="13" y="5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="4" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+            <rect x="13" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.35" />
+          </svg>
+        </span>
+        <span class="seal-label">Cabinet</span>
+      </button>
+      <button type="button" class="seal-hint" data-open-spotlight title="Spotlight" aria-label="Open Spotlight">
+        <kbd>⌘K</kbd>
+      </button>
+    </div>
+
+    <!-- The Cabinet (Launchpad) -->
+    <div class="overlay cabinet" id="cabinet" role="dialog" aria-modal="true" aria-labelledby="cabinet-title" hidden>
+      <button type="button" class="overlay-scrim" data-close="cabinet" tabindex="-1" aria-label="Close cabinet"></button>
+      <div class="cabinet-stage">
+        <div class="cabinet-chrome">
+          <div>
+            <p class="cabinet-kicker">The Cabinet</p>
+            <h2 id="cabinet-title">Open a desk drawer</h2>
+          </div>
+          <button type="button" class="icon-close" data-close="cabinet" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <label class="cabinet-search bezel">
+          <span class="bezel-core search-core">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.3" />
+              <path d="M16 16.5 20 20.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+            <input type="search" id="cabinet-filter" placeholder="Filter modules…" autocomplete="off" />
+          </span>
+        </label>
+
+        <div class="folder-row" role="tablist" aria-label="Folders">
+          <button type="button" class="folder is-on" data-folder="all" role="tab" aria-selected="true">All</button>
+          <button type="button" class="folder" data-folder="workspace" role="tab">Workspace</button>
+          <button type="button" class="folder" data-folder="masters" role="tab">Masters</button>
+          <button type="button" class="folder" data-folder="vouchers" role="tab">Vouchers</button>
+          <button type="button" class="folder" data-folder="library" role="tab">Library</button>
+        </div>
+
+        <div class="cabinet-grid" id="cabinet-grid">
+          <button type="button" class="mod-tile bezel" data-folder="workspace" data-name="desk" style="--i: 0">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-desk"></span><span class="mod-name">Desk</span><span class="mod-sub">Today’s surface</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="vouchers" data-name="sales invoice" style="--i: 1">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-sales"></span><span class="mod-name">Sales Invoice</span><span class="mod-sub">Vouchers</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="vouchers" data-name="purchase" style="--i: 2">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-purchase"></span><span class="mod-name">Purchase</span><span class="mod-sub">Vouchers</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="vouchers" data-name="cash receipt" style="--i: 3">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-cash"></span><span class="mod-name">Cash Receipt</span><span class="mod-sub">Vouchers</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="vouchers" data-name="stock transfer" style="--i: 4">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-stock"></span><span class="mod-name">Stock Transfer</span><span class="mod-sub">Inventory</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="masters" data-name="brands" style="--i: 5">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-brand"></span><span class="mod-name">Brands</span><span class="mod-sub">Masters</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="masters" data-name="ledgers" style="--i: 6">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-ledger"></span><span class="mod-name">Ledgers</span><span class="mod-sub">Accounts</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="masters" data-name="items" style="--i: 7">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-item"></span><span class="mod-name">Items</span><span class="mod-sub">Inventory</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="library" data-name="reports" style="--i: 8">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-report"></span><span class="mod-name">Reports</span><span class="mod-sub">Library</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="library" data-name="people" style="--i: 9">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-people"></span><span class="mod-name">People</span><span class="mod-sub">Employee</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="masters" data-name="warehouses" style="--i: 10">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-wh"></span><span class="mod-name">Warehouses</span><span class="mod-sub">Inventory</span></span>
+          </button>
+          <button type="button" class="mod-tile bezel" data-folder="workspace" data-name="settings" style="--i: 11">
+            <span class="bezel-core mod-core"><span class="mod-glyph g-set"></span><span class="mod-name">Settings</span><span class="mod-sub">Workspace</span></span>
+          </button>
+        </div>
+        <p class="cabinet-foot">Type to filter · Esc closes · ⌘K opens Spotlight</p>
+      </div>
+    </div>
+
+    <!-- Spotlight -->
+    <div class="overlay spotlight" id="spotlight" role="dialog" aria-modal="true" aria-labelledby="spotlight-title" hidden>
+      <button type="button" class="overlay-scrim" data-close="spotlight" tabindex="-1" aria-label="Close spotlight"></button>
+      <div class="spotlight-panel bezel">
+        <div class="bezel-core spotlight-core">
+          <h2 id="spotlight-title" class="sr-only">Spotlight</h2>
+          <div class="spotlight-input-row">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.3" />
+              <path d="M16 16.5 20 20.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+            <input type="search" id="spotlight-input" placeholder="Go to module, document, or action…" autocomplete="off" />
+            <kbd class="kbd quiet">Esc</kbd>
+          </div>
+          <div class="spotlight-results" id="spotlight-results">
+            <p class="spot-group">Actions</p>
+            <button type="button" class="spot-row" data-toast="Create sales invoice">
+              <span class="spot-ico" aria-hidden="true">＋</span>
+              <span><strong>Create sales invoice</strong><small>Action</small></span>
+              <kbd class="kbd quiet">↵</kbd>
+            </button>
+            <button type="button" class="spot-row" data-toast="Post stock transfer">
+              <span class="spot-ico" aria-hidden="true">↑</span>
+              <span><strong>Post waiting stock transfer</strong><small>Action · ST/441</small></span>
+            </button>
+            <p class="spot-group">Documents</p>
+            <button type="button" class="spot-row" data-toast="Open INV/2408">
+              <span class="spot-ico" aria-hidden="true">≡</span>
+              <span><strong>INV/2408 · Desert Motors</strong><small>Sales Invoice · Approved</small></span>
+              <span class="money quiet">14,280.00</span>
+            </button>
+            <button type="button" class="spot-row" data-toast="Open PO/1182">
+              <span class="spot-ico" aria-hidden="true">≡</span>
+              <span><strong>PO/1182 · Steel &amp; Co.</strong><small>Purchase · Draft</small></span>
+              <span class="money quiet">6,920.00</span>
+            </button>
+            <p class="spot-group">Masters</p>
+            <button type="button" class="spot-row" data-toast="Open Brands">
+              <span class="spot-ico" aria-hidden="true">◆</span>
+              <span><strong>Brands</strong><small>Inventory master</small></span>
+            </button>
+            <button type="button" class="spot-row" data-toast="Open Ledgers">
+              <span class="spot-ico" aria-hidden="true">◆</span>
+              <span><strong>Ledgers</strong><small>Accounts master</small></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden>Mock only.</div>
+    <script src="./script.js"></script>
+  </body>
+</html>

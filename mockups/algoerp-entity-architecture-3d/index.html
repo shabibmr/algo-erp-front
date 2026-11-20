@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>algoERP — Standard Entity Architecture (5-View)</title>
+    <meta
+      name="description"
+      content="5-View Entity Architecture: Hub Dashboard, List, Record Overview, Editor, Reports — Ledger &amp; Linen, agency chrome, ambient 3D."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- Loader -->
+    <div class="loader-screen" id="loader">
+      <div class="loader-content">
+        <div class="loader-badge">
+          <div class="magic-logo-wrap">
+            <div class="magic-cube-core"></div>
+            <div class="magic-ring-spin"></div>
+          </div>
+          <span class="loader-title">algoERP Entity Architecture</span>
+        </div>
+        <p class="loader-sub">Preparing 5-view shell · Hub · List · Record · Editor · Reports</p>
+        <div class="loader-bar-wrap">
+          <div class="loader-bar" id="loader-bar"></div>
+        </div>
+        <span class="loader-percent" id="loader-percent">0%</span>
+      </div>
+    </div>
+
+    <!-- WebGL fallback -->
+    <div class="webgl-fallback" id="webgl-fallback" style="display: none;">
+      <div class="fallback-hero" style="background-image: url('./assets/cabinet_3d.jpg');"></div>
+    </div>
+
+    <!-- Ambient WebGL -->
+    <div class="canvas-3d-wrap" id="canvas-3d-wrap">
+      <canvas id="webgl-canvas"></canvas>
+      <div id="tooltip-3d" class="tooltip-3d" hidden>
+        <div class="tooltip-category" id="tooltip-category">3D Entity Object</div>
+        <div class="tooltip-title" id="tooltip-title">Sales Invoice</div>
+        <div class="tooltip-val" id="tooltip-val">View Active</div>
+        <div class="tooltip-tag" id="tooltip-tag">Focus object</div>
+      </div>
+    </div>
+
+    <!-- Floating island nav -->
+    <nav class="view-nav-bar" aria-label="Entity view navigation">
+      <div class="view-nav-inner">
+        <span class="entity-title-tag">Entity · <strong>Sales Invoice</strong></span>
+        <div class="view-tabs" role="tablist">
+          <button type="button" class="view-tab is-active" data-view="hub" role="tab" aria-selected="true" title="Hub Dashboard (⌘1)">
+            <span class="tab-idx">1</span><span class="tab-name">Hub</span>
+          </button>
+          <button type="button" class="view-tab" data-view="list" role="tab" aria-selected="false" title="Entity List (⌘2)">
+            <span class="tab-idx">2</span><span class="tab-name">List</span>
+          </button>
+          <button type="button" class="view-tab" data-view="record" role="tab" aria-selected="false" title="Record Overview (⌘3)">
+            <span class="tab-idx">3</span><span class="tab-name">Record</span>
+          </button>
+          <button type="button" class="view-tab" data-view="editor" role="tab" aria-selected="false" title="Entity Editor (⌘4)">
+            <span class="tab-idx">4</span><span class="tab-name">Editor</span>
+          </button>
+          <button type="button" class="view-tab" data-view="reports" role="tab" aria-selected="false" title="Reports (⌘5)">
+            <span class="tab-idx">5</span><span class="tab-name">Reports</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Seal dock -->
+    <div class="seal-dock">
+      <button type="button" class="seal" id="seal-btn" aria-label="Open The Cabinet" title="Open Cabinet (⌘.)">
+        <span class="seal-core" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+            <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+            <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+            <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+          </svg>
+        </span>
+        <span class="seal-label">Cabinet</span>
+      </button>
+      <button type="button" class="seal-hint" id="spotlight-trigger" title="Spotlight (⌘K)" aria-label="Open Spotlight">
+        <kbd>⌘K</kbd>
+      </button>
+      <button type="button" class="seal-hint" id="btn-theme-toggle" title="Toggle desk lighting" aria-label="Toggle theme">
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M5.1 18.9l1.6-1.6M17.3 6.7l1.6-1.6" />
+        </svg>
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" hidden>
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5z" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="desk-app">
+      <main class="canvas" id="desk">
+
+        <!-- ════════ VIEW 1 · HUB DASHBOARD ════════ -->
+        <section class="entity-view-section" id="view-hub" aria-label="Entity Hub Dashboard">
+          <header class="greeting reveal">
+            <div class="greeting-copy">
+              <div class="context-row">
+                <span class="context-pill">Entity Hub</span>
+                <span class="context-dot" aria-hidden="true"></span>
+                <span class="context-muted">Sales Invoice · FY 2026</span>
+                <span class="magic-badge">Dubai HQ</span>
+              </div>
+              <h1 class="hero-title">
+                Sales Invoice
+                <em class="magic-gradient-text">Hub Dashboard</em>
+              </h1>
+              <p class="lede">
+                What needs you today — receivables pulse, credit watch, and branch coverage across the voucher series.
+              </p>
+            </div>
+            <div class="greeting-actions">
+              <button type="button" class="btn btn-lagoon" id="btn-create-invoice">
+                <span>New Sales Invoice</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+              </button>
+              <button type="button" class="btn btn-ghost" id="btn-go-list">
+                <span>Open list</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+              </button>
+            </div>
+          </header>
+
+          <div class="bento bento-hub">
+            <div class="bezel reveal">
+              <div class="bezel-core">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow tight">Needs you</span>
+                    <h2>Priority queue</h2>
+                  </div>
+                  <span class="tag tag-credit">3 open</span>
+                </div>
+                <div class="needs-list">
+                  <button type="button" class="needs-item" data-goto="record" data-inv="INV/2409">
+                    <span class="needs-dot" aria-hidden="true"></span>
+                    <span class="needs-copy">
+                      <strong>Pending seal · INV/2409</strong>
+                      <span>Gulf Spares LLC · AED 42,100.00</span>
+                    </span>
+                    <span class="tag tag-credit">Seal</span>
+                  </button>
+                  <button type="button" class="needs-item" data-goto="record" data-inv="INV/2408">
+                    <span class="needs-dot warn" aria-hidden="true"></span>
+                    <span class="needs-copy">
+                      <strong>Overdue credit · INV/2408</strong>
+                      <span>Desert Motors LLC · 12 days past due</span>
+                    </span>
+                    <span class="tag tag-draft">Credit</span>
+                  </button>
+                  <button type="button" class="needs-item" data-goto="list">
+                    <span class="needs-dot ok" aria-hidden="true"></span>
+                    <span class="needs-copy">
+                      <strong>14 invoices posted today</strong>
+                      <span>Review master grid for branch Dubai HQ</span>
+                    </span>
+                    <span class="tag tag-approve">Posted</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="pulse-stack">
+              <div class="bezel reveal">
+                <div class="bezel-core pulse-card accent">
+                  <span class="pulse-label">Total receivables</span>
+                  <strong class="money" style="font-size: 1.55rem;">AED 1,420,850.00</strong>
+                  <p class="pulse-meta">94% collected · 6% open aging</p>
+                </div>
+              </div>
+              <div class="bezel reveal">
+                <div class="bezel-core pulse-card">
+                  <span class="pulse-label">Keyboard</span>
+                  <p class="pulse-meta">
+                    Switch views with <kbd class="kbd">⌘1</kbd>–<kbd class="kbd">⌘5</kbd> · Spotlight <kbd class="kbd">⌘K</kbd>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bezel span-2 reveal">
+              <div class="bezel-core">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow tight">Pulse</span>
+                    <h2>Today’s figures</h2>
+                  </div>
+                  <div class="chip-row" aria-label="Period">
+                    <span class="chip"><span class="chip-dot"></span> Today</span>
+                    <span class="chip text-muted">MTD</span>
+                    <span class="chip text-muted">FY</span>
+                  </div>
+                </div>
+                <div class="notes">
+                  <article class="note">
+                    <span class="eyebrow">Approved today</span>
+                    <strong class="money">AED 184,200.00</strong>
+                    <p>14 sales invoices posted</p>
+                  </article>
+                  <article class="note">
+                    <span class="eyebrow">Pending seal</span>
+                    <strong class="money brass">AED 42,800.00</strong>
+                    <p>3 invoices awaiting stamp</p>
+                  </article>
+                  <article class="note">
+                    <span class="eyebrow">Overdue credit</span>
+                    <strong class="money text-oxblood">AED 14,280.00</strong>
+                    <p>Desert Motors LLC · 12 days</p>
+                  </article>
+                  <article class="note">
+                    <span class="eyebrow">Avg. voucher</span>
+                    <strong class="money">AED 13,157.00</strong>
+                    <p>Across open branches</p>
+                  </article>
+                </div>
+                <div class="panel-head" style="margin: 1.5rem 0 0.75rem;">
+                  <div>
+                    <span class="eyebrow tight">Topology</span>
+                    <h3 style="margin: 0.15rem 0 0; font-family: var(--font-display); font-size: 1.05rem;">Branch coverage</h3>
+                  </div>
+                </div>
+                <div class="chip-row">
+                  <span class="chip"><span class="chip-dot"></span> Dubai HQ · 28</span>
+                  <span class="chip"><span class="chip-dot" style="background: var(--brass);"></span> Riyadh Hub · 12</span>
+                  <span class="chip"><span class="chip-dot" style="background: var(--oxblood);"></span> London · 8</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ════════ VIEW 2 · ENTITY LIST ════════ -->
+        <section class="entity-view-section" id="view-list" aria-label="Entity List" hidden>
+          <header class="greeting reveal">
+            <div class="greeting-copy">
+              <div class="context-row">
+                <span class="context-pill">Entity List</span>
+                <span class="context-dot" aria-hidden="true"></span>
+                <span class="context-muted" id="list-count-label">48 records</span>
+              </div>
+              <h1 class="hero-title">
+                Sales Invoice
+                <em class="magic-gradient-text">Master Grid</em>
+              </h1>
+              <p class="lede">Scan, filter, and open a record. Money right-aligned · status centered.</p>
+            </div>
+            <div class="greeting-actions">
+              <button type="button" class="btn btn-lagoon" id="btn-list-new">
+                <span>New invoice</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+              </button>
+            </div>
+          </header>
+
+          <div class="bezel reveal">
+            <div class="bezel-core">
+              <div class="table-toolbar">
+                <input
+                  type="search"
+                  class="grid-search-input"
+                  id="list-search"
+                  placeholder="Filter by voucher, customer, branch…"
+                  autocomplete="off"
+                />
+                <div class="filter-pills" role="group" aria-label="Status filter">
+                  <button type="button" class="filter-pill is-active" data-status="all">All</button>
+                  <button type="button" class="filter-pill" data-status="Approved">Approved</button>
+                  <button type="button" class="filter-pill" data-status="Pending Seal">Pending</button>
+                  <button type="button" class="filter-pill" data-status="Posted">Posted</button>
+                  <button type="button" class="filter-pill" data-status="Draft">Draft</button>
+                </div>
+              </div>
+
+              <div class="table-scroll">
+                <table class="entity-table">
+                  <thead>
+                    <tr>
+                      <th>Voucher</th>
+                      <th>Customer</th>
+                      <th>Date</th>
+                      <th>Branch</th>
+                      <th class="num">Amount</th>
+                      <th class="center">Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="entity-table-body">
+                    <tr class="table-row-item" data-inv="INV/2408" data-customer="Desert Motors LLC" data-status="Approved" data-branch="Dubai HQ" data-amount="14280">
+                      <td><strong class="money">INV/2408</strong></td>
+                      <td>Desert Motors LLC</td>
+                      <td>08 Aug 2026</td>
+                      <td>Dubai HQ</td>
+                      <td class="money">AED 14,280.00</td>
+                      <td class="center"><span class="tag tag-approve">Approved</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2408">Open</button></td>
+                    </tr>
+                    <tr class="table-row-item" data-inv="INV/2409" data-customer="Gulf Spares LLC" data-status="Pending Seal" data-branch="Riyadh Hub" data-amount="42100">
+                      <td><strong class="money">INV/2409</strong></td>
+                      <td>Gulf Spares LLC</td>
+                      <td>08 Aug 2026</td>
+                      <td>Riyadh Hub</td>
+                      <td class="money brass">AED 42,100.00</td>
+                      <td class="center"><span class="tag tag-credit">Pending Seal</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2409">Open</button></td>
+                    </tr>
+                    <tr class="table-row-item" data-inv="INV/2410" data-customer="Al Bustan Catering" data-status="Posted" data-branch="London Branch" data-amount="8950">
+                      <td><strong class="money">INV/2410</strong></td>
+                      <td>Al Bustan Catering</td>
+                      <td>07 Aug 2026</td>
+                      <td>London Branch</td>
+                      <td class="money">AED 8,950.00</td>
+                      <td class="center"><span class="tag tag-stock">Posted</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2410">Open</button></td>
+                    </tr>
+                    <tr class="table-row-item" data-inv="INV/2411" data-customer="Oasis Retail Group" data-status="Draft" data-branch="Dubai HQ" data-amount="22150">
+                      <td><strong class="money">INV/2411</strong></td>
+                      <td>Oasis Retail Group</td>
+                      <td>08 Aug 2026</td>
+                      <td>Dubai HQ</td>
+                      <td class="money">AED 22,150.00</td>
+                      <td class="center"><span class="tag tag-draft">Draft</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2411">Open</button></td>
+                    </tr>
+                    <tr class="table-row-item" data-inv="INV/2412" data-customer="Pearl Marine Co" data-status="Approved" data-branch="Riyadh Hub" data-amount="6750">
+                      <td><strong class="money">INV/2412</strong></td>
+                      <td>Pearl Marine Co</td>
+                      <td>06 Aug 2026</td>
+                      <td>Riyadh Hub</td>
+                      <td class="money">AED 6,750.00</td>
+                      <td class="center"><span class="tag tag-approve">Approved</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2412">Open</button></td>
+                    </tr>
+                    <tr class="table-row-item" data-inv="INV/2413" data-customer="Desert Motors LLC" data-status="Pending Seal" data-branch="Dubai HQ" data-amount="9800">
+                      <td><strong class="money">INV/2413</strong></td>
+                      <td>Desert Motors LLC</td>
+                      <td>05 Aug 2026</td>
+                      <td>Dubai HQ</td>
+                      <td class="money brass">AED 9,800.00</td>
+                      <td class="center"><span class="tag tag-credit">Pending Seal</span></td>
+                      <td><button type="button" class="mini-btn inspect-btn" data-inv="INV/2413">Open</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="bulk-bar">
+                <span class="bulk-meta" id="list-visible-meta">Showing 6 of 48 · page 1</span>
+                <div class="bulk-actions">
+                  <button type="button" class="mini-btn" id="btn-bulk-export">Export CSV</button>
+                  <button type="button" class="mini-btn" id="btn-bulk-print">Print</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ════════ VIEW 3 · RECORD OVERVIEW ════════ -->
+        <section class="entity-view-section" id="view-record" aria-label="Single Record Overview" hidden>
+          <header class="greeting reveal">
+            <div class="greeting-copy">
+              <div class="context-row">
+                <span class="context-pill">Record Overview</span>
+                <span class="context-dot" aria-hidden="true"></span>
+                <span class="context-muted" id="rec-header-inv">INV/2408</span>
+                <span class="magic-badge" id="rec-status-badge">Approved</span>
+              </div>
+              <h1 class="hero-title" id="rec-title-inv">INV/2408 · Desert Motors LLC</h1>
+              <p class="lede" id="rec-lede">Issued by Dubai HQ · Net payable <strong class="money">AED 14,280.00</strong></p>
+              <div class="status-steps" style="margin-top: 0.85rem;" aria-label="Document status">
+                <span class="status-step is-done">Draft</span>
+                <span class="status-step is-done">Pending Seal</span>
+                <span class="status-step is-current">Approved</span>
+                <span class="status-step">Posted</span>
+              </div>
+            </div>
+            <div class="greeting-actions">
+              <button type="button" class="btn btn-lagoon" id="btn-seal-this-record">
+                <span>Apply seal</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg>
+                </span>
+              </button>
+              <button type="button" class="btn btn-ghost" id="btn-edit-record">
+                <span>Edit</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </span>
+              </button>
+            </div>
+          </header>
+
+          <div class="kpi-strip reveal">
+            <div class="kpi-cell">
+              <span class="eyebrow">Balance due</span>
+              <strong class="money" id="rec-balance">AED 14,280.00</strong>
+            </div>
+            <div class="kpi-cell">
+              <span class="eyebrow">Aging bucket</span>
+              <strong id="rec-aging">0–30 days</strong>
+            </div>
+            <div class="kpi-cell">
+              <span class="eyebrow">Payment status</span>
+              <strong id="rec-pay">Unpaid</strong>
+            </div>
+            <div class="kpi-cell">
+              <span class="eyebrow">Branch</span>
+              <strong id="rec-branch">Dubai HQ</strong>
+            </div>
+          </div>
+
+          <div class="bento bento-wide">
+            <div class="bezel reveal">
+              <div class="bezel-core">
+                <div class="panel-head">
+                  <div>
+                    <span class="eyebrow tight">Lines</span>
+                    <h3>Voucher line items</h3>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table class="line-table" id="rec-lines-table">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th class="num">Qty</th>
+                        <th class="num">Unit price</th>
+                        <th class="num">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rec-lines-body">
+                      <tr>
+                        <td>Heavy Duty Brake Pad Set · SKU-4401</td>
+                        <td class="money">10</td>
+                        <td class="money">AED 820.00</td>
+                        <td class="money">AED 8,200.00</td>
+                      </tr>
+                      <tr>
+                        <td>Synthetic Engine Oil 5L · SKU-1102</td>
+                        <td class="money">20</td>
+                        <td class="money">AED 304.00</td>
+                        <td class="money">AED 6,080.00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="pulse-stack">
+              <div class="bezel reveal">
+                <div class="bezel-core">
+                  <span class="pulse-label">Activity</span>
+                  <ul class="activity-list">
+                    <li>
+                      <span class="tick" aria-hidden="true"></span>
+                      <div>
+                        <strong>Created by Rania</strong>
+                        <time>08 Aug 2026 · 10:14</time>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="tick" aria-hidden="true"></span>
+                      <div>
+                        <strong>Seal verified</strong>
+                        <time>08 Aug 2026 · 11:02</time>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="tick" aria-hidden="true"></span>
+                      <div>
+                        <strong>Credit watch flagged</strong>
+                        <time>Overdue · 12 days</time>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="bezel reveal">
+                <div class="bezel-core pulse-card">
+                  <span class="pulse-label">Attachments</span>
+                  <p class="pulse-meta">E-invoice PDF · Delivery note · none yet</p>
+                  <button type="button" class="mini-btn" id="btn-attach">Add attachment</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ════════ VIEW 4 · ENTITY EDITOR ════════ -->
+        <section class="entity-view-section" id="view-editor" aria-label="Entity Editor" hidden>
+          <header class="greeting reveal">
+            <div class="greeting-copy">
+              <div class="context-row">
+                <span class="context-pill">Entity Workbench</span>
+                <span class="context-dot" aria-hidden="true"></span>
+                <span class="context-muted">Desk Lamp focus</span>
+                <span class="magic-badge">Draft</span>
+              </div>
+              <h1 class="hero-title">
+                Create &amp; edit
+                <em class="magic-gradient-text">Sales Invoice</em>
+              </h1>
+              <p class="lede">Header fields hold preferred widths. Line grid owns the body. One primary save.</p>
+            </div>
+          </header>
+
+          <div class="desk-lamp reveal">
+            <div class="bezel-core">
+              <form id="entity-editor-form" class="editor-form">
+                <div>
+                  <h3 class="form-section-title">Header</h3>
+                  <div class="form-grid">
+                    <div class="field-group field-status">
+                      <label for="edit-inv-no">Voucher no.</label>
+                      <input type="text" id="edit-inv-no" value="INV/2414" readonly />
+                    </div>
+                    <div class="field-group field-customer">
+                      <label for="edit-customer">Customer</label>
+                      <select id="edit-customer">
+                        <option>Desert Motors LLC</option>
+                        <option>Gulf Spares LLC</option>
+                        <option>Al Bustan Catering</option>
+                        <option>Oasis Retail Group</option>
+                        <option>Pearl Marine Co</option>
+                      </select>
+                    </div>
+                    <div class="field-group field-date">
+                      <label for="edit-date">Voucher date</label>
+                      <input type="date" id="edit-date" value="2026-08-08" />
+                    </div>
+                    <div class="field-group field-grow">
+                      <label for="edit-branch">Branch</label>
+                      <select id="edit-branch">
+                        <option>Dubai HQ</option>
+                        <option>Riyadh Hub</option>
+                        <option>London Branch</option>
+                      </select>
+                    </div>
+                    <div class="field-group field-full">
+                      <label for="edit-remarks">Remarks</label>
+                      <textarea id="edit-remarks" placeholder="Optional remarks for this voucher…"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="form-section-title">Line items</h3>
+                  <div class="line-editor-wrap">
+                    <table class="line-editor">
+                      <thead>
+                        <tr>
+                          <th style="width: 38%;">Item description</th>
+                          <th class="num" style="width: 12%;">Qty</th>
+                          <th class="num" style="width: 16%;">Unit price</th>
+                          <th class="num" style="width: 14%;">Tax %</th>
+                          <th class="num" style="width: 16%;">Amount</th>
+                          <th style="width: 4%;"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="editor-lines-body">
+                        <tr class="editor-line">
+                          <td><input type="text" class="line-desc" value="Heavy Duty Brake Pad Set · SKU-4401" /></td>
+                          <td><input type="number" class="line-qty" value="10" min="0" step="1" /></td>
+                          <td><input type="number" class="line-price" value="820" min="0" step="0.01" /></td>
+                          <td><input type="number" class="line-tax" value="5" min="0" step="0.01" /></td>
+                          <td class="money-cell line-amount">AED 8,610.00</td>
+                          <td><button type="button" class="line-remove" aria-label="Remove line">×</button></td>
+                        </tr>
+                        <tr class="editor-line">
+                          <td><input type="text" class="line-desc" value="Synthetic Engine Oil 5L · SKU-1102" /></td>
+                          <td><input type="number" class="line-qty" value="20" min="0" step="1" /></td>
+                          <td><input type="number" class="line-price" value="304" min="0" step="0.01" /></td>
+                          <td><input type="number" class="line-tax" value="5" min="0" step="0.01" /></td>
+                          <td class="money-cell line-amount">AED 6,384.00</td>
+                          <td><button type="button" class="line-remove" aria-label="Remove line">×</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="button" class="mini-btn add-line-row" id="btn-add-line">+ Add line</button>
+                </div>
+
+                <div class="editor-sticky-footer">
+                  <div class="totals-block">
+                    <div class="total-item">
+                      <span>Subtotal</span>
+                      <strong id="edit-subtotal">AED 14,280.00</strong>
+                    </div>
+                    <div class="total-item">
+                      <span>Tax</span>
+                      <strong id="edit-tax">AED 714.00</strong>
+                    </div>
+                    <div class="total-item grand">
+                      <span>Grand total</span>
+                      <strong id="edit-grand">AED 14,994.00</strong>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" id="btn-cancel-editor">Cancel</button>
+                    <button type="submit" class="btn btn-lagoon" id="btn-save-editor">
+                      <span>Save &amp; seal</span>
+                      <span class="btn-icon-wrap" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ════════ VIEW 5 · REPORTS ════════ -->
+        <section class="entity-view-section" id="view-reports" aria-label="Entity Reports" hidden>
+          <header class="greeting reveal">
+            <div class="greeting-copy">
+              <div class="context-row">
+                <span class="context-pill">Analytics</span>
+                <span class="context-dot" aria-hidden="true"></span>
+                <span class="context-muted">Sales Invoice reports</span>
+              </div>
+              <h1 class="hero-title">
+                Entity analytics &amp;
+                <em class="magic-gradient-text">Aging</em>
+              </h1>
+              <p class="lede">Pick a report, set filters, read chart + table together. Export is secondary.</p>
+            </div>
+            <div class="greeting-actions">
+              <button type="button" class="btn btn-ghost" id="btn-export-csv">
+                <span>Export CSV</span>
+                <span class="btn-icon-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>
+                </span>
+              </button>
+            </div>
+          </header>
+
+          <div class="bezel reveal">
+            <div class="bezel-core">
+              <span class="eyebrow tight">Report catalog</span>
+              <div class="report-picker" id="report-picker">
+                <button type="button" class="report-card is-active" data-report="aging">
+                  <strong>Receivables aging</strong>
+                  <span>0–30 · 31–60 · 61–90 · 90+</span>
+                </button>
+                <button type="button" class="report-card" data-report="branch">
+                  <strong>By branch</strong>
+                  <span>Volume &amp; collection rate</span>
+                </button>
+                <button type="button" class="report-card" data-report="customer">
+                  <strong>By customer</strong>
+                  <span>Top open balances</span>
+                </button>
+                <button type="button" class="report-card" data-report="series">
+                  <strong>Voucher series</strong>
+                  <span>Posted vs draft mix</span>
+                </button>
+              </div>
+
+              <div class="report-filters">
+                <div class="field-group field-date">
+                  <label for="rep-from">From</label>
+                  <input type="date" id="rep-from" value="2026-07-01" />
+                </div>
+                <div class="field-group field-date">
+                  <label for="rep-to">To</label>
+                  <input type="date" id="rep-to" value="2026-08-08" />
+                </div>
+                <div class="field-group field-grow">
+                  <label for="rep-branch">Branch</label>
+                  <select id="rep-branch">
+                    <option>All branches</option>
+                    <option>Dubai HQ</option>
+                    <option>Riyadh Hub</option>
+                    <option>London Branch</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="bento bento-wide">
+                <div>
+                  <h3 class="form-section-title" id="report-chart-title">Receivables aging breakdown</h3>
+                  <div class="spark-bars" id="report-bars" aria-hidden="true">
+                    <span style="--height: 88%"><label>0–30<br />62%</label></span>
+                    <span style="--height: 48%"><label>31–60<br />22%</label></span>
+                    <span style="--height: 28%"><label>61–90<br />11%</label></span>
+                    <span style="--height: 16%"><label>90+<br />5%</label></span>
+                  </div>
+                </div>
+                <div class="aging-table-wrap">
+                  <h3 class="form-section-title">Detail</h3>
+                  <table class="line-table" id="report-detail-table">
+                    <thead>
+                      <tr>
+                        <th>Bucket</th>
+                        <th class="num">Amount</th>
+                        <th class="num">Share</th>
+                        <th class="num">Invoices</th>
+                      </tr>
+                    </thead>
+                    <tbody id="report-detail-body">
+                      <tr>
+                        <td>0–30 days</td>
+                        <td class="money">AED 880,900.00</td>
+                        <td class="money">62%</td>
+                        <td class="money">31</td>
+                      </tr>
+                      <tr>
+                        <td>31–60 days</td>
+                        <td class="money">AED 312,600.00</td>
+                        <td class="money">22%</td>
+                        <td class="money">9</td>
+                      </tr>
+                      <tr>
+                        <td>61–90 days</td>
+                        <td class="money">AED 156,300.00</td>
+                        <td class="money">11%</td>
+                        <td class="money">5</td>
+                      </tr>
+                      <tr>
+                        <td>90+ days</td>
+                        <td class="money text-oxblood">AED 71,050.00</td>
+                        <td class="money">5%</td>
+                        <td class="money">3</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="desk-foot">
+          <span>Standard 5-view entity architecture · algoERP</span>
+          <span>
+            <kbd class="kbd">⌘1</kbd>–<kbd class="kbd">⌘5</kbd> views ·
+            <kbd class="kbd">⌘K</kbd> spotlight ·
+            <kbd class="kbd">⌘.</kbd> cabinet
+          </span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Cabinet -->
+    <div class="overlay cabinet" id="cabinet-overlay" role="dialog" aria-modal="true" aria-labelledby="cabinet-title" hidden>
+      <button type="button" class="overlay-scrim" id="close-cabinet-scrim" aria-label="Close cabinet"></button>
+      <div class="cabinet-stage">
+        <div class="cabinet-chrome">
+          <div>
+            <p class="cabinet-kicker">The Cabinet</p>
+            <h2 id="cabinet-title">Open a drawer</h2>
+          </div>
+          <button type="button" class="icon-close" id="close-cabinet-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="cabinet-grid" id="cabinet-grid">
+          <button type="button" class="mod-tile" data-name="sales invoice">
+            <span class="mod-core">
+              <span class="mod-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 3.5h7l3 3V20.5H7z"/><path d="M14 3.5V7h3.5"/><path d="M9.5 12h5M9.5 15.5h5"/></svg>
+              </span>
+              <span class="mod-name">Sales Invoice</span>
+              <span class="mod-sub">Voucher series</span>
+            </span>
+          </button>
+          <button type="button" class="mod-tile" data-name="purchase order">
+            <span class="mod-core">
+              <span class="mod-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/><path d="M3 4h2l2.2 10.5h9.6L19 8H7"/></svg>
+              </span>
+              <span class="mod-name">Purchase Order</span>
+              <span class="mod-sub">Procurement</span>
+            </span>
+          </button>
+          <button type="button" class="mod-tile" data-name="ledgers">
+            <span class="mod-core">
+              <span class="mod-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 4.5h11.5a2 2 0 0 1 2 2V19.5H7a2 2 0 0 0-2 2z"/><path d="M5 4.5A2 2 0 0 0 7 6.5v15"/></svg>
+              </span>
+              <span class="mod-name">Ledgers</span>
+              <span class="mod-sub">Accounts</span>
+            </span>
+          </button>
+          <button type="button" class="mod-tile" data-name="stock">
+            <span class="mod-core">
+              <span class="mod-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 8l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/></svg>
+              </span>
+              <span class="mod-name">Stock</span>
+              <span class="mod-sub">Inventory</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spotlight -->
+    <div class="overlay spotlight" id="spotlight-overlay" role="dialog" aria-modal="true" aria-label="Spotlight" hidden>
+      <button type="button" class="overlay-scrim" id="close-spotlight-scrim" aria-label="Close spotlight"></button>
+      <div class="spotlight-panel">
+        <div class="spotlight-core">
+          <div class="spotlight-input-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+            <input type="search" id="spotlight-input" placeholder="Jump to view, create invoice, open seal…" autocomplete="off" />
+            <kbd class="kbd quiet">Esc</kbd>
+          </div>
+          <ul class="spotlight-results" id="spotlight-results"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

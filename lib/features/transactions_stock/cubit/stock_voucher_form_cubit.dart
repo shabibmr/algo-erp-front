@@ -1,4 +1,3 @@
-import 'package:algo_erp_front/core/error/failure.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_kind.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_models.dart';
 import 'package:algo_erp_front/core/vouchers/stock/stock_voucher_repository.dart';
@@ -156,23 +155,9 @@ class StockVoucherFormCubit extends Cubit<StockVoucherFormState> {
     final result = await _repository.post(draft.copyWith(lines: complete));
     if (isClosed) return;
     result.fold(
-      (failure) => emit(
-        state.copyWith(posting: false, error: () => _messageOf(failure)),
-      ),
+      (failure) =>
+          emit(state.copyWith(posting: false, error: () => failure.message)),
       (posted) => emit(state.copyWith(posting: false, posted: () => posted)),
     );
   }
-
-  String _messageOf(Failure f) => switch (f) {
-    NetworkFailure(:final message) => message,
-    TimeoutFailure(:final message) => message,
-    UnauthorizedFailure(:final message) => message,
-    ForbiddenFailure(:final message) => message,
-    ValidationFailure(:final message) => message,
-    NotFoundFailure(:final message) => message,
-    ConflictFailure(:final message) => message,
-    ServerFailure(:final message) => message,
-    CacheFailure(:final message) => message,
-    UnknownFailure(:final message) => message,
-  };
 }
